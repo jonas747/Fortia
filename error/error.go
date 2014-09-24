@@ -7,7 +7,6 @@ package fortia
 // trace information.
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"runtime"
 	"strings"
@@ -31,8 +30,8 @@ type FortiaError interface {
 	// Implements the built-in error interface.
 	Error() string
 
-	// Serializes to json
-	Json() []byte
+	// Gets additional data map
+	GetData() map[string]interface{}
 }
 
 // Standard struct for general types of errors.
@@ -74,9 +73,8 @@ func GetMessage(err interface{}) string {
 	}
 }
 
-func (d *FortiaBaseError) Json() []byte {
-	serialised, _ := json.Marshal(d)
-	return serialised
+func (d *FortiaBaseError) GetData() map[string]interface{} {
+	return d.AdditionalData
 }
 
 // This returns a string with all available error information, including inner
