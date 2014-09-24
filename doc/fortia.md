@@ -69,7 +69,7 @@ Todo list:
     2. Auth server (reg, login)
     3. Doc game server API
     4. Web frontend
-    5. Game server
+    5. Game server 
     6. Master server
 
     - Fortia pkg
@@ -85,7 +85,7 @@ Todo list:
                 - Combined
                 - Split between server
     - Game server
-        + Handle ticks
+         + Handle ticks
         + Handle incoming requests
     - Auth server
         + Registration
