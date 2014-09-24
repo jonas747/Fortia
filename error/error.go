@@ -7,6 +7,7 @@ package fortia
 // trace information.
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"strings"
@@ -29,6 +30,9 @@ type FortiaError interface {
 
 	// Implements the built-in error interface.
 	Error() string
+
+	// Serializes to json
+	Json() []byte
 }
 
 // Standard struct for general types of errors.
@@ -36,10 +40,11 @@ type FortiaError interface {
 // For an example of custom error type, look at databaseError/newDatabaseError
 // in errors_test.go.
 type FortiaBaseError struct {
-	Msg     string
-	Stack   string
-	Context string
-	inner   error
+	Msg            string
+	Stack          string
+	Context        string
+	inner          error
+	AdditionalData map[string]interface{}
 }
 
 // This returns the error string without stack trace information.
@@ -67,6 +72,11 @@ func GetMessage(err interface{}) string {
 	default:
 		return "Passed a non-error to GetMessage"
 	}
+}
+
+func (d *FortiaBaseError) Json() []byte {
+	serialised, _ := json.Marshal(d)
+	return serialised
 }
 
 // This returns a string with all available error information, including inner
@@ -98,11 +108,18 @@ func (e *FortiaBaseError) GetInner() error {
 // This returns a new FortiaBaseError initialized with the given message and
 // the current stack trace.
 func New(msg string) FortiaError {
+	return Newa(msg, make(map[string]interface{}))
+}
+
+// This returns a new FortiaBaseError initialized with the given message and
+// the current stack trace.
+func Newa(msg string, additionalData map[string]interface{}) FortiaError {
 	stack, context := StackTrace()
 	return &FortiaBaseError{
-		Msg:     msg,
-		Stack:   stack,
-		Context: context,
+		Msg:            msg,
+		Stack:          stack,
+		Context:        context,
+		AdditionalData: additionalData,
 	}
 }
 
@@ -118,12 +135,18 @@ func Newf(format string, args ...interface{}) FortiaError {
 
 // Wraps another error in a new FortiaBaseError.
 func Wrap(err error, msg string) FortiaError {
+	return Wrapa(err, msg, make(map[string]interface{}))
+}
+
+// Wraps another error in a new FortiaBaseError.
+func Wrapa(err error, msg string, additionalData map[string]interface{}) FortiaError {
 	stack, context := StackTrace()
 	return &FortiaBaseError{
-		Msg:     msg,
-		Stack:   stack,
-		Context: context,
-		inner:   err,
+		Msg:            msg,
+		Stack:          stack,
+		Context:        context,
+		inner:          err,
+		AdditionalData: additionalData,
 	}
 }
 
