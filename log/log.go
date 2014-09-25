@@ -1,10 +1,31 @@
 package log
 
 import (
-	//"encoding/json"
 	"fmt"
-	ferr "github.com/jonas747/fortia/error"
-	"strings"
+	"time"
+)
+
+const (
+	col_nocolor = "\x1b[0m"
+	col_black   = "\x1b[30m"
+	col_red     = "\x1b[31m"
+	col_green   = "\x1b[32m"
+	col_yellow  = "\x1b[33m"
+	col_blue    = "\x1b[34m"
+	col_magenta = "\x1b[35m"
+	col_cyan    = "\x1b[36m"
+	col_white   = "\x1b[37m"
+)
+
+var (
+	col_bold_black   = col_black[:4] + ";1m"
+	col_bold_red     = col_red[:4] + ";1m"
+	col_bold_green   = col_green[:4] + ";1m"
+	col_bold_yellow  = col_yellow[:4] + ";1m"
+	col_bold_blue    = col_blue[:4] + ";1m"
+	col_bold_magenta = col_magenta[:4] + ";1m"
+	col_bold_cyan    = col_cyan[:4] + ";1m"
+	col_bold_white   = col_white[:4] + ";1m"
 )
 
 /*
@@ -16,81 +37,56 @@ Log levels:
  3: Fatal
 */
 
+var LogLvlStr = map[int]string{
+	-1: "Debug",
+	0:  "Info",
+	1:  "Warning",
+	2:  "Error",
+	3:  "Fatal",
+}
+
+var LogColors = map[int]string{
+	-1: col_cyan,
+	0:  col_white,
+	1:  col_yellow,
+	2:  col_magenta,
+	3:  col_red,
+}
+
+// Represents a log message
 type LogMsg struct {
-	Lvl  int
-	Msg  string
-	Data map[string]interface{}
+	Lvl       int
+	Msg       string
+	Data      map[string]interface{}
+	Host      string
+	Timestamp time.Time
 }
 
 func NewLogMsg(lvl int, msg string, data map[string]interface{}) LogMsg {
+	now := time.Now()
 	return LogMsg{
-		Lvl:  lvl,
-		Msg:  msg,
-		Data: data,
+		Lvl:       lvl,
+		Msg:       msg,
+		Data:      data,
+		Timestamp: now,
 	}
 }
 
-type LogClient struct {
-	// TODO
-	// connection to server
-	// etc
-	PrintLvl int
+func (l *LogMsg) String() string {
+	return l.StringDetailed(false)
 }
 
-func NewLogClient(addr string, Plvl int) (*LogClient, error) {
-	return &LogClient{
-		PrintLvl: Plvl,
-	}, nil
-}
-
-// Base log function
-func (l *LogClient) Log(msg LogMsg) {
-	// Print if were higher than printlvl
-	if l.PrintLvl <= msg.Lvl {
-		fmt.Println(msg.Msg)
+func (l *LogMsg) StringDetailed(host bool) string {
+	timeStr := l.Timestamp.Format(time.Stamp)
+	stackTrace, ok := l.Data["stacktrace"]
+	str := ""
+	if host {
+		str = fmt.Sprintf("{%s}", l.Host)
 	}
-
-	// Send to logserver
-	if msg.Lvl < 0 {
-		return
+	if ok {
+		str += fmt.Sprintf("%s[%s] %s: %s\n%s\x1b[0m", LogColors[l.Lvl], timeStr, LogLvlStr[l.Lvl], l.Msg, stackTrace)
+	} else {
+		str += fmt.Sprintf("%s[%s] %s: %s\x1b[0m\n", LogColors[l.Lvl], timeStr, LogLvlStr[l.Lvl], l.Msg)
 	}
-	//TODO
-}
-
-// lvl -1 (not recorded or sent to master(maybe sent to master))
-func (l *LogClient) Debug(msgs ...string) {
-	str := strings.Join(msgs, "")
-	l.Log(NewLogMsg(-1, str, make(map[string]interface{})))
-}
-
-// lvl 0
-func (l *LogClient) Info(msg string, data map[string]interface{}) {
-	l.Log(NewLogMsg(0, msg, data))
-}
-
-// lvl 1
-func (l *LogClient) Warn(msg string, data map[string]interface{}) {
-	l.Log(NewLogMsg(1, msg, data))
-}
-
-// lvl 2
-func (l *LogClient) Error(err ferr.FortiaError) {
-	msg := err.GetMessage()
-	data := err.GetData()
-
-	data["stacktrace"] = err.GetStack()
-	data["context"] = err.GetContext()
-
-	l.Log(NewLogMsg(2, msg, data))
-}
-
-// lvl 3
-func (l *LogClient) Fatal(err ferr.FortiaError) {
-	msg := err.GetMessage()
-	data := err.GetData()
-
-	data["stacktrace"] = err.GetStack()
-	data["context"] = err.GetContext()
-
-	l.Log(NewLogMsg(2, msg, data))
+	return str
 }
