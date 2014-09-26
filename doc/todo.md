@@ -6,14 +6,17 @@
     - log (done)
     - error (done)
     - db (working on)
-2. Auth server 
+        + auth (done)
+        + game (working on)
+2. Rest Server
+3. Auth server 
     - Register
     - Login
     - Session token handling
-3. Doc game server API
-4. Web frontend
-5. Game server 
-6. Master server
+4. Doc game server API
+5. Web frontend
+6. Game server 
+7. Master server
 
 #### Detailed
 
