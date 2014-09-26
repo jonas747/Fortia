@@ -19,8 +19,6 @@ type LogClient struct {
 func NewLogClient(addr string, Plvl int, host string) (*LogClient, error) {
 	// Dial the address
 	conn, err := net.Dial("tcp", addr)
-	fmt.Println(conn.LocalAddr())
-	fmt.Println(conn.RemoteAddr())
 	return &LogClient{
 		PrintLvl: Plvl,
 		Conn:     conn,

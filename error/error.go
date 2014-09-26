@@ -139,6 +139,9 @@ func Wrap(err error, msg string) FortiaError {
 // Wraps another error in a new FortiaBaseError.
 func Wrapa(err error, msg string, additionalData map[string]interface{}) FortiaError {
 	stack, context := StackTrace()
+	if msg == "" {
+		msg = err.Error()
+	}
 	return &FortiaBaseError{
 		Msg:            msg,
 		Stack:          stack,

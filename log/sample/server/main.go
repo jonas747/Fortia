@@ -10,7 +10,7 @@ func main() {
 }
 
 func initServer() {
-	logServer, err := log.NewServer(":8080")
+	logServer, err := log.NewServer(":8082")
 	if err != nil {
 		fmt.Println("Error launching logsever:", err)
 		return
