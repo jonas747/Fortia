@@ -14,6 +14,14 @@ type Database struct {
 	Pool *pool.Pool
 }
 
+func NewDatabase(addr string) (*Database, error) {
+	p, err := pool.NewPool("tcp", addr, 10)
+	if err != nil {
+		return nil, err
+	}
+	return &Database{p}, nil
+}
+
 // Same as redis.Client.Cmd but uses a connection from a pool
 func (db *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, ferr.FortiaError) {
 	client, err := db.Pool.Get()
