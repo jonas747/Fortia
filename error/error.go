@@ -32,6 +32,9 @@ type FortiaError interface {
 
 	// Gets additional data map
 	GetData() map[string]interface{}
+
+	// Sets some data
+	SetData(string, interface{})
 }
 
 // Standard struct for general types of errors.
@@ -75,6 +78,10 @@ func GetMessage(err interface{}) string {
 
 func (d *FortiaBaseError) GetData() map[string]interface{} {
 	return d.AdditionalData
+}
+
+func (d *FortiaBaseError) SetData(key string, data interface{}) {
+	d.AdditionalData[key] = data
 }
 
 // This returns a string with all available error information, including inner
