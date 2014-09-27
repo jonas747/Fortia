@@ -58,6 +58,13 @@ func (l *LogClient) Log(msg LogMsg) {
 	}
 }
 
+// For log.Logger output
+func (l *LogClient) Write(p []byte) (n int, err error) {
+	// TODO: Check for prefix
+	l.Info(string(p))
+	return len(p), nil
+}
+
 // lvl -1 (not recorded or sent to master(maybe sent to master))
 func (l *LogClient) Debug(msgs ...string) {
 	str := strings.Join(msgs, "")
