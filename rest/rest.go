@@ -15,14 +15,15 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"io/ioutil"
+	nativeLog "log"
 	"net/http"
 	"reflect"
 	"time"
 )
 
 type Server struct {
-	hServer  http.Server
-	handlers map[string]*RestHandler
+	hServer  http.Server             // The http server
+	handlers map[string]*RestHandler // Map of handlers
 	logger   *log.LogClient
 }
 
@@ -36,6 +37,7 @@ func NewSever(addr string, logger *log.LogClient) *Server {
 		Handler:      server,
 		ReadTimeout:  time.Duration(10) * time.Second,
 		WriteTimeout: time.Duration(10) * time.Second,
+		ErrorLog:     nativeLog.New(logger, "", 0),
 	}
 	server.hServer = hServer
 	return server

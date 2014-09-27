@@ -61,7 +61,8 @@ func (l *LogClient) Log(msg LogMsg) {
 // For log.Logger output
 func (l *LogClient) Write(p []byte) (n int, err error) {
 	// TODO: Check for prefix
-	l.Info(string(p))
+	nerr := ferr.New(string(p))
+	l.Error(nerr)
 	return len(p), nil
 }
 
