@@ -5,8 +5,9 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
-	"net/http"
-	"net/url"
+	//"net/http"
+	//"net/url"
+	"reflect"
 )
 
 var (
@@ -50,7 +51,7 @@ func main() {
 
 /*
 	Handler         RestHandlerFunc
-	Method          string       // The metho ex: GET, PUT, PATCH etc..
+	Method          string       // The metho ex: GET, POST, PUT, PATCH etc..
 	RequiredParams  []string     // Required url parameters
 	OptionalParams  []string     // Optional Url parameters
 	RequiredCookies []string     // Required cookies
@@ -59,14 +60,29 @@ func main() {
 	BodyRequired    bool         // Wther a body is required or not
 */
 func initApi(s *rest.Server) {
-	s.RegisterHandler(&rest.RestHandler{
-		Handler:        rest.RestHandlerFunc(TestHandler),
-		Method:         "PUT",
-		RequiredParams: []string{"kind"},
-		Path:           "/",
-	})
-}
 
-func TestHandler(w http.ResponseWriter, r *http.Request, params url.Values, body interface{}) {
-	w.Write([]byte("poop"))
+	s.RegisterHandler(&rest.RestHandler{
+		Handler:      rest.RestHandlerFunc(handleRegister),
+		Method:       "POST",
+		Path:         "/register",
+		BodyRequired: true,
+		BodyType:     reflect.TypeOf(new(BodyRegister)),
+	})
+
+	s.RegisterHandler(&rest.RestHandler{
+		Handler:      rest.RestHandlerFunc(handleLogin),
+		Method:       "POST",
+		Path:         "/login",
+		BodyRequired: true,
+		BodyType:     reflect.TypeOf(new(BodyLogin)),
+	})
+
+	s.RegisterHandler(&rest.RestHandler{
+		Handler:         rest.RestHandlerFunc(handleGetInfo),
+		Method:          "GET",
+		Path:            "/getinfo",
+		RequiredCookies: []string{"fortia-session"},
+		RequiredParams:  []string{"username"},
+	})
+
 }

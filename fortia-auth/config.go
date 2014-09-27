@@ -8,7 +8,6 @@ import (
 
 type Config struct {
 	AuthDb    string
-	GameDb    string
 	LogServer string
 }
 
