@@ -16,7 +16,6 @@ import (
 	"github.com/jonas747/fortia/log"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"reflect"
 	"time"
 )
@@ -115,7 +114,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Finally call the handler
-	handler.Handler(w, r, params, bodyDecoded)
+	handler.Handler(w, r, bodyDecoded)
 }
 
 func HandleInternalServerError(w http.ResponseWriter, msg string) {
@@ -138,7 +137,7 @@ func (s *Server) RegisterHandler(r *RestHandler) {
 	s.handlers[r.Path] = r
 }
 
-type RestHandlerFunc func(http.ResponseWriter, *http.Request, url.Values, interface{})
+type RestHandlerFunc func(http.ResponseWriter, *http.Request, interface{})
 
 type RestHandler struct {
 	Handler         RestHandlerFunc
