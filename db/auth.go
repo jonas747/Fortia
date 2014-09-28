@@ -11,14 +11,25 @@ type AuthDB struct {
 	*Database
 }
 
+var validSessionTokenChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
 func createSessionToken(length int) string {
 	seed := time.Now().Nanosecond()
 	rand.Seed(int64(seed))
-	arr := make([]byte, length)
+	/*
+		arr := make([]byte, length)
+		for i := 0; i < length; i++ {
+			arr[i] = byte(rand.Intn(255))
+		}
+		return string(arr)
+	*/
+	finalString := ""
 	for i := 0; i < length; i++ {
-		arr[i] = byte(rand.Intn(255))
+		rNum := rand.Intn(len(validSessionTokenChars))
+		char := string(validSessionTokenChars[rNum])
+		finalString += char
 	}
-	return string(arr)
+	return finalString
 }
 
 // Logs the specified user in returning a session token
@@ -39,13 +50,16 @@ func (a *AuthDB) CheckUserPw(user, pw string) (bool, ferr.FortiaError) {
 		return false, err
 	}
 	correctPwHash := pwReply.String()
+	if correctPwHash == "" {
+		return false, nil
+	}
 
 	berr := bcrypt.CompareHashAndPassword([]byte(correctPwHash), []byte(pw))
 	if berr != nil {
 		if berr == bcrypt.ErrMismatchedHashAndPassword {
 			return false, nil
 		}
-		return false, ferr.Wrapa(berr, "Error bcrypt compare", map[string]interface{}{"user": user})
+		return false, ferr.Wrapa(berr, "", map[string]interface{}{"user": user})
 	}
 	return true, nil
 }
