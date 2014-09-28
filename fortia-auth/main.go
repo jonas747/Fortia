@@ -36,10 +36,12 @@ func main() {
 
 	l.Info("(2/4) Log client init successful! Creating database connection pools...")
 
-	//adb, nErr := db.NewDatabase(config.AuthDb)
-	//panicErr(nErr)
+	adb, nErr := db.NewDatabase(config.AuthDb)
+	if nErr != nil {
+		l.Warn("Not connected to database..." + nErr.Error())
+	}
 
-	//authDb = &db.AuthDB{adb}
+	authDb = &db.AuthDB{adb}
 
 	l.Info("(3/4) Initializing api handlers...")
 	server := rest.NewSever(":8080", l)
@@ -66,7 +68,7 @@ func initApi(s *rest.Server) {
 		Method:       "POST",
 		Path:         "/register",
 		BodyRequired: true,
-		BodyType:     reflect.TypeOf(new(BodyRegister)),
+		BodyType:     reflect.TypeOf(BodyRegister{}),
 	})
 
 	s.RegisterHandler(&rest.RestHandler{
@@ -74,7 +76,7 @@ func initApi(s *rest.Server) {
 		Method:       "POST",
 		Path:         "/login",
 		BodyRequired: true,
-		BodyType:     reflect.TypeOf(new(BodyLogin)),
+		BodyType:     reflect.TypeOf(BodyLogin{}),
 	})
 
 	s.RegisterHandler(&rest.RestHandler{
@@ -82,7 +84,7 @@ func initApi(s *rest.Server) {
 		Method:          "GET",
 		Path:            "/getinfo",
 		RequiredCookies: []string{"fortia-session"},
-		RequiredParams:  []string{"username"},
+		RequiredParams:  []string{"user"},
 	})
 
 }

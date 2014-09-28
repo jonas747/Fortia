@@ -51,6 +51,11 @@ func (s *Server) Run() error {
 
 // Implements http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	// Set some CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 	// Check which handler is supposed to be used
 	path := r.URL.Path
 	if path == "" {

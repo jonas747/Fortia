@@ -1,4 +1,4 @@
 {
-	"authDb": "",
+	"authDb": ":6379",
 	"logServer": ""
 }

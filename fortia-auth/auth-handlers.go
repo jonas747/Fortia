@@ -3,6 +3,7 @@ package main
 import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"encoding/json"
+	//"fmt"
 	ferr "github.com/jonas747/fortia/error"
 	"net/http"
 )
@@ -59,7 +60,6 @@ func checkSession(w http.ResponseWriter, r *http.Request, user string) bool {
 		// Expired
 		handleUnauthorized(w, r, user)
 		return false
-
 	}
 
 	return true
@@ -67,7 +67,7 @@ func checkSession(w http.ResponseWriter, r *http.Request, user string) bool {
 
 // /login
 func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
-	bl := body.(BodyLogin)
+	bl := body.(*BodyLogin)
 	correctPw, err := authDb.CheckUserPw(bl.Username, bl.Pw)
 	if handleFortiaError(w, r, err) {
 		return
@@ -86,11 +86,12 @@ func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
 		Value: session,
 		Path:  "/",
 	}
-
-	// Everything's okay
-	w.WriteHeader(http.StatusOK)
 	http.SetCookie(w, cookie)
+
+	w.WriteHeader(http.StatusOK)
+
 	w.Write([]byte("{\"ok\": true}"))
+	logger.Info("User Logged in: " + bl.Username)
 }
 
 // Returns true if the email is okay
@@ -112,7 +113,7 @@ func validatePassword(pw string) bool {
 
 // /register
 func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
-	rBody := body.(BodyRegister)
+	rBody := body.(*BodyRegister)
 
 	// Make sure all details are valid
 	ok := validateUsername(rBody.Username)
@@ -162,6 +163,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("{\"ok\": true}"))
 	}
+	logger.Info("User " + rBody.Username + " Sucessfully registered!")
 }
 
 // /getinfo
@@ -180,6 +182,8 @@ func handleGetInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
 
 	// Add ok true, because everythign is ok
 	info["ok"] = "true"
+	// We dont want to send the password hash...
+	info["pw"] = ""
 
 	out, nerr := json.Marshal(info)
 	if nerr != nil {
