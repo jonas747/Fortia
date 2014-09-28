@@ -43,16 +43,40 @@ Units walk through building and can fly&walk thorugh ground
 ####Game
  - 3d world viewed in 2d (dwarf fortress style)
  - Simple structures
-    + barracks
-        * Traines population into warriors
  - Simple ui
-    + Create buildings
-    + Population
-        * warrios
-        * farmers
-        * etc..
-    + Resources
-    
+
+More detailed:
+
+ - Units
+     + Farmers
+         * Generates food
+     + Warriors (Trained from farmers)
+         * 5 times better than farmers at fighting
+         * Consumes food
+ - Buildings
+     + Barracks
+         * Trains Farmers into warriors
+         * Cost: none
+ - World gen
+     + Simple
+     + block types:
+         * Grass
+         * Rock
+ - Resource gathering
+     + Food (farmers by being around generates food)
+ - World altering
+     + none
+ - Pathfinding
+     + Try to implement some cheap pathfinding, last priority
+ - Fighting
+     + Simple
+         * Warriors select the closest target withing a set radius
+ - UI
+     + View food
+     + Click on a tile to open a menu
+         * Move the units on that tile
+         * Build a building on that tile
+
 ####Account management
  - Simple login (username password)
  - Simple registration (email user passx2)
@@ -63,6 +87,11 @@ Units walk through building and can fly&walk thorugh ground
  - View all game servers
  - Logs
 
-####Game server
- - 1 game server per world 
+####Fortia-auth
+ - Auth rest server
 
+####Fortia-game
+ - Game rest server
+ 
+####World ticker
+ - Keeps a world spinning
