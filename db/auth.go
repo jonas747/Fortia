@@ -36,7 +36,7 @@ func createSessionToken(length int) string {
 func (a *AuthDB) LoginUser(user string) (string, ferr.FortiaError) {
 	token := createSessionToken(64)
 
-	_, err := a.Cmd("SETEX", "t:"+user+":"+token, 3600 /*An hour*/, 1)
+	_, err := a.Cmd("SETEX", "t:"+token, 3600 /*An hour*/, user)
 	if err != nil {
 		return token, err
 	}
@@ -80,17 +80,14 @@ func (a *AuthDB) SetUserInfo(user string, info map[string]interface{}) ferr.Fort
 	return err
 }
 
-// Checks if the session token is existing, returning the ttl if found or -1 if not
-func (a *AuthDB) CheckSessionToken(user, token string) (int, ferr.FortiaError) {
-	reply, err := a.Cmd("TTL", "t:"+user+":"+token)
+// Checks if the session token is existing, returning the user it belong to if found or "" if not
+func (a *AuthDB) CheckSessionToken(token string) (string, ferr.FortiaError) {
+	reply, err := a.Cmd("GET", "t:"+token)
 	if err != nil {
-		return -1, err
+		return "", err
 	}
-	duration, convErr := reply.Int()
-	if convErr != nil {
-		return -1, ferr.Wrapa(err, "Error converting to int", map[string]interface{}{"user": user, "token": token})
-	}
-	return duration, nil
+	owner := reply.String()
+	return owner, nil
 }
 
 // Extends the session token for n seconds
@@ -105,8 +102,16 @@ func (a *AuthDB) ExtendSessionToken(user, token string, duration int) ferr.Forti
 func (a *AuthDB) GetWorldInfo(name string) ([]map[string]string, ferr.FortiaError) {
 	empty := make([]map[string]string, 0)
 	if name != "" {
-		// TODO
-		return empty, nil
+		reply, err := a.Cmd("HGETALL", "world:"+name)
+		if err != nil {
+			return empty, err
+		}
+		hash, nerr := reply.Hash()
+		if nerr != nil {
+			return empty, ferr.Wrap(nerr, "")
+		}
+
+		return []map[string]string{hash}, nil
 	}
 	conn, err := a.Pool.Get()
 	if err != nil {
