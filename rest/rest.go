@@ -53,7 +53,7 @@ func (s *Server) Run() error {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Set some CORS headers
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost")
+	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	// Check which handler is supposed to be used
