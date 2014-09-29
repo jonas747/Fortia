@@ -80,11 +80,10 @@ func initApi(s *rest.Server) {
 	})
 
 	s.RegisterHandler(&rest.RestHandler{
-		Handler:         rest.RestHandlerFunc(handleGetInfo),
+		Handler:         rest.RestHandlerFunc(handleMe),
 		Method:          "GET",
-		Path:            "/getinfo",
+		Path:            "/me",
 		RequiredCookies: []string{"fortia-session"},
-		RequiredParams:  []string{"user"},
 	})
 
 	s.RegisterHandler(&rest.RestHandler{

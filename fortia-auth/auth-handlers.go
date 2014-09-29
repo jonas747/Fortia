@@ -41,28 +41,28 @@ func handleUnauthorized(w http.ResponseWriter, r *http.Request, user string) {
 
 // Returns true if logged on, false if not
 // Also writes the status code and error
-func checkSession(w http.ResponseWriter, r *http.Request, user string) bool {
+func checkSession(w http.ResponseWriter, r *http.Request) (bool, string) {
 	// Get the session cookie
 	cookie, nerr := r.Cookie("fortia-session")
 	if nerr != nil {
 		// No session cookie
-		handleUnauthorized(w, r, user)
-		return false
+		handleUnauthorized(w, r, "")
+		return false, ""
 	}
 
 	session := cookie.Value
-	ttl, err := authDb.CheckSessionToken(user, session)
+	user, err := authDb.CheckSessionToken(session)
 	if handleFortiaError(w, r, err) {
-		return false
+		return false, ""
 	}
 
-	if ttl < 0 {
+	if user == "" {
 		// Expired
-		handleUnauthorized(w, r, user)
-		return false
+		handleUnauthorized(w, r, "")
+		return false, ""
 	}
 
-	return true
+	return true, user
 }
 
 // /login
@@ -168,11 +168,9 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	logger.Info("User " + rBody.Username + " Sucessfully registered!")
 }
 
-// /getinfo
-func handleGetInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
-	params := r.URL.Query()
-	user := params.Get("user")
-	loggedIn := checkSession(w, r, user)
+// /me
+func handleMe(w http.ResponseWriter, r *http.Request, body interface{}) {
+	loggedIn, user := checkSession(w, r)
 	if !loggedIn {
 		return
 	}
@@ -200,12 +198,8 @@ func handleGetInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
 func handleGetWorlds(w http.ResponseWriter, r *http.Request, body interface{}) {
 	params := r.URL.Query()
 	wname := params.Get("world")
-	if wname != "" {
-		// only return server specific info
-		// TODO
-		return
-	}
-	info, err := authDb.GetWorldInfo("")
+
+	info, err := authDb.GetWorldInfo(wname)
 	if handleFortiaError(w, r, err) {
 		return
 	}
