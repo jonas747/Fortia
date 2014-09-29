@@ -87,4 +87,10 @@ func initApi(s *rest.Server) {
 		RequiredParams:  []string{"user"},
 	})
 
+	s.RegisterHandler(&rest.RestHandler{
+		Handler: rest.RestHandlerFunc(handleGetWorlds),
+		Method:  "GET",
+		Path:    "/worlds",
+	})
+
 }

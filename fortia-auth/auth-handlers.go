@@ -74,6 +74,8 @@ func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
 	}
 	if !correctPw {
 		logger.Warna("User tried logging in with invalid password", map[string]interface{}{"remoteaddr": r.RemoteAddr, "user": bl.Username})
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(ApiError(ErrCodeWrongLoginDetails, "Username or password incorrect"))
 		return
 	}
 	session, err := authDb.LoginUser(bl.Username)
@@ -192,5 +194,26 @@ func handleGetInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	w.Write(out)
+}
+
+func handleGetWorlds(w http.ResponseWriter, r *http.Request, body interface{}) {
+	params := r.URL.Query()
+	wname := params.Get("world")
+	if wname != "" {
+		// only return server specific info
+		// TODO
+		return
+	}
+	info, err := authDb.GetWorldInfo("")
+	if handleFortiaError(w, r, err) {
+		return
+	}
+	out, nerr := json.Marshal(info)
+	if nerr != nil {
+		handleFortiaError(w, r, ferr.Wrap(nerr, ""))
+		return
+	}
+
 	w.Write(out)
 }
