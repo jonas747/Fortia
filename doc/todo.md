@@ -1,7 +1,7 @@
-## Pre alha todo list
+##Alha todo list
 
-####Todo list
-
+###Todo list
+####Alpha 0.1
 1. fortia packages
     - log (done)
     - error (done)
@@ -9,17 +9,52 @@
         + auth (done)
         + game (working on)
 2. Rest Server (done)
-3. Auth server 
-    - Register
-    - Login
-    - Session token handling
-4. Web frontend
-5. Doc game server API
+3. Auth server (mostly done)
+    - Register (done)
+    - Login (done)
+    - Session token handling (done)
+    - Get avaiable worlds
+4. Web frontend (mostly done)
+    - login (done)
+    - lobby (working on)
+        + Only front page and world joining
+5. Doc game server API (working on)
 6. World ticker
     - Gen simple world
-7. Game server 
-8. Master server
+7. Game server
+    - Serve the world 
+8. Web frontend
+    - view available worlds
+    - join a world
+    - View the world
 
+First public release 0.2
+####Alpha 0.2
+1. Log server
+    - Store logs in mongodb
+2. Web frontend
+    - Select tile(s)
+        + view units and building on that tile and interact with them
+3. Game server
+    - Interactions with units and buildings
+
+#####Alpha 0.2 Units
+ - Actions
+     + Move
+     + Attack
+     + Stop
+     + Hold position
+ - Monitor
+     + Health
+
+#####Alpha 0.2 Buildings
+ - Actions
+     + Self destruct
+     + Cancel queue item
+ - Monitor
+     + Queue
+     + Health
+ 
 #### Detailed
  - World ticker 
      + Simple package

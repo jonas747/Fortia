@@ -34,7 +34,7 @@ func createSessionToken(length int) string {
 
 // Logs the specified user in returning a session token
 func (a *AuthDB) LoginUser(user string) (string, ferr.FortiaError) {
-	token := createSessionToken(32)
+	token := createSessionToken(64)
 
 	_, err := a.Cmd("SETEX", "t:"+user+":"+token, 3600 /*An hour*/, 1)
 	if err != nil {
@@ -56,10 +56,7 @@ func (a *AuthDB) CheckUserPw(user, pw string) (bool, ferr.FortiaError) {
 
 	berr := bcrypt.CompareHashAndPassword([]byte(correctPwHash), []byte(pw))
 	if berr != nil {
-		if berr == bcrypt.ErrMismatchedHashAndPassword {
-			return false, nil
-		}
-		return false, ferr.Wrapa(berr, "", map[string]interface{}{"user": user})
+		return false, nil
 	}
 	return true, nil
 }
@@ -103,4 +100,34 @@ func (a *AuthDB) ExtendSessionToken(user, token string, duration int) ferr.Forti
 		return err
 	}
 	return nil
+}
+
+func (a *AuthDB) GetWorldInfo(name string) ([]map[string]string, ferr.FortiaError) {
+	empty := make([]map[string]string, 0)
+	if name != "" {
+		// TODO
+		return empty, nil
+	}
+	conn, err := a.Pool.Get()
+	if err != nil {
+		return empty, ferr.Wrap(err, "")
+	}
+	defer a.Pool.Put(conn)
+
+	replyList := conn.Cmd("SMEMBERS", "worlds")
+	list, err := replyList.List()
+	if err != nil {
+		return empty, ferr.Wrap(err, "")
+	}
+	servers := make([]map[string]string, 0)
+	for _, v := range list {
+		reply := conn.Cmd("HGETALL", "world:"+v)
+		hash, err := reply.Hash()
+		if err != nil {
+			continue
+		}
+		hash["name"] = v
+		servers = append(servers, hash)
+	}
+	return servers, nil
 }

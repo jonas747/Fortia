@@ -14,6 +14,16 @@ General stuff, online servers, configurations, user accounts etc...
  - token:{user}:{token}
      + Session token for the specified user
 
+ - worlds
+    + unordered set
+    + Contains a list of all world names
+ 
+ - world:name
+    + hash
+    + info about a specified world
+        * started   - when the world started
+        * players   - number of players 
+        * size
 
 ##Game
 Game database is entirely in redis
@@ -25,7 +35,8 @@ Benchmark to see which is faster
  - b:{xpos}:{ypos}:{zpos}
      + unsorted set
      + or list
-         * 0 in the list = lowest entity on the tile (for example floor)
+         * first item = blockid
+         * rest is entity ids
      + values in list/set:
          * entity id's
          
@@ -34,7 +45,7 @@ Benchmark to see which is faster
      + list
          * index = local x, y, z
          * value
-             - entity id's seperated by ":"
+             - entity id's seperated by ":" with first one being block id
 
  - e:{eid}
      + hash
@@ -47,5 +58,19 @@ Benchmark to see which is faster
      + hash
      + World specific info about this user
     
-##Log
+Entity specific properties:
+ - Units
+     + CurrentAction
+         * An action such as MOVE, ATTACK, etc..
+     + Health
+ - Buldings
+     + Health
+
+ - Unit Action fields
+     + Move
+         * MovePos
+         * WhenOff
+             - Unix timestamp of when this unit is supposed to be off this tile(and onto another)
+##Login
 Log database is in mongodb? maybe
+
