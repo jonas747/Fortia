@@ -3,88 +3,206 @@
 	<title> F to the O to the R to the T to the I to the A rawr</title>
 	<link rel="stylesheet" type="text/css" href="css/bootstrap-theme.css"></link>
 	<link rel="stylesheet" type="text/css" href="css/bootstrap.css"></link>
-	<script src="js/jquery.js"></script>
-	<script src="js/bootstrap.js"></script>
-	<script src="js/auth.js"></script>
-	<script src="js/controller.js"></script>
+	<script type="text/javascript"></script>
+	<script src="js/libs/jquery.js"></script>
+	<script src="js/libs/handlebars-v2.0.0.js"></script>
+	<script src="js/libs/underscore.js"></script>
+	<script src="js/libs/backbone.js"></script>
+	<script src="js/libs/bootstrap.js"></script>
+	<script src="js/libs/utility.js"></script>
+	<script src="js/home.js"></script>
+	<script src="js/lobby.js"></script>
+	<script src="js/main.js"></script>
 </head>
 <body>
-	<div id="auth" class="container jumbotron">
-		<h1>Fortia header placeholder...</h1>	
-			<div class="row">
-				<div class="col-md-6">
-					<p>Sign in</p>
-					<form class="form-horizontal" role="form" id="authLoginForm">
-						<div class="form-group">
-							<label for="authLoginUsername" class="col-sm-2 control-label">Username</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="authLoginUsername" placeholder="Username">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="authLoginPassword" class="col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input type="password" class="form-control" id="authLoginPassword" placeholder="Password">
-							</div>
-						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-3">
-								<button type="submit" class="btn btn-primary" data-loading-text="Logging in..." id="authLoginButton">Sign in</button>
-							</div>
-							<div class="col-sm-7">
-								<p id="authLoginErrorMessage" class="text-danger">
-								</p>
-							</div>
-						</div>
+	<div id="main-container" class="">
+	</div>
 
-					</form>
+	<script id="lobby-header-template" type="text/x-handlebars-template">
+	<nav class="navbar navbar-default" role="navigation">
+		<div class="container-fluid">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#" id="lobbyNavUser">Hello {{username}}!</a>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="#">Home</a></li>
+					<li><a href="#">Worlds</a></li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Community <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="#">Action</a></li>
+							<li><a href="#">Another action</a></li>
+							<li><a href="#">Something else here</a></li>
+							<li class="divider"></li>
+							<li><a href="#">Separated link</a></li>
+							<li class="divider"></li>
+							<li><a href="#">One more separated link</a></li>
+						</ul>
+					</li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Settings <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="#">Action</a></li>
+							<li><a href="#">Another action</a></li>
+							<li><a href="#">Something else here</a></li>
+							<li class="divider"></li>
+							<li><a href="#">Separated link</a></li>
+							<li class="divider"></li>
+							<li><a href="#">One more separated link</a></li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="#">Help</a></li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown">Admin menu <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="#">Action</a></li>
+							<li><a href="#">Another action</a></li>
+							<li><a href="#">Something else here</a></li>
+							<li class="divider"></li>
+							<li><a href="#">Separated link</a></li>
+						</ul>
+					</li>
+					<li><a href="#">Sign out</a></li>
+				</ul>
+			</div><!-- /.navbar-collapse -->
+		</div><!-- /.container-fluid -->
+	</nav>
+	</script>
+	<script id="lobby-main-template" type="text/x-handlebars-template">
+	<div id="lobbyHome" class="container">
+		<div class="row">
+			<div class="col-md-6 panel panel-default infobox">
+				<div class="page-header">
+					<h1>World Statistics <small>or alerts maybe?</small></h1>
 				</div>
-				<div class="col-md-6">
-					<p>Register</p>
-					<form class="form-horizontal" role="form" id="authRegisterForm">
-						<div class="form-group">
-							<label for="authRegisterUsername" class="col-sm-2 control-label">Username</label>
-							<div class="col-sm-10">
-								<input type="text" class="form-control" id="authRegisterUsername" placeholder="Username">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="authRegisterEmail" class="col-sm-2 control-label">Email</label>
-							<div class="col-sm-10">
-								<input type="email" class="form-control" id="authRegisterEmail" placeholder="Email">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="authRegisterPassword1" class="col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input type="password" class="form-control" id="authRegisterPassword1" placeholder="Password">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="authRegisterPassword2" class="col-sm-2 control-label">Confirm</label>
-							<div class="col-sm-10">
-								<input type="password" class="form-control" id="authRegisterPassword2" placeholder="Password">
-							</div>
-						</div>
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-3">
-								<button type="submit" class="btn btn-primary" data-loading-text="Logging in..." id="authRegisterButton">Register</button>
-							</div>
-							<div class="col-sm-7">
-								<p id="authRegisterErrorMessage" class="text-danger">
-								</p>
-							</div>
-						</div>
-					</form>
-					<div id="authRegisterSuccess" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="Congratulations!" aria-hidden="true">
-						<div class="modal-dialog modal-sm">
-						<div class="modal-content">
-						You have sucessfully registered
-						</div>
-						</div>
-					</div>
+				<div id="lobby-main-worlds">
+				</div>
+			</div>
+			<div class="col-md-5 col-md-offset-1 panel panel-default infobox">
+				<div class="page-header">
+					<h1>News</h1>
+				</div>
+				<div>
+					<h2>Some shitty news <small>21.03.2014</small></h2>
+					<p>
+						This website is so shit i dont even know how it got like this. Also im making this game pay to play since im a greedy bastard that want money for candy, so i can stop stealing it from children. tlac-something has a small penis
+					</p>
+					<h2>Updated to v0.12 <small>10.03.2014</small></h2>
+					<p>
+						All Servers has been updated to v12, this update has some promising changes implemented and enabled.<br/>
+						Changelog:
+					</p>
+					<ul>
+						<li>Enabled spear training</li>
+						<li>Fixed some pathfinding bugs</li>
+						<li>Added chat command /me</li>
+						<li>fuck this</li>
+					</ul>
 				</div>
 			</div>
 		</div>
+	</div>
+	</script>
+	<script  id="lobby-server-template" type="text/x-handlebars-template">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+		    	<h3 class="panel-title">{{name}} <button class="btn btn-primary btn-sm pull-right" style="margin-top:-5px">Join</button></h3>
+			</div>
+			<table class="table table-striped">
+				<tbody>
+					<tr>
+						<td>Started:</td>
+						<td>{{started}}</td>
+					</tr>
+					<tr>
+						<td>Players</td>
+						<td>{{players}}</td>
+					</tr>
+					<tr>
+						<td>Size</td>
+						<td>{{size}}</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</script>
+	<script id="home-template" type="text/x-handlebars-template">
+	<div class="container jumbotron">
+		<div class="col-md-6">
+			<p>Sign in</p>
+			<form class="form-horizontal" role="form" id="login-form">
+				<div class="form-group">
+					<label for="login-username" class="col-sm-2 control-label">Username</label>
+					<div class="col-sm-10">
+						<input type="text" class="form-control" id="login-username" placeholder="Username">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="login-password" class="col-sm-2 control-label">Password</label>
+					<div class="col-sm-10">
+						<input type="password" class="form-control" id="login-password" placeholder="Password">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-3">
+						<button type="submit" class="btn btn-primary" data-loading-text="Logging in..." id="authLoginButton">Sign in</button>
+					</div>
+					<p class="text-danger col-sm-7">
+					{{loginError}}
+					</p>
+				</div>
+			</form>
+		</div>
+		<div class="col-md-6">
+			<p>Register</p>
+			<form class="form-horizontal" role="form" id="register-form">
+				<div class="form-group">
+					<label for="register-username" class="col-sm-2 control-label">Username</label>
+					<div class="col-sm-10">
+						<input type="text" class="form-control" id="register-username" placeholder="Username">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="register-email" class="col-sm-2 control-label">Email</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control" id="register-email" placeholder="Email">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="regiser-password1" class="col-sm-2 control-label">Password</label>
+					<div class="col-sm-10">
+						<input type="password" class="form-control" id="register-password1" placeholder="Password">
+					</div>	
+				</div>
+				<div class="form-group">
+					<label for="register-password2" class="col-sm-2 control-label">Confirm</label>
+					<div class="col-sm-10">
+						<input type="password" class="form-control" id="register-password2" placeholder="Password">
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="col-sm-offset-2 col-sm-3">
+						<button type="submit" class="btn btn-primary" data-loading-text="Logging in..." id="authRegisterButton">Register</button>
+					</div>
+					<p class="text-danger col-sm-7">
+					{{registerError}}
+					</p>
+				</div>
+			</form>
+		</div>
+	</div>
+	</script>
 </body>
 

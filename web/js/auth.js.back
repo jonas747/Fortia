@@ -30,6 +30,7 @@ var Auth = {
 		    	$("#authLoginForm")[0].reset()
 		    },
 		    error: function(a){
+		    	console.log(a)
 		    	var response = a.responseJSON;
 		    	if (response === null) {return};
 				Auth.LoginError(response.error);
