@@ -7,7 +7,6 @@ import (
 	"fmt"
 	ferr "github.com/jonas747/fortia/error"
 	"net"
-	"strings"
 )
 
 type LogClient struct {
@@ -67,14 +66,23 @@ func (l *LogClient) Write(p []byte) (n int, err error) {
 }
 
 // lvl -1 (not recorded or sent to master(maybe sent to master))
-func (l *LogClient) Debug(msgs ...string) {
-	str := strings.Join(msgs, "")
+func (l *LogClient) Debug(msgs ...interface{}) {
+	str := fmt.Sprint(msgs...)
+	l.Log(NewLogMsg(-1, str, make(map[string]interface{})))
+}
+
+func (l *LogClient) Debugf(format string, args ...interface{}) {
+	str := fmt.Sprintf(format, args...)
 	l.Log(NewLogMsg(-1, str, make(map[string]interface{})))
 }
 
 // lvl 0
-func (l *LogClient) Info(msg string) {
-	l.Infoa(msg, make(map[string]interface{}))
+func (l *LogClient) Info(msg ...interface{}) {
+	l.Infoa(fmt.Sprint(msg...), make(map[string]interface{}))
+}
+
+func (l *LogClient) Infof(format string, args ...interface{}) {
+	l.Infoa(fmt.Sprintf(format, args...), make(map[string]interface{}))
 }
 
 func (l *LogClient) Infoa(msg string, data map[string]interface{}) {
@@ -82,8 +90,12 @@ func (l *LogClient) Infoa(msg string, data map[string]interface{}) {
 }
 
 // lvl 1
-func (l *LogClient) Warn(msg string) {
-	l.Warna(msg, make(map[string]interface{}))
+func (l *LogClient) Warn(msg ...interface{}) {
+	l.Warna(fmt.Sprint(msg...), make(map[string]interface{}))
+}
+
+func (l *LogClient) Warnf(format string, args ...interface{}) {
+	l.Warna(fmt.Sprintf(format, args...), make(map[string]interface{}))
 }
 
 func (l *LogClient) Warna(msg string, data map[string]interface{}) {
