@@ -22,7 +22,11 @@ Body:
         "email": "email to register"
     }
 
-####/GetInfo
+####/me
 Method: GET
 Returns info about yourself
-params: user
+
+####/worlds
+Method: GET
+Returns info about all worlds or the specified world
+optional params: world

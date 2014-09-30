@@ -27,20 +27,8 @@ General stuff, online servers, configurations, user accounts etc...
 
 ##Game
 Game database is entirely in redis
-
-Options for storing the world:
-Benchmark to see which is faster
-
-#####Single blocks
- - b:{xpos}:{ypos}:{zpos}
-     + unsorted set
-     + or list
-         * first item = blockid
-         * rest is entity ids
-     + values in list/set:
-         * entity id's
-         
-#####Chunks
+going with chunks!
+    
  - c:{xpos}:{ypos}
      + list
          * index = local x, y, z

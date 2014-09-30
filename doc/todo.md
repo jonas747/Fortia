@@ -19,7 +19,7 @@
     - lobby (working on)
         + Only front page and world joining
 5. Doc game server API (working on)
-6. World ticker
+6. World ticker (working on)
     - Gen simple world
 7. Game server
     - Serve the world 
@@ -30,15 +30,25 @@
 
 First public release 0.2
 ####Alpha 0.2
-1. Log server
-    - Store logs in mongodb
-2. Web frontend
-    - Select tile(s)
-        + view units and building on that tile and interact with them
-3. Game server
-    - Interactions with units and buildings
+alpha 0.2:
+ - vector math lib 
+     + change all stuff to use the lib
+ - selection
+ - Build buildings
+ - Train units
 
-#####Alpha 0.2 Units
+######Avaiable buildings for alpha 0.2
+ - Barracks
+    + Train farmers/builders(default units) into warriors
+
+######Avaiable units:
+ - farmers
+     + Default unit
+ - warrior
+     + 3 times tronger than farmers
+     + takes up twice as much food
+
+######Alpha 0.2 Units
  - Actions
      + Move
      + Attack
@@ -47,7 +57,7 @@ First public release 0.2
  - Monitor
      + Health
 
-#####Alpha 0.2 Buildings
+######Alpha 0.2 Buildings
  - Actions
      + Self destruct
      + Cancel queue item
@@ -55,7 +65,7 @@ First public release 0.2
      + Queue
      + Health
  
-#### Detailed
+#### notes
  - World ticker 
      + Simple package
          * Before game server is complete
