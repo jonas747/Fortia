@@ -1,13 +1,10 @@
-function initHome(){
-	var LoginModel = Backbone.Model.extend({
-		urlRoot: "/login",
-	})
-
+var Fortia = Fortia || {}; 
+Fortia.initHome = function(){
 	var HomeView = Backbone.View.extend({
 		el: "#main-container",
 		template: templates.home,
 		events: {
-			"submit #login-form": "login",
+			"submit #login-form": 	 "login",
 			"submit #register-form": "register"
 		},
 		login: function(event){
@@ -16,7 +13,7 @@ function initHome(){
 			var passwordField = $("#login-password");
 
 			if(!validateForm(userField, passwordField)){
-				return
+				return;
 			}
 
 			var fobj = {
@@ -24,42 +21,39 @@ function initHome(){
 				pw: passwordField.val(),
 			};
 			var that = this
-			$.ajax({
-			    url: 'http://localhost:8080/login',
-			    type: 'POST',
-			    data: JSON.stringify(fobj),
-			    dataType: "json",
-			    success: function(a) {
-			    	console.log(a)
-			    	// Navigate to lobby
-			    	localStorage.setItem("username", fobj.username)
-			    	router.navigate("lobby", {trigger: true});
-			    },
-			    error: function(a){
-			    	var response = a.responseJSON;
-					if (response === "") {
-						that.loginError = "Uknown error occured";
-					}else{
-						that.loginError = response.error;
-					}
-					that.render()
-			    },
-			});
+			
+			Fortia.authApi.post("login", fobj, function(response){
+				console.log(response);
+				// Navigate to lobby
+				localStorage.setItem("username", fobj.username);
+				Fortia.router.navigate("lobby", {trigger: true});			
+			}, function(req){
+				var response = req.responseJSON;
+				if (response === "") {
+					that.loginError = "Unknown error occured";
+				}else{
+					that.loginError = response.error;
+				}
+				that.render()
+			})
 		},
 		register: function(event){
 			event.preventDefault();
-			var userField = $("#register-username");
-			var emailField = $("#register-email");
-			var pw1Field = $("#register-password1");
-			var pw2Field = $("#register-password2");
+			var userField = 	$("#register-username");
+			var emailField = 	$("#register-email");
+			var pw1Field = 		$("#register-password1");
+			var pw2Field = 		$("#register-password2");
 			
 			if(!validateForm(userField, emailField, pw1Field, pw2Field)){
-				return
+				this.registerError = "Check your fields again!"
+				this.render();
+				return;
 			}
 
 			if (pw1Field.val() !== pw2Field.val()) {
 				pw2Field.parent().addClass("has-error")
-				return
+				pw1Field.parent().addClass("has-error")
+				return;
 			};
 
 			var fobj = {
@@ -68,27 +62,26 @@ function initHome(){
 				pw: pw1Field.val(),
 			}
 			var that = this
-			$.ajax({
-			    url: 'http://localhost:8080/register',
-			    type: 'POST',
-			    data: JSON.stringify(fobj),
-			    dataType: "json",
-			    success: function(a) {
-			    	console.log(a)
-			    },
-			    error: function(a){
-			    	var response = a.responseJSON;
-					if (response === "") {
-						that.registerError = "Uknown error occured";
-					}else{
-						that.registerError = response.error;
-					}
-					that.render()
-			    },
+			
+			Fortia.authApi.post("register", fobj, function(reponse){
+				that.render();
+				$("#register-success").modal();
+				$("#login-username").val(fobj.username);
+			}, function(req){
+		    	var response = req.responseJSON;
+				if (response === "") {
+					that.registerError = "Uknown error occured";
+				}else{
+					that.registerError = response.error;
+				}
+				that.render()
 			});
 		},
 		render: function(){
 			this.$el.html(this.template(this));
+		},
+		switchTo: function(){
+			this.render();
 		}
 	})
 

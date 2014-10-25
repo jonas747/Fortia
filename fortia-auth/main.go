@@ -5,16 +5,14 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
-	//"net/http"
-	//"net/url"
 	"reflect"
 )
 
 var (
 	logger *log.LogClient
 	authDb *db.AuthDB
-	gameDb *db.GameDB
 	config *Config
+	server *rest.Server
 )
 
 func panicErr(err error) {
@@ -22,7 +20,6 @@ func panicErr(err error) {
 		panic(err)
 	}
 }
-
 func main() {
 	c, err := loadConfig("config.json")
 	panicErr(err)
@@ -30,6 +27,7 @@ func main() {
 
 	l, nErr := log.NewLogClient(config.LogServer, -1, "authAPI")
 	logger = l
+
 	if nErr != nil {
 		l.Error(ferr.Wrap(nErr, ""))
 	}
@@ -44,7 +42,7 @@ func main() {
 	authDb = &db.AuthDB{adb}
 
 	l.Info("(3/4) Initializing api handlers...")
-	server := rest.NewSever(":8080", l)
+	server = rest.NewSever(":8080", l)
 
 	initApi(server)
 	l.Info("(4/4) Starting http server...")
@@ -87,7 +85,7 @@ func initApi(s *rest.Server) {
 	})
 
 	s.RegisterHandler(&rest.RestHandler{
-		Handler: rest.RestHandlerFunc(handleGetWorlds),
+		Handler: rest.RestHandlerFunc(handleWorlds),
 		Method:  "GET",
 		Path:    "/worlds",
 	})

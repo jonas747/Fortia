@@ -33,10 +33,10 @@ func createSessionToken(length int) string {
 }
 
 // Logs the specified user in returning a session token
-func (a *AuthDB) LoginUser(user string) (string, ferr.FortiaError) {
+func (a *AuthDB) LoginUser(user string, duration int) (string, ferr.FortiaError) {
 	token := createSessionToken(64)
 
-	_, err := a.Cmd("SETEX", "t:"+token, 3600 /*An hour*/, user)
+	_, err := a.Cmd("SETEX", "t:"+token, duration, user)
 	if err != nil {
 		return token, err
 	}
@@ -63,21 +63,12 @@ func (a *AuthDB) CheckUserPw(user, pw string) (bool, ferr.FortiaError) {
 
 // Returns the specified user's info
 func (a *AuthDB) GetUserInfo(user string) (map[string]string, ferr.FortiaError) {
-	reply, err := a.Cmd("HGETALL", "u:"+user)
-	if err != nil {
-		return emptyStrStrMap, nil
-	}
-	hash, convErr := reply.Hash()
-	if convErr != nil {
-		return emptyStrStrMap, ferr.Wrapa(convErr, "Error converting to map", map[string]interface{}{"user": user})
-	}
-	return hash, nil
+	return a.GetHash("u:" + user)
 }
 
 // Sets the specified users info fields from info map to whatever is in the info map
 func (a *AuthDB) SetUserInfo(user string, info map[string]interface{}) ferr.FortiaError {
-	_, err := a.Cmd("HMSET", "u:"+user, info)
-	return err
+	return a.SetHash("u:"+user, info)
 }
 
 // Checks if the session token is existing, returning the user it belong to if found or "" if not

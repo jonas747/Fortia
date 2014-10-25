@@ -266,5 +266,5 @@ func stackTrace(skip int) (current, context string) {
 // This returns the current stack trace string.  NOTE: the stack creation code
 // is excluded from the stack trace.
 func StackTrace() (current, context string) {
-	return stackTrace(3)
+	return stackTrace(4)
 }

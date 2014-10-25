@@ -1,11 +1,12 @@
-function initLobbyMain(){
+var Fortia = Fortia || {};
+Fortia.initLobbyMain = function(){
 	var WorldModel = Backbone.Model.extend({
 		defaults: function() {
 	      return {
 	        name: "default server name",
-	        started: Date.now(),
-	        players: 9999,
-	        size: 1,
+	        started: "?",
+	        players: "?",
+	        size: "?",
 	      };
 	    },
 	});
@@ -18,15 +19,23 @@ function initLobbyMain(){
 	var worlds = new WorldList(); 
 
 	var WorldView = Backbone.View.extend({
-		template: templates.lobbyServer,
-		initialize: function() {
-	      this.listenTo(this.model, 'change', this.render);
+		template: templates.lobbyservers,
+
+		events: {
+			"click .server-join": "join",
+		},
+
+		initialize: function() {	    	
 	    },
 
 		render: function(){
 			this.$el.html(this.template(this));
 			return this
 		},
+		join: function(){
+			Fortia.router.navigate("game/"+this.name(), {trigger: true});
+		},
+		// Getters for template
 		started: function(){
 			var date = new Date(parseInt(this.model.get("started")));
 			return date.toString();
@@ -39,13 +48,13 @@ function initLobbyMain(){
 		},
 		size: function(){
 			return this.model.get("size")
-		}
+		},
 	});
 
 	var LobbyMainView = Backbone.View.extend({
 		el: "#main-container",
-		template: templates.lobbyMain,
-		templateHeader: templates.lobbyHeader,
+		template: templates.lobbymain,
+		templateHeader: templates.nav,
 
 		initialize: function() {
 			this.listenTo(worlds, 'add', this.addWorld);
@@ -53,7 +62,7 @@ function initLobbyMain(){
 		},
 
 		render: function(){
-			var header = this.templateHeader({username: localStorage.getItem("username")})
+			var header = this.templateHeader(Fortia.userInfo)
 			var body = this.template()
 			this.$el.html(header + "\n" + body)
 			worlds.fetch()
@@ -67,6 +76,16 @@ function initLobbyMain(){
 		addAllWorlds: function() {
 	      worlds.each(this.addWorld, this);
 	    },
+	    switchTo: function(){
+	    	var that = this;
+	    	Fortia.authApi.get("me", "", function(info){
+	    		if (!info.role) {
+	    			info.amenuClass = "hidden";
+	    		};
+	    		Fortia.userInfo = info;
+	    		that.render();
+	    	})
+	    }
 	});
 	return new LobbyMainView();
 }

@@ -56,7 +56,7 @@ func (db *Database) MultiCmd(cmds []RedisCmd) ([]*redis.Reply, ferr.FortiaError)
 	return replies, nil
 }
 
-func (db *Database) GetHashMap(key string) (map[string]string, ferr.FortiaError) {
+func (db *Database) GetHash(key string) (map[string]string, ferr.FortiaError) {
 	reply, err := db.Cmd("HGETALL", key)
 	if err != nil {
 		return emptyStrStrMap, err
@@ -66,4 +66,9 @@ func (db *Database) GetHashMap(key string) (map[string]string, ferr.FortiaError)
 		return emptyStrStrMap, ferr.Wrapa(errConv, "Redis reply conversion", map[string]interface{}{"key": key, "type": "hash"})
 	}
 	return hMap, err
+}
+
+func (db *Database) SetHash(key string, info map[string]interface{}) ferr.FortiaError {
+	_, err := db.Cmd("HMSET", key, info)
+	return err
 }

@@ -10,7 +10,10 @@ General stuff, online servers, configurations, user accounts etc...
         * name   - Nameof the user
         * mail   - Email of the user
         * pw     - Bcrypt password hash
-        * worlds - The worlds this user is on
+        * ---Optional:
+        * worlds - The worlds this user is on, seperated with ":" 
+        * role - 0 normal, 1 mod, 2 admin, 3 fish, 4 god
+        * donor - donor leve
  - token:{user}:{token}
      + Session token for the specified user
 
@@ -23,18 +26,27 @@ General stuff, online servers, configurations, user accounts etc...
     + info about a specified world
         * started   - when the world started
         * players   - number of players 
-        * size
+        * size      - size in chunks
 
 ##Game
 Game database is entirely in redis
-going with chunks!
-    
+
+- sinfo
+    + hash
+    + general information about this server(name...)
+        * name
+        * size
+        * players
+
+went with chunks before:....
  - c:{xpos}:{ypos}
      + list
          * index = local x, y, z
          * value
              - entity id's seperated by ":" with first one being block id
-
+going with layers
+- l:{xpos}:{ypos}:{layer(or zpos if you want)}
+     + json of block info
  - e:{eid}
      + hash
      + An entity(live entity, building, item, etc..)

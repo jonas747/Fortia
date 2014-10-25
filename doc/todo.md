@@ -7,27 +7,34 @@
     - error (done)
     - db (working on)
         + auth (done)
-        + game (working on)
+        + game (partially done)
 2. Rest Server (done)
 3. Auth server (mostly done)
     - Register (done)
     - Login (done)
     - Session token handling (done)
-    - Get avaiable worlds
+    - Get avaiable worlds (done)
 4. Web frontend (mostly done)
     - login (done)
-    - lobby (working on)
-        + Only front page and world joining
-5. Doc game server API (working on)
-6. World ticker (working on)
-    - Gen simple world
-7. Game server
+    - lobby (partially done)
+        + servers and world joining (done)
+5. Doc game server API (partially done)
+6. World ticker (done)
+    - Gen simple world (done)
+7. Game server(working on)
     - Serve the world 
-8. Web frontend
-    - view available worlds
-    - join a world
+8. Web frontend(working on)
+    - join a world <- big one
     - View the world
+        + engine
+            * load blocktypes and textures
+            * handle input
+            * draw loop
 
+######Sudden things to do
+ - figure out which way to store block types with attributes in both go and javascript
+     + simple json file?
+    
 First public release 0.2
 ####Alpha 0.2
 alpha 0.2:
@@ -36,7 +43,12 @@ alpha 0.2:
  - selection
  - Build buildings
  - Train units
-
+ - somewhat more advanced world gen
+ - Extended lobby
+     + Admin panel
+     + User global settings
+     + News
+     + Help
 ######Avaiable buildings for alpha 0.2
  - Barracks
     + Train farmers/builders(default units) into warriors
@@ -64,6 +76,23 @@ alpha 0.2:
  - Monitor
      + Queue
      + Health
+
+####Post alpha 0.2
+ - Chat
+     + different channels
+ - Websockets as an alternative backend to rest
+ - optional 3d renderer
+     + If you have a good computer you can use the 3d-
+     + renderer, or if you dont you can use the 2d one
+ - Build system
+     + Numbered builds
+ - Switch easily between dev and production modes (add -dev flag)
+ - Easy server deployment
+    - Simple daemon that is on the server, downloads updates and such for whatever the server is running
+    - tell the daemon to install a server via web admin panel
+ - Password recovery through email
+ - 2fa maybe?
+
  
 #### notes
  - World ticker 

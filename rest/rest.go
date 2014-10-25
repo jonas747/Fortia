@@ -53,6 +53,8 @@ func (s *Server) Run() error {
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Set some CORS headers
+	// Simply setting the allow origin to * is not enough since that wont
+	// Let requests be made with cookies if they are on a different origin
 	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -69,7 +71,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Maybe use method not allowed status instead?
+	// TODO: Maybe use method not allowed status instead?
 	if r.Method != handler.Method {
 		HandleNotFound(w)
 		return
@@ -122,21 +124,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// Finally call the handler
 	handler.Handler(w, r, bodyDecoded)
-}
-
-func HandleInternalServerError(w http.ResponseWriter, msg string) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("{\"error\": \"" + msg + "\"}"))
-}
-
-func HandleBadRequest(w http.ResponseWriter, msg string) {
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte("{\"error\":\"" + msg + "\"}"))
-}
-
-func HandleNotFound(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("<h1>404 - Not found buddy</h1>"))
 }
 
 // Registers a Handler
