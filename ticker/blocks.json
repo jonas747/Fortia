@@ -1,0 +1,10 @@
+[{
+	"id": 0,
+	"name": "Air",
+	"flags": ["air"]
+},
+{
+	"id": 1,
+	"name": "Stone",
+	"flags": ["minable"]
+}]
