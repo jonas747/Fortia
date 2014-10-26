@@ -8,6 +8,7 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/vec"
+	"math/rand"
 )
 
 type BlockFlag byte
@@ -39,16 +40,17 @@ func (w *World) GenLayer(pos vec.Vec3I) *Layer {
 		Position: pos,
 	}
 
-	id := 1
-	if layer.Position.Z > w.LayerHeight/2 {
-		id = 0
-		layer.IsAir = true
-	}
-
 	blocks := make([]*Block, w.LayerSize*w.LayerSize)
 
 	for x := 0; x < w.LayerSize; x++ {
 		for y := 0; y < w.LayerSize; y++ {
+
+			id := rand.Intn(2) + 1
+			if layer.Position.Z > w.LayerHeight/2 {
+				id = 0
+				layer.IsAir = true
+			}
+
 			b := Block{
 				LocalPosition: vec.Vec2I{x, y},
 				Layer:         layer,

@@ -39,6 +39,9 @@ Fortia.game = {
 		this.view = view;
 		this.worldName = world;
 		this.running = false;
+		this.initKeybinds();
+	},
+	initKeybinds: function(){
 	},
 	start: function(){
 		console.log("Starting the game")
@@ -63,10 +66,41 @@ Fortia.game = {
 	},
 
 	render2: function(){ // 2d renderer, df like
-
+		Fortia.camera2.render();
 	},
 	render3: function(){}, // 3d renderer
-	update: function(delta){},
+	update: function(delta){
+		var keys = KeyboardJS.activeKeys();
+		var moveMap = {
+			"up": {x: 0, y: -1, z: 0},
+			"down": {x: 0, y: 1, z: 0},
+			"left": {x: -1, y: 0, z: 0},
+			"right": {x: 1, y: 0, z: 0},
+			"period": {x: 0, y: 0, z: 1},
+			"comma": {x: 0, y: 0, z: -1},
+		}
+		var moveBy = {x: 0, y: 0, z: 0}; 
+		var move = false;
+		for (var i = 0; i < keys.length; i++) {
+			var key =keys[i]
+			switch(key){
+				case "up":
+				case "down":
+				case "left":
+				case "right":
+				case "comma":
+				case "period":
+					move = true;
+					moveBy.x += moveMap[key].x;
+					moveBy.y += moveMap[key].y;
+					moveBy.z += moveMap[key].z;
+					break;
+			}	
+		};
+		if (move) {
+			Fortia.camera2.move(moveBy);
+		};
+	},
 	loop: function(){
 		var that = Fortia.game;
 		if (that.running) {
@@ -80,8 +114,8 @@ Fortia.game = {
 		var delta = now - that.lastUpdate;
 		lastUpdate = now;
 
-		that.render2();
 		that.update(delta);
+		that.render2();
 	},
 	resize: function(){
 		var cwidth = window.innerWidth;
@@ -89,8 +123,8 @@ Fortia.game = {
 
 		Fortia.gameView.canvasWidth = cwidth;
 		Fortia.gameView.canvasHeight = cheight;
-		$("#game-canvas").width(cwidth);
-		$("#game-canvas").height(cheight);
+		$("#game-canvas")[0].width = cwidth;
+		$("#game-canvas")[0].height = cheight;
 	},
 	setChunk: function(chunk){
 		console.log(chunk)
