@@ -45,3 +45,16 @@ func handleLayers(w http.ResponseWriter, r *http.Request, body interface{}) {
 }
 
 func handleVisibleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {}
+
+// /info
+func handleInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
+	infoHash, err := gameDb.GetWorldInfo()
+	if server.HandleFortiaError(w, r, err) {
+		return
+	}
+	serialized, nErr := json.Marshal(&infoHash)
+	if server.HandleError(w, r, nErr) {
+		return
+	}
+	w.Write(serialized)
+}

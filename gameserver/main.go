@@ -109,4 +109,9 @@ func initApi(s *rest.Server) {
 		Handler:         handleVisibleChunks,
 		RequiredCookies: []string{"fortia-session"},
 	})
+	s.RegisterHandler(&rest.RestHandler{
+		Path:    "/info",
+		Method:  "GET",
+		Handler: handleInfo,
+	})
 }

@@ -31,7 +31,7 @@ General stuff, online servers, configurations, user accounts etc...
 ##Game
 Game database is entirely in redis
 
-- sinfo
+- worldInfo
     + hash
     + general information about this server(name...)
         * name

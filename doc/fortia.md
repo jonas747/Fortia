@@ -27,8 +27,19 @@ A world can last years without a winner. Depending on what time you have you can
     + Keeps the world going
  - Web frontend
     + bootstrap
- - Fortia Libs
-    + other stuff
+ - Fortia pkgs
+    + log
+        * Provides a logging client and server
+    + rest
+        * Simple rest server
+    + resterrors
+        * common errors returned by the rest servers
+    + vec
+        * vector math
+    + world
+        * Functions for maipulating the world
+    + db
+        * Abstracts db interactions
 
 How this works:
 Login

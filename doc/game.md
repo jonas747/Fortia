@@ -1,6 +1,12 @@
 #Game api
 api url = {world}.fortia.com/
 
+####/info
+Method: `GET` 
+
+Returns info about this world
+such as blocktpes, size etc..
+
 ####/register
 Method: `POST` 
 
@@ -27,11 +33,6 @@ Method: `GET`
 
 Returns a list of chunks visible to you, or wether specified chunk is visible to you
 optional params: x y
-
-####/blocktypes
-Method: `GET`
-
-Returns all the block types with attributes for this server
 
 #Types of game objects
 

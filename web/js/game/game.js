@@ -52,10 +52,9 @@ Fortia.game = {
 			that.visibleCunks = response 
 		})
 */
-		this.api.get("chunk?x=1&y=1", "", function(response){
-			that.setChunk(response);
-		})
-
+	
+		Fortia.camera2.move({x:0, y:0, z: 50});
+	
 		this.running = true;
 		this.loop();
 	},
@@ -69,19 +68,20 @@ Fortia.game = {
 	render3: function(){}, // 3d renderer
 	update: function(delta){},
 	loop: function(){
-		if (this.running) {
-			window.requestAnimationFrame(this.loop);
+		var that = Fortia.game;
+		if (that.running) {
+			window.requestAnimationFrame(that.loop);
 		};
-		if (!this.lastUpdate) {
-			this.lastUpdate = Date.now();
+		if (!that.lastUpdate) {
+			that.lastUpdate = Date.now();
 		};
 
 		var now = Date.now();
-		var delta = now - this.lastUpdate;
+		var delta = now - that.lastUpdate;
 		lastUpdate = now;
 
-		this.render2();
-		this.update(delta);
+		that.render2();
+		that.update(delta);
 	},
 	resize: function(){
 		var cwidth = window.innerWidth;

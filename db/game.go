@@ -10,6 +10,10 @@ type GameDB struct {
 	*Database
 }
 
+func (g *GameDB) GetWorldInfo() (map[string]string, ferr.FortiaError) {
+	return g.GetHash("worldInfo")
+}
+
 // Returns the specified user's info
 func (g *GameDB) GetUserInfo(user string) (map[string]string, ferr.FortiaError) {
 	return g.GetHash("u:" + user)
