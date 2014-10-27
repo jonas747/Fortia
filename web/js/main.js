@@ -6,7 +6,7 @@ $(function(){
 	function runFortia(){
 		console.log("Sarting everything")
 
-		Fortia.authApi = new Fortia.REST({urlRoot: "http://localhost:8080/"}),
+		Fortia.authApi = new Fortia.REST({urlRoot: "http://localhost:8080/"});
 
 		Fortia.homeView = Fortia.initHome();
 		Fortia.lobbyView = Fortia.initLobbyMain();

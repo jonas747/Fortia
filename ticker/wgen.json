@@ -1,0 +1,68 @@
+{	
+	"defaultBiomeProperties":{
+		"trees": 5,
+		"roughness": 3,
+		"soil": 5,
+		"minerals": 5,
+		"wildlife": 5,
+		"temperatureSeasonVariance": 5,
+		"temperature": 5,
+		"rivers": 5,
+		"water": 3,
+		"caves": 5
+	},
+
+	"biomeFlags": [
+		"land",
+		"ocean",
+		"vulcano",
+		"evil"
+	],
+
+	"biomes":[
+		{
+			"id": 1,
+			"name": "hills",
+			"flags": ["land"],
+			"probability": 30,
+			"properties": {
+				"trees": 3,
+				"roughness": 6,
+				"soil": 2,
+				"minerals": 6,
+				"rivers": 4,
+			}
+		},
+		{
+			"id": 2,
+			"name": "oceanPeaceFull",
+			"flags": ["ocean"],
+			"probability": 10,
+			"properties":{
+				"soil": 1,
+				"wildlife": 1,
+			}
+		},
+		{
+			"id": 3,
+			"name": "plains",
+			"flags": ["land"],
+			"probability": 40,
+			"properties": {
+				"roughness": 2,
+				"wildlife": 4,
+			}
+		},
+		{
+			"id": 4,
+			"name": "jungle",
+			"flags": ["land"],
+			"probability": 20,
+			"properties": {
+				"wildlife": 9,
+				"soil": 3,
+				"trees": 8,
+			}
+		}
+	]
+}

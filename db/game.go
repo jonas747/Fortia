@@ -10,8 +10,13 @@ type GameDB struct {
 	*Database
 }
 
+// Information about the world. Blocktypes, biomes, layer size  and such
 func (g *GameDB) GetWorldInfo() (map[string]string, ferr.FortiaError) {
 	return g.GetHash("worldInfo")
+}
+
+func (g *GameDB) SetWorldInfo(info map[string]interface{}) ferr.FortiaError {
+	return g.SetHash("worldInfo", info)
 }
 
 // Returns the specified user's info
@@ -25,7 +30,7 @@ func (g *GameDB) SetUserInfo(user string, info map[string]interface{}) ferr.Fort
 }
 
 /*
- - c:{xpos}:{ypos}:{zpos}
+ - l:{xpos}:{ypos}:{zpos}
 	json with info
  }
 */
@@ -46,21 +51,17 @@ func (g *GameDB) GetLayer(x, y, z int) ([]byte, ferr.FortiaError) {
 	return out, nil
 }
 
-// // Returns a list of all chunks
-// func (g *GameDB) GetChunkList() ([]string, ferr.FortiaError) {
-// 	empty := []string{}
-// 	reply, err := g.Cmd("KEYS", "c*")
-// 	if err != nil {
-// 		return empty, err
-// 	}
+// Stores information about a chunk
+// c:{x}:{y}
+func (g *GameDB) GetChunkInfo(x, y int) (map[string]string, ferr.FortiaError) {
+	return g.GetHash(fmt.Sprintf("c:%d:%d", x, y))
+}
 
-// 	list, nerr := reply.List()
-// 	if nerr != nil {
-// 		return empty, ferr.Wrap(nerr, "")
-// 	}
-// 	return list, nil
-// }
+func (g *GameDB) SetChunkInfo(x, y int, info map[string]interface{}) ferr.FortiaError {
+	return g.SetHash(fmt.Sprintf("c:%d:%d", x, y), info)
+}
 
+// Get and set entities
 func (g *GameDB) GetEntity(id int) (map[string]string, ferr.FortiaError) {
 	return g.GetHash("e:" + strconv.Itoa(id))
 }

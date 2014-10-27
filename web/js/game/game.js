@@ -40,6 +40,14 @@ Fortia.game = {
 		this.worldName = world;
 		this.running = false;
 		this.initKeybinds();
+		this.camera = Fortia.camera;
+		Keyboard.storeEvents = true;
+
+		var stats = new Stats();
+		stats.setMode(0);
+		document.body.appendChild(stats.domElement);
+		this.stats = stats;
+
 	},
 	initKeybinds: function(){
 	},
@@ -56,7 +64,7 @@ Fortia.game = {
 		})
 */
 	
-		Fortia.camera2.move({x:0, y:0, z: 50});
+		this.camera.move({x:0, y:0, z: 50});
 	
 		this.running = true;
 		this.loop();
@@ -66,43 +74,56 @@ Fortia.game = {
 	},
 
 	render2: function(){ // 2d renderer, df like
-		Fortia.camera2.render();
+		this.camera.render2();
 	},
 	render3: function(){}, // 3d renderer
 	update: function(delta){
-		var keys = KeyboardJS.activeKeys();
 		var moveMap = {
-			"up": {x: 0, y: -1, z: 0},
-			"down": {x: 0, y: 1, z: 0},
-			"left": {x: -1, y: 0, z: 0},
-			"right": {x: 1, y: 0, z: 0},
-			"period": {x: 0, y: 0, z: 1},
-			"comma": {x: 0, y: 0, z: -1},
+			"Up": {x: 0, y: -1, z: 0},
+			"Down": {x: 0, y: 1, z: 0},
+			"Left": {x: -1, y: 0, z: 0},
+			"Right": {x: 1, y: 0, z: 0},
 		}
 		var moveBy = {x: 0, y: 0, z: 0}; 
 		var move = false;
-		for (var i = 0; i < keys.length; i++) {
-			var key =keys[i]
-			switch(key){
-				case "up":
-				case "down":
-				case "left":
-				case "right":
-				case "comma":
-				case "period":
-					move = true;
-					moveBy.x += moveMap[key].x;
-					moveBy.y += moveMap[key].y;
-					moveBy.z += moveMap[key].z;
-					break;
-			}	
+
+		for(var key in moveMap){
+			if(Keyboard.isKeyDown(key)){
+				move = true;
+				var madd = moveMap[key]
+				moveBy.x += madd.x
+				moveBy.y += madd.y
+			}
+		}
+
+		for (var i = 0; i < Keyboard.events.length; i++) {
+			var evt = Keyboard.events[i];
+			if (evt.down) {
+				switch(evt.keyStr){
+					case ",":
+						// go up
+						move = true;
+						moveBy.z -= 1;
+						break;
+					case ".":
+						move = true;
+						moveBy.z += 1;
+						// go down
+						break;
+				}
+			};
 		};
+		Keyboard.events = [];
+
 		if (move) {
-			Fortia.camera2.move(moveBy);
+			this.camera.move(moveBy);
 		};
 	},
 	loop: function(){
 		var that = Fortia.game;
+		that.stats.end();
+		that.stats.begin();
+
 		if (that.running) {
 			window.requestAnimationFrame(that.loop);
 		};

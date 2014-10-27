@@ -1,6 +1,6 @@
 var Fortia = Fortia || {}
 
-Fortia.camera2 = {
+Fortia.camera = {
 	pos: {x: 0, y: 0, z: 0},
 	layersVisible: 5,
 
@@ -14,7 +14,7 @@ Fortia.camera2 = {
 
 	colors: ["#fff", "#af5", "#2e9"],
 
-	render: function(){
+	render2: function(){
 
 
 		if (!this.ctx) {
@@ -45,6 +45,10 @@ Fortia.camera2 = {
 			};
 		};
 	},
+
+	render3: function(){
+		
+	}
 
 	renderLayer: function(layer){
 		var layerWorldPos = {
@@ -96,7 +100,7 @@ Fortia.camera2 = {
 		}
 
 		// If we moved to a new section or we moved up/down
-		if (newSection !== oldSection || oldPos.z !== this.pos.z) {
+		if (newSection.x !== oldSection.x || newSection.y !== oldSection.y || oldPos.z !== this.pos.z) {
 			// Fetch the new layer(s)
 			var layers = this.pos.z + "";
 			var that = this;

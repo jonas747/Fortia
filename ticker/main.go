@@ -2,6 +2,7 @@ package main
 
 import (
 	//"fmt"
+	"github.com/jonas747/fortia/common"
 	"github.com/jonas747/fortia/db"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
@@ -28,9 +29,8 @@ func panicErr(err error) {
 	}
 }
 func main() {
-	c, err := loadConfig("config.json")
+	err := common.LoadJsonFile("config.json", config)
 	panicErr(err)
-	config = c
 
 	l, nErr := log.NewLogClient(config.LogServer, -1, "authAPI")
 	logger = l

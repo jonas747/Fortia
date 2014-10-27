@@ -1,3 +1,7 @@
+/*
+	Provides an abstraction from the server stack to the database to make it easier to switch/ make improvements
+*/
+
 package db
 
 import (

@@ -9,6 +9,7 @@ import (
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/vec"
 	"math/rand"
+	"strconv"
 )
 
 type BlockFlag byte
@@ -23,8 +24,56 @@ type World struct {
 	Logger      *log.LogClient
 	Db          *db.GameDB
 	LayerSize   int
-	LayerHeight int // How many layers high the world is
+	WorldHeight int
 	WorldGen    WorldGenerator
+
+	BlockTypes map[int]*BlockType
+	Biomes     []*Biome
+}
+
+func (w *World) LoadSettingsFromDb() ferr.FortiaError {
+	settings, err := w.Db.GetWorldInfo()
+	if err != nil {
+		return err
+	}
+	w.WorldHeight, _ = strconv.Atoi(settings["worldHeight"])
+	w.LayerSize, _ = strconv.Atoi(settings["layerSize"])
+	btypesJson := settings["blockTypes"]
+	biomesJson := settings["biomes"]
+
+	// Decode the json
+	var blocktypes map[int]*BlockType
+	nErr := json.Unmarshal([]byte(btypesJson), &blocktypes)
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+	w.BlockTypes = blocktypes
+
+	var biomes []*Biome
+	nErr = json.Unmarshal([]byte(biomesJson), &biomes)
+	if nErr != nil {
+		return ferr.Wrap(err, "")
+	}
+	return nil
+}
+
+func (w *World) SaveSettingsToDb() ferr.FortiaError {
+	btypesJson, err := json.Marshal(w.BlockTypes)
+	if err != nil {
+		return ferr.Wrap(err, "")
+	}
+	biomesJson, err := json.Marshal(w.Biomes)
+	if err != nil {
+		return ferr.Wrap(err, "")
+	}
+
+	infoMap := map[string]interface{}{
+		"layerSize":   w.LayerSize,
+		"worldHeight": w.WorldHeight,
+		"blockTypes":  btypesJson,
+		"biomes":      biomesJson,
+	}
+	return w.Db.SetWorldInfo(infoMap)
 }
 
 func (w *World) LayerToWorldPos(layePos vec.Vec3I) vec.Vec3I {
@@ -46,7 +95,7 @@ func (w *World) GenLayer(pos vec.Vec3I) *Layer {
 		for y := 0; y < w.LayerSize; y++ {
 
 			id := rand.Intn(2) + 1
-			if layer.Position.Z > w.LayerHeight/2 {
+			if layer.Position.Z > w.WorldHeight/2 {
 				id = 0
 				layer.IsAir = true
 			}
@@ -77,57 +126,6 @@ func (w *World) IndexToCoords(index int) vec.Vec3I {
 	x := index / w.LayerSize
 	y := index - (x * w.LayerSize)
 	return vec.Vec3I{x, y, 0}
-}
-
-func (w *World) SetLayer(layer *Layer) ferr.FortiaError {
-	raw, err := layer.Json()
-	if err != nil {
-		return err
-	}
-	return w.Db.SetLayer(layer.Position.X, layer.Position.Y, layer.Position.Z, raw)
-}
-
-func (w *World) GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError) {
-	rawLayer, err := w.Db.GetLayer(pos.X, pos.Y, pos.Z)
-	if err != nil {
-		return nil, err
-	}
-
-	layer := &Layer{
-		Position: pos,
-	}
-
-	nErr := json.Unmarshal(rawLayer, layer)
-	if nErr != nil {
-		return nil, ferr.Wrap(nErr, "")
-	}
-
-	return layer, nil
-}
-
-type Layer struct {
-	Position vec.Vec3I
-	Flags    int
-	World    *World `json:"-"`
-	Blocks   []*Block
-	IsAir    bool // True if this layer is just air
-}
-
-func (l *Layer) Json() ([]byte, ferr.FortiaError) {
-	out, err := json.Marshal(l)
-	if err != nil {
-		return []byte{}, ferr.Wrap(err, "")
-	}
-	return out, nil
-}
-
-type Block struct {
-	LocalPosition vec.Vec2I `json:"-"`
-	Layer         *Layer    `json:"-"`
-	Entities      []int     `json:",omitempty"`
-	Id            int
-	Flags         byte                   `json:",omitempty"`
-	Properties    map[string]interface{} `json:",omitempty"`
 }
 
 type Entity interface {

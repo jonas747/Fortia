@@ -1,10 +1,25 @@
 [{
-	"id": 0,
-	"name": "Air",
-	"flags": ["air"]
+	"id": 1,
+	"name": "rock",
+	"flags": ["mineable"]
 },
 {
-	"id": 1,
-	"name": "Stone",
-	"flags": ["minable"]
+	"id": 2,
+	"name": "grass",
+	"flags": ["mineable"]
+},
+{
+	"id": 3,
+	"name": "dirt",
+	"flags": ["mineable"]
+},
+{
+	"id": 4,
+	"name": "sand",
+	"flags": ["mineable"]
+},
+{
+	"id": 5,
+	"name": "water",
+	"flags": ["fluid"]
 }]
