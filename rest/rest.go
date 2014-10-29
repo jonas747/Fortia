@@ -27,7 +27,7 @@ type Server struct {
 	logger   *log.LogClient
 }
 
-func NewSever(addr string, logger *log.LogClient) *Server {
+func NewServer(addr string, logger *log.LogClient) *Server {
 	server := &Server{
 		handlers: make(map[string]*RestHandler),
 		logger:   logger,

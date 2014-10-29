@@ -1,4 +1,4 @@
-package resterrors
+package rest
 
 import (
 	"fmt"
