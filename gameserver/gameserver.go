@@ -1,8 +1,7 @@
-package main
+package gameserver
 
 import (
 	"github.com/jonas747/fortia/db"
-	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
 	"github.com/jonas747/fortia/world"
@@ -13,53 +12,25 @@ var (
 	logger    *log.LogClient
 	authDb    *db.AuthDB
 	gameDb    *db.GameDB
-	config    *Config
 	gameWorld *world.World
 	server    *rest.Server
 )
 
-func panicErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-func main() {
-	c, err := loadConfig("config.json")
-	panicErr(err)
-	config = c
-
-	l, nErr := log.NewLogClient(config.LogServer, -1, "gameServer")
+func Run(l *log.LogClient, gdb *db.GameDB, adb *db.AuthDB, addr string) {
+	l.Info("Starting gameserver")
 	logger = l
-	if nErr != nil {
-		l.Error(ferr.Wrap(nErr, ""))
-	}
-
-	l.Info("(2/4) Log client init done! Creating database connection pools...")
-
-	adb, nErr := db.NewDatabase(config.AuthDb)
-	if nErr != nil {
-		l.Warn("Not connected to authentication database..." + nErr.Error())
-	}
-	authDb = &db.AuthDB{adb}
-
-	gdb, nErr := db.NewDatabase(config.GameDb)
-	if nErr != nil {
-		l.Warn("Not connected to authentication database..." + nErr.Error())
-	}
-	gameDb = &db.GameDB{gdb}
+	authDb = adb
+	gameDb = gdb
 
 	gameWorld = &world.World{
 		Logger:      logger,
 		Db:          gameDb,
-		LayerSize:   50,
-		LayerHeight: 100,
+		LayerSize:   20,
+		WorldHeight: 200,
 	}
 
-	l.Info("(3/4) Initializing api handlers...")
-	server = rest.NewSever(":8081", l)
-
+	server = rest.NewServer(addr, logger)
 	initApi(server)
-	l.Info("(4/4) Starting http server...")
 	server.Run()
 }
 

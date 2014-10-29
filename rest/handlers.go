@@ -2,7 +2,6 @@ package rest
 
 import (
 	ferr "github.com/jonas747/fortia/error"
-	"github.com/jonas747/fortia/resterrors"
 	"net/http"
 )
 
@@ -16,7 +15,7 @@ func (s *Server) HandleFortiaError(w http.ResponseWriter, r *http.Request, err f
 	err.SetData("path", r.URL.Path)
 	s.logger.Error(err)
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write(resterrors.ApiError(resterrors.ErrServerError, "Something went wrong back in serverland :("))
+	w.Write(ApiError(ErrServerError, "Something went wrong back in serverland :("))
 	return true
 }
 
@@ -31,7 +30,7 @@ func (s *Server) HandleError(w http.ResponseWriter, r *http.Request, err error) 
 func (s *Server) HandleUnauthorized(w http.ResponseWriter, r *http.Request, user string) {
 	s.logger.Warna("Unauthorized", map[string]interface{}{"remoteaddr": r.RemoteAddr, "user": user, "path": r.URL.Path})
 	w.WriteHeader(http.StatusUnauthorized)
-	w.Write(resterrors.ApiError(resterrors.ErrInvalidSessionCookie, "Session expired"))
+	w.Write(ApiError(ErrInvalidSessionCookie, "Session expired"))
 }
 
 func HandleInternalServerError(w http.ResponseWriter, msg string) {

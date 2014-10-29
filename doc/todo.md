@@ -24,12 +24,12 @@
 7. Game server(working on)
     - Serve the world 
 8. Web frontend(working on)
-    - join a world <- big one
+    - join a world <- done
     - View the world
         + engine
-            * load blocktypes and textures
-            * handle input
-            * draw loop
+            * 3d renderer - basically done
+            * load blocktypes and textures (use colors for now i guess)
+            * handle input - 50%
 
 ######Sudden things to do
  - figure out which way to store block types with attributes in both go and javascript

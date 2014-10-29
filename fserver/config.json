@@ -1,0 +1,8 @@
+{
+	"auth": ":6379",
+	"game": ":6379",
+	"master": "todo",
+	"version": "alpha-0.1",
+	"servegame": true,
+	"serverauth": true
+}

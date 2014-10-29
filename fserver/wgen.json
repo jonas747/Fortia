@@ -1,5 +1,5 @@
 {	
-	"defaultBiomeProperties":{
+	"defaultProperties":{
 		"trees": 5,
 		"roughness": 3,
 		"soil": 5,
@@ -30,7 +30,7 @@
 				"roughness": 6,
 				"soil": 2,
 				"minerals": 6,
-				"rivers": 4,
+				"rivers": 4
 			}
 		},
 		{
@@ -40,7 +40,7 @@
 			"probability": 10,
 			"properties":{
 				"soil": 1,
-				"wildlife": 1,
+				"wildlife": 1
 			}
 		},
 		{
@@ -50,7 +50,7 @@
 			"probability": 40,
 			"properties": {
 				"roughness": 2,
-				"wildlife": 4,
+				"wildlife": 4
 			}
 		},
 		{
@@ -61,7 +61,7 @@
 			"properties": {
 				"wildlife": 9,
 				"soil": 3,
-				"trees": 8,
+				"trees": 8
 			}
 		}
 	]

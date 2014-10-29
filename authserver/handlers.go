@@ -1,11 +1,11 @@
-package main
+package authserver
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"encoding/json"
 	//"fmt"
 	ferr "github.com/jonas747/fortia/error"
-	"github.com/jonas747/fortia/resterrors"
+	"github.com/jonas747/fortia/rest"
 	"net/http"
 )
 
@@ -56,7 +56,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
 	if !correctPw {
 		logger.Warna("User tried logging in with invalid password", map[string]interface{}{"remoteaddr": r.RemoteAddr, "user": bl.Username})
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resterrors.ApiError(resterrors.ErrWrongLoginDetails, "Username or password incorrect"))
+		w.Write(rest.ApiError(rest.ErrWrongLoginDetails, "Username or password incorrect"))
 		return
 	}
 	session, err := authDb.LoginUser(bl.Username, 3600*24) // 24 hours, make this expand as the users does stuff
@@ -112,17 +112,17 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	// Make sure all details are valid
 	if !validateUsername(rBody.Username) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resterrors.ApiError(resterrors.ErrInvalidUsername, "Username is not valid"))
+		w.Write(rest.ApiError(rest.ErrInvalidUsername, "Username is not valid"))
 		return
 	}
 	if !validateEmail(rBody.Email) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resterrors.ApiError(resterrors.ErrInvalidEmail, "Email is not valid"))
+		w.Write(rest.ApiError(rest.ErrInvalidEmail, "Email is not valid"))
 		return
 	}
 	if !validatePassword(rBody.Pw) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resterrors.ApiError(resterrors.ErrInavlidPassword, "Password is not valid"))
+		w.Write(rest.ApiError(rest.ErrInavlidPassword, "Password is not valid"))
 		return
 	}
 
@@ -133,7 +133,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	_, ok := existingInfo["name"]
 	if ok {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resterrors.ApiError(resterrors.ErrUsernameTaken, "Username is taken"))
+		w.Write(rest.ApiError(rest.ErrUsernameTaken, "Username is taken"))
 		return
 	}
 

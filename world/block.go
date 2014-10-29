@@ -1,21 +1,89 @@
 package world
 
 import (
+	"encoding/json"
 	"errors"
+	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
+	"io/ioutil"
 	"strconv"
+	"strings"
 )
 
 var (
 	ErrPropertyNotFound = errors.New("Property not found")
 )
 
+type BlockProbability struct {
+	Everywhere int
+	Outside    int
+	Inside     int
+	Biomes     map[string]int
+}
+
 type BlockType struct {
-	Id         int
-	Name       string
-	Flags      []string
+	Id        int
+	Name      string
+	Flags     []string
+	Biomes    []string
+	AllBiomes bool
+	Type      string
+	LayersStr string
+
+	Probability BlockProbability
+
+	LayerStart   int
+	LayerEnd     int
+	LayerOutSide bool
+
+	// Additional properties
 	Properties map[string]string
-	Biomes     []string
+}
+
+func BlockTypesFromJson(data []byte) ([]BlockType, ferr.FortiaError) {
+	// Decode the json
+	var btypes []BlockType
+	err := json.Unmarshal(data, &btypes)
+	if err != nil {
+		return []BlockType{}, ferr.Wrap(err, "")
+	}
+	for i, v := range btypes {
+		if v.LayerStart == 0 && v.LayerEnd == 0 {
+			if v.LayersStr == "outside" {
+				btypes[i].LayerOutSide = true
+			} else if v.LayersStr == "inside" {
+				btypes[i].LayerOutSide = false
+			} else if v.LayersStr == "*" {
+				btypes[i].LayerEnd = 1000
+			} else if strings.Contains(v.LayersStr, "-") {
+				split := strings.Split(v.LayersStr, "-")
+				start, err := strconv.Atoi(split[0])
+				if err != nil {
+					return []BlockType{}, ferr.Wrap(err, "")
+				}
+				end, err := strconv.Atoi(split[1])
+				if err != nil {
+					return []BlockType{}, ferr.Wrap(err, "")
+				}
+				btypes[i].LayerStart = start
+				btypes[i].LayerEnd = end
+			}
+		}
+
+		if v.Biomes[0] == "*" {
+			btypes[i].AllBiomes = true
+		}
+	}
+	return btypes, nil
+}
+
+func BlockTypesFromFile(file string) ([]BlockType, ferr.FortiaError) {
+	data, nErr := ioutil.ReadFile(file)
+	if nErr != nil {
+		return []BlockType{}, ferr.Wrap(nErr, "")
+	}
+	btypes, err := BlockTypesFromJson(data)
+	return btypes, err
 }
 
 func (j *BlockType) GetPropertyInt(key string) (value int, err error) {
@@ -41,8 +109,6 @@ type Block struct {
 	Data          map[string]interface{} `json:",omitempty"`
 
 	Id int
-}
-
 }
 
 func (w *World) SetLayer(layer *Layer) ferr.FortiaError {
@@ -93,6 +159,6 @@ type Chunk struct {
 	Biome    Biome
 }
 
-func (w *World) SetChunk(chunk *Chunk){
-	
+func (w *World) SetChunk(chunk *Chunk) {
+
 }

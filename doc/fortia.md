@@ -1,6 +1,6 @@
 # Fortia
 
-Fortia is a strategy browser game that takes place in a fantasy world. You start off with a small town with a small population, but if you play the game right you can end up with an empire with a population in the houndreds of thousands. 
+Fortia is a strategy game that takes place in a fantasy world. You start off with a small town with a small population, but if you play the game right you can end up with an empire with a population in the houndreds of thousands. 
 
 You can be an aggressive player, fighting everyone you can manage, plundering and threatening your way up the ladder of world dominance.
 

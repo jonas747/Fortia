@@ -1,0 +1,83 @@
+[{
+	"id": 0,
+	"name":  "air"
+},
+{
+	"id": 1,
+	"name": "bedrock"
+},
+{
+	"id": 2,
+	"name": "rock",
+	"type": "stone",
+	"layer": "*",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	}
+},
+{
+	"id": 3,
+	"name": "grass",
+	"type": "soil",
+	"layer": "outside",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 90
+	}
+},
+{
+	"id": 4,
+	"name": "dirt",
+	"type": "soil",
+	"layer": "inside",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 95
+	}
+},
+{
+	"id": 5,
+	"name": "sand",
+	"type": "soil",
+	"layer": "*",
+	"biomes": ["*"],
+	"probability": {
+		"outside": 10,
+		"inside": 5
+	}
+},
+{
+	"id": 6,
+	"name": "water",
+	"type": "water",
+	"layer": "*",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	},
+	"flags": ["fish", "swim"]
+},
+{
+	"id": 7,
+	"name": "oak",
+	"type": "wood",
+	"layer": "*",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	},
+	"properties":{
+		"leaves": 7
+	}
+},
+{
+	"id": 8,
+	"name": "oak leaves",
+	"type": "leaves",
+	"layer": "*",
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	}
+}]

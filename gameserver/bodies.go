@@ -1,4 +1,4 @@
-package main
+package gameserver
 
 type BodyRegister struct {
 }

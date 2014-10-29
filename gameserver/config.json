@@ -1,5 +1,0 @@
-{
-	"authDb": ":6379",
-	"logServer": "",
-	"gameDb": ":6379"
-}

@@ -27,8 +27,8 @@ type World struct {
 	WorldHeight int
 	WorldGen    WorldGenerator
 
-	BlockTypes map[int]*BlockType
-	Biomes     []*Biome
+	BlockTypes []BlockType
+	Biomes     BiomesInfo
 }
 
 func (w *World) LoadSettingsFromDb() ferr.FortiaError {
@@ -42,18 +42,15 @@ func (w *World) LoadSettingsFromDb() ferr.FortiaError {
 	biomesJson := settings["biomes"]
 
 	// Decode the json
-	var blocktypes map[int]*BlockType
-	nErr := json.Unmarshal([]byte(btypesJson), &blocktypes)
-	if nErr != nil {
-		return ferr.Wrap(nErr, "")
-	}
-	w.BlockTypes = blocktypes
+	blockTypes, err := BlockTypesFromJson([]byte(btypesJson))
+	w.BlockTypes = blockTypes
 
-	var biomes []*Biome
-	nErr = json.Unmarshal([]byte(biomesJson), &biomes)
-	if nErr != nil {
-		return ferr.Wrap(err, "")
+	biomes, err := BiomesFromJson([]byte(biomesJson))
+	if err != nil {
+		return err
 	}
+	w.Biomes = biomes
+
 	return nil
 }
 

@@ -1,71 +1,27 @@
-package main
+package ticker
 
 import (
-	//"fmt"
-	"github.com/jonas747/fortia/common"
 	"github.com/jonas747/fortia/db"
-	ferr "github.com/jonas747/fortia/error"
+	//ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
-	//"math/rand"
-	// "strconv"
-	// "strings"
 	"time"
 )
 
 var (
-	logger     *log.LogClient
-	authDb     *db.AuthDB
-	gameDb     *db.GameDB
-	blockTypes []*BlockType
-	config     *Config
-	gameWorld  *world.World
+	logger    *log.LogClient
+	authDb    *db.AuthDB
+	gameDb    *db.GameDB
+	gameWorld *world.World
 )
 
-func panicErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-func main() {
-	err := common.LoadJsonFile("config.json", config)
-	panicErr(err)
-
-	l, nErr := log.NewLogClient(config.LogServer, -1, "authAPI")
+func Run(l *log.LogClient, adb *db.AuthDB, gdb *db.GameDB, gw *world.World, addr string) {
+	logger.Info("Running world ticker")
 	logger = l
-	if nErr != nil {
-		l.Warn(ferr.Wrap(nErr, "Error connecting to logserver, client wont send log messages"))
-	}
-
-	l.Info("Log client init successful! Creating database connection pools...")
-
-	gdb, nErr := db.NewDatabase(config.GameDb)
-	if nErr != nil {
-		l.Fatal(ferr.Wrap(nErr, ""))
-		return
-	}
-
-	gameDb = &db.GameDB{gdb}
-
-	l.Info("Game db init sucessfull, Reading blcoktypes now")
-
-	blockTypes, err = loadBlockTypes("blocks.json")
-	if err != nil {
-		l.Fatal(err)
-		return
-	}
-
-	l.Info("Blocktypes loaded, initialising world")
-	gameWorld = &world.World{
-		Logger:      logger,
-		Db:          gameDb,
-		LayerSize:   50,
-		LayerHeight: 100,
-	}
-
-	l.Info("World ticker started sucessfully")
-	generate(2, 2)
+	authDb = adb
+	gameDb = gdb
+	gameWorld = gw
 	run()
 }
 

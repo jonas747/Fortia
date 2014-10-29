@@ -15,14 +15,18 @@ type LogClient struct {
 	Host     string
 }
 
-func NewLogClient(addr string, Plvl int, host string) (*LogClient, error) {
+func NewLogClient(addr string, Plvl int, host string) (*LogClient, ferr.FortiaError) {
 	// Dial the address
 	conn, err := net.Dial("tcp", addr)
-	return &LogClient{
+	lc := &LogClient{
 		PrintLvl: Plvl,
 		Conn:     conn,
 		Host:     host,
-	}, err
+	}
+	if err != nil {
+		return lc, ferr.Wrap(err, "")
+	}
+	return lc, nil
 }
 
 // Base log function

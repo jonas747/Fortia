@@ -127,3 +127,17 @@ func (a *AuthDB) GetWorldInfo(name string) ([]map[string]string, ferr.FortiaErro
 	}
 	return servers, nil
 }
+
+func (a *AuthDB) SetWorldInfo(name string, info map[string]interface{}) ferr.FortiaError {
+	client, err := a.Pool.Get()
+	if err != nil {
+		return ferr.Wrap(err, "")
+	}
+	defer a.Pool.Put(client)
+
+	reply := client.Cmd("SADD", "worlds", name)
+	if reply.Err != nil {
+		return ferr.Wrap(reply.Err, "")
+	}
+	return a.SetHash("world:"+name, info)
+}
