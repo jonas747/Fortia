@@ -2,6 +2,7 @@ package gameserver
 
 import (
 	"github.com/jonas747/fortia/db"
+	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
 	"github.com/jonas747/fortia/world"
@@ -16,22 +17,25 @@ var (
 	server    *rest.Server
 )
 
-func Run(l *log.LogClient, gdb *db.GameDB, adb *db.AuthDB, addr string) {
+func Run(l *log.LogClient, gdb *db.GameDB, adb *db.AuthDB, addr string) ferr.FortiaError {
 	l.Info("Starting gameserver")
 	logger = l
 	authDb = adb
 	gameDb = gdb
 
 	gameWorld = &world.World{
-		Logger:      logger,
-		Db:          gameDb,
-		LayerSize:   20,
-		WorldHeight: 200,
+		Logger: logger,
+		Db:     gameDb,
+	}
+	err := gameWorld.LoadSettingsFromDb()
+	if err != nil {
+		return err
 	}
 
 	server = rest.NewServer(addr, logger)
 	initApi(server)
 	server.Run()
+	return nil
 }
 
 /*

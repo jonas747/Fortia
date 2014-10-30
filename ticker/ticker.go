@@ -2,7 +2,7 @@ package ticker
 
 import (
 	"github.com/jonas747/fortia/db"
-	//ferr "github.com/jonas747/fortia/error"
+	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
@@ -16,13 +16,23 @@ var (
 	gameWorld *world.World
 )
 
-func Run(l *log.LogClient, adb *db.AuthDB, gdb *db.GameDB, gw *world.World, addr string) {
+func Run(l *log.LogClient, adb *db.AuthDB, gdb *db.GameDB) ferr.FortiaError {
 	logger.Info("Running world ticker")
 	logger = l
 	authDb = adb
 	gameDb = gdb
-	gameWorld = gw
+
+	gameWorld = &world.World{
+		Logger: logger,
+		Db:     gameDb,
+	}
+	err := gameWorld.LoadSettingsFromDb()
+	if err != nil {
+		return err
+	}
+
 	run()
+	return nil
 }
 
 func generate(numX, numY int) {

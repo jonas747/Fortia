@@ -7,6 +7,7 @@ import (
 	"github.com/jonas747/fortia/db"
 	"github.com/jonas747/fortia/gameserver"
 	"github.com/jonas747/fortia/log"
+	"github.com/jonas747/fortia/ticker"
 	"github.com/jonas747/fortia/world"
 )
 
@@ -45,7 +46,7 @@ func main() {
 
 	// Connect to databases and master server
 	// TODO: Master server
-	if config.ServerAuth || config.ServeGame || *fCreateWorld {
+	if config.ServeAuth || config.ServeGame || *fCreateWorld {
 		if config.ServeGame || *fCreateWorld {
 			gdbRaw, err := db.NewDatabase(config.Game)
 			panicErr(err)
@@ -62,8 +63,11 @@ func main() {
 	if config.ServeGame {
 		go gameserver.Run(logger, gdb, adb, ":8081")
 	}
-	if config.ServerAuth {
+	if config.ServeAuth {
 		go authserver.Run(logger, adb, ":8080")
+	}
+	if config.RunTicker {
+		go ticker.Run(logger, adb, gdb)
 	}
 	select {}
 }
