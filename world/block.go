@@ -155,10 +155,45 @@ func (l *Layer) Json() ([]byte, ferr.FortiaError) {
 
 type Chunk struct {
 	Position vec.Vec2I
-	Layers   []*Layer
+	Layers   []*Layer `json:"-"` // No need to store layers twice...
 	Biome    Biome
 }
 
-func (w *World) SetChunk(chunk *Chunk) {
+func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
+	if setLayers {
+		for _, l := range chunk.Layers {
+			err := w.SetLayer(l)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
+	serialised, err := json.Marshal(chunk)
+	if err != nil {
+		return ferr.Wrap(err, "")
+	}
+
+	fErr := w.Db.SetChunkInfo(chunk.Position.X, chunk.Position.Y, serialised)
+
+	return fErr
+}
+
+func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
+	if getLayers {
+		// TODO (see general tasks)
+	}
+
+	raw, err := w.Db.GetChunkInfo(x, y)
+	if err != nil {
+		return nil, err
+	}
+
+	var cinfo Chunk
+	nErr := json.Unmarshal(raw, &cinfo)
+	if nErr != nil {
+		return nil, ferr.Wrap(nErr, "")
+	}
+
+	return cinfo, nil
 }
