@@ -138,10 +138,10 @@ func (w *World) GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError) {
 }
 
 type Layer struct {
-	Position vec.Vec3I
-	Flags    int
 	World    *World `json:"-"`
+	Position vec.Vec3I
 	Blocks   []*Block
+	Flags    int
 	IsAir    bool // True if this layer is just air
 }
 
@@ -154,11 +154,60 @@ func (l *Layer) Json() ([]byte, ferr.FortiaError) {
 }
 
 type Chunk struct {
-	Position vec.Vec2I
+	World    *World   `json:"-"`
 	Layers   []*Layer `json:"-"` // No need to store layers twice...
+	Position vec.Vec2I
 	Biome    Biome
+	Potency  int // The biome potency this chunk has
 }
 
+// Rerturns a layer of the chunk, if it is in the chunk's cache then it will return that
+// If fetch is true then it will fetch even if it is in the cache
+// If store is true it will store the layer int he chunk's cache after fetching it
+func (c *Chunk) GetLayer(layer int, fetch, store bool) (*Layer, ferr.FortiaError) {
+	if len(c.Layers) == 0 || fetch {
+		l, err := c.World.GetLayer(vec.Vec3I{c.Position.X, c.Position.Y, layer})
+		if err != nil {
+			return nil, err
+		}
+		if store {
+			if len(c.Layers) == 0 {
+				c.Layers = make([]*Layer, c.World.WorldHeight)
+			}
+			c.Layers[layer] = l
+		}
+		return l, nil
+	}
+
+	l := c.Layers[layer]
+	return l, nil
+}
+
+// returns chunk at x y, local to current chunk
+func (c *Chunk) GetNeighbour(x, y int) (*Chunk, ferr.FortiaError) {
+	wPos := c.Position.Clone()
+	wPos.Add(vec.Vec2I{x, y})
+
+	chunk, err := c.World.GetChunk(wPos.X, wPos.Y, false)
+	return chunk, err
+}
+
+// Returns all neighbours
+func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
+	out := make([]*Chunk, 0)
+	for x := -1; x < 1; x++ {
+		for y := -1; y < 1; y++ {
+			chunk, err := c.GetNeighbour(x, y)
+			if err != nil {
+				return out, err
+			}
+			out = append(out, chunk)
+		}
+	}
+	return out, nil
+}
+
+// Saves the chunk to the database
 func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 	if setLayers {
 		for _, l := range chunk.Layers {
@@ -179,6 +228,7 @@ func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 	return fErr
 }
 
+// Fetches a chunk from the database at x,y
 func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
 	if getLayers {
 		// TODO (see general tasks)
