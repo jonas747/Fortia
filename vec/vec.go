@@ -22,7 +22,7 @@ func (v *Vec3I) Sub(other Vec3I) {
 	v.Z -= other.Z
 }
 
-func (v *Vec3I) MltiplyScalar(scalar float64) {
+func (v *Vec3I) MultiplyScalar(scalar float64) {
 	v.X = int(float64(v.X) * scalar)
 	v.Y = int(float64(v.Y) * scalar)
 	v.Z = int(float64(v.Z) * scalar)

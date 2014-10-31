@@ -19,7 +19,7 @@ func (v *Vec2I) Sub(other Vec2I) {
 	v.Y -= other.Y
 }
 
-func (v *Vec2I) MltiplyScalar(scalar float64) {
+func (v *Vec2I) MultiplyScalar(scalar float64) {
 	v.X = int(float64(v.X) * scalar)
 	v.Y = int(float64(v.Y) * scalar)
 }

@@ -195,5 +195,5 @@ func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
 		return nil, ferr.Wrap(nErr, "")
 	}
 
-	return cinfo, nil
+	return &cinfo, nil
 }
