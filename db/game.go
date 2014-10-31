@@ -53,12 +53,22 @@ func (g *GameDB) GetLayer(x, y, z int) ([]byte, ferr.FortiaError) {
 
 // Stores information about a chunk
 // c:{x}:{y}
-func (g *GameDB) GetChunkInfo(x, y int) (map[string]string, ferr.FortiaError) {
-	return g.GetHash(fmt.Sprintf("c:%d:%d", x, y))
+func (g *GameDB) GetChunkInfo(x, y int) ([]byte, ferr.FortiaError) {
+	reply, err := g.Cmd("GET", fmt.Sprintf("c:%d:%d", x, y))
+	if err != nil {
+		return []byte{}, err
+	}
+
+	out, nErr := reply.Bytes()
+	if nErr != nil {
+		return []byte{}, ferr.Wrap(nErr, "")
+	}
+	return out, nil
 }
 
-func (g *GameDB) SetChunkInfo(x, y int, info map[string]interface{}) ferr.FortiaError {
-	return g.SetHash(fmt.Sprintf("c:%d:%d", x, y), info)
+func (g *GameDB) SetChunkInfo(x, y int, info []byte) ferr.FortiaError {
+	_, err := g.Cmd("SET", fmt.Sprintf("c:%d:%d", x, y), info)
+	return err
 }
 
 // Get and set entities
