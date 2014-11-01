@@ -1,0 +1,24 @@
+General:
+  This is general tasks to be completed whenever i get around to it, with no set deadline
+  
+  Ticker:
+    ☐ Add a scheduler
+
+  World/db:
+   ☐ Add being able to fetch multiple layers at the same time instead of doing each sperately
+
+  Vec:
+   ☐ Change to interfaces so funcitons that require vec2 can be passed vec3 but only use x and y.
+
+  Tests:
+    Add tests to a lot of stuff
+   ☐ world 
+   ☐ simplex
+   ☐ db
+   ☐ log
+
+  Major cleanup:
+   ☐ server...
+
+  Client:
+   ☐ Major cleanups

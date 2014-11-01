@@ -20,11 +20,11 @@ type BiomeProperties struct {
 }
 
 type Biome struct {
-	Id           int
-	Name         string
-	Flags        []string
-	Propbability int8
-	Properties   BiomeProperties
+	Id          int
+	Name        string
+	Flags       []string
+	Probability int8
+	Properties  BiomeProperties
 }
 
 type BiomesInfo struct {

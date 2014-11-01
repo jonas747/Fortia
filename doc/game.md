@@ -35,76 +35,7 @@ Returns a list of chunks visible to you, or wether specified chunk is visible to
 optional params: x y
 
 #Types of game objects
-
-Block types and entity types are stored in a json file. 
-If a block type needs a custom handler it can register a custom handler
-
-###Blocks
-
-id - The unique id for this blocktype
-name - human readable name for this blocktype
-flags - list of flags for this blocktype
-properties - proprties for this blocktype
-    
-default flags:
-    solid
-
-    {
-        "id": 1,
-        "name": "stone",
-        "flags": [
-            "solid",
-            "mineable",
-        ],
-        "proprties": {
-            "miningspeed": 100,
-        }
-    }
-    {
-        "id": 2,
-        "name": "water",
-        "flags": [
-            "fluid",
-            "freezeable"
-        ],
-        "proprties": {
-            "fluidspeed": 10,
-            "freezetemp": 0,
-            "freezetoblockid": 4
-        }
-    }
-    {
-        "id": 2,
-        "name": "lava",
-        "flags": [
-            "fluid",
-            "heatemitter",
-        ],
-        "proprties": {
-            "fluidspeed": 10,
-        }
-    }
-
-flags and properties for those flags:
-
-global properties:
-    + mass
-        * 1
-
- - solid
- - mineable
-     + mineSpeed int
- - convert
-     + convertTemp int
-     + convertDamage int
- - fluid
-     + fluidSpeed int
-     + fluidLevel int
-     + fluidSwimSpeed int
- - heatEmitter
-     + heHeat int
-     + heRadius int
-
+Todo: write doc on thi
 ###ItemsconvertTemp
 
 ###Entity

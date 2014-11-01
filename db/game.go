@@ -53,17 +53,18 @@ func (g *GameDB) GetLayer(x, y, z int) ([]byte, ferr.FortiaError) {
 
 // Stores information about a chunk
 // c:{x}:{y}
-func (g *GameDB) GetChunkInfo(x, y int) ([]byte, ferr.FortiaError) {
+// Returns the chunkinfo, wether the chunk exists, and any errors
+func (g *GameDB) GetChunkInfo(x, y int) ([]byte, bool, ferr.FortiaError) {
 	reply, err := g.Cmd("GET", fmt.Sprintf("c:%d:%d", x, y))
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, false, err
 	}
 
 	out, nErr := reply.Bytes()
 	if nErr != nil {
-		return []byte{}, ferr.Wrap(nErr, "")
+		return []byte{}, false, nil
 	}
-	return out, nil
+	return out, true, nil
 }
 
 func (g *GameDB) SetChunkInfo(x, y int, info []byte) ferr.FortiaError {

@@ -4,7 +4,7 @@
 Auth database is in redis
 General stuff, online servers, configurations, user accounts etc...
 ####Keys
- - user:{name}
+ - u:{name}
     + Hash
     + Represents a user
         * name   - Nameof the user
@@ -14,7 +14,7 @@ General stuff, online servers, configurations, user accounts etc...
         * worlds - The worlds this user is on, seperated with ":" 
         * role - 0 normal, 1 mod, 2 admin, 3 fish, 4 god
         * donor - donor leve
- - token:{user}:{token}
+ - t:{token}
      + Session token for the specified user
 
  - worlds
@@ -37,16 +37,11 @@ Game database is entirely in redis
         * name
         * size
         * players
-
-went with chunks before:....
+        * 
  - c:{xpos}:{ypos}
-     + list
-         * index = local x, y, z
-         * value
-             - entity id's seperated by ":" with first one being block id
-going with layers
+     + json with chunk info (no actual blocks, just information), see package world for more info
 - l:{xpos}:{ypos}:{layer(or zpos if you want)}
-     + json of block info
+     + json layer info, see package world for more info
  - e:{eid}
      + hash
      + An entity(live entity, building, item, etc..)

@@ -1,6 +1,8 @@
 #Auth api methods
 
-####/Login
+###No atuthentication required
+    
+####/login
 Method: POST
 Returns a session cookie that expires after 1h inactivity
 Or an error
@@ -11,7 +13,7 @@ Body:
         "pw": "password to login with"
     }
 
-####/Register
+####/register
 Method: POST
 Returns an error if something went wrong. {"ok": true} if everything went okay
 Body:
@@ -22,11 +24,13 @@ Body:
         "email": "email to register"
     }
 
-####/me
-Method: GET
-Returns info about yourself
-
 ####/worlds
 Method: GET
 Returns info about all worlds or the specified world
 optional params: world
+
+###Authentication required
+
+####/me
+Method: GET
+Returns info about yourself

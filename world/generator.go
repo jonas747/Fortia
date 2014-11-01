@@ -104,6 +104,11 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 			if err != nil {
 				return Biome{}, 0, err
 			}
+
+			// skip if the chunk is not found
+			if chunk == nil {
+				continue
+			}
 			if chunk.Potency > highestPotency {
 				highestPotency = chunk.Potency
 				highestBiome = chunk.Biome
@@ -116,11 +121,11 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 		// Get a random biome
 		biomes := make([]int, 0)
 		for k, v := range g.Biomes.Biomes {
-			for i := 0; i < int(v.Propbability); i++ {
+			for i := 0; i < int(v.Probability); i++ {
 				biomes = append(biomes, k)
 			}
 		}
-		bNum := rand.Intn(len(biomes))
+		bNum := biomes[rand.Intn(len(biomes))]
 		highestBiome = g.Biomes.Biomes[bNum]
 		highestPotency = 5 // Add one because we subtract one later
 	}
@@ -151,6 +156,13 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				wy := cWorldPos.Y + y
 
 				l := layers[z]
+				if l == nil {
+					l = &Layer{
+						World:    g.W,
+						Position: vec.Vec3I{wx, wy, z},
+					}
+					layers[z] = l
+				}
 				if len(l.Blocks) == 0 {
 					l.Blocks = make([]*Block, lSize*lSize)
 				}

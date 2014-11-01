@@ -28,7 +28,7 @@ type BlockType struct {
 	Biomes    []string
 	AllBiomes bool
 	Type      string
-	LayersStr string
+	Layer     string
 
 	Probability BlockProbability
 
@@ -49,14 +49,14 @@ func BlockTypesFromJson(data []byte) ([]BlockType, ferr.FortiaError) {
 	}
 	for i, v := range btypes {
 		if v.LayerStart == 0 && v.LayerEnd == 0 {
-			if v.LayersStr == "outside" {
+			if v.Layer == "outside" {
 				btypes[i].LayerOutSide = true
-			} else if v.LayersStr == "inside" {
+			} else if v.Layer == "inside" {
 				btypes[i].LayerOutSide = false
-			} else if v.LayersStr == "*" {
+			} else if v.Layer == "*" {
 				btypes[i].LayerEnd = 1000
-			} else if strings.Contains(v.LayersStr, "-") {
-				split := strings.Split(v.LayersStr, "-")
+			} else if strings.Contains(v.Layer, "-") {
+				split := strings.Split(v.Layer, "-")
 				start, err := strconv.Atoi(split[0])
 				if err != nil {
 					return []BlockType{}, ferr.Wrap(err, "")
@@ -70,7 +70,7 @@ func BlockTypesFromJson(data []byte) ([]BlockType, ferr.FortiaError) {
 			}
 		}
 
-		if v.Biomes[0] == "*" {
+		if len(v.Biomes) == 0 || v.Biomes[0] == "*" {
 			btypes[i].AllBiomes = true
 		}
 	}
@@ -229,14 +229,18 @@ func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 }
 
 // Fetches a chunk from the database at x,y
+// Chunk is nil if not found
 func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
 	if getLayers {
 		// TODO (see general tasks)
 	}
 
-	raw, err := w.Db.GetChunkInfo(x, y)
+	raw, found, err := w.Db.GetChunkInfo(x, y)
 	if err != nil {
 		return nil, err
+	}
+	if !found {
+		return nil, nil
 	}
 
 	var cinfo Chunk

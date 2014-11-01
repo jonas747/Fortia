@@ -8,12 +8,13 @@ import (
 	"github.com/jonas747/fortia/gameserver"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/ticker"
+	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
 )
 
 var (
-	fUpdateWorld = flag.Bool("-u", false, "Updates the world with the wgen.json and blocktypes.json")
-	fCreateWorld = flag.Bool("-c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json")
+	fUpdateWorld = flag.Bool("u", false, "Updates the world with the wgen.json and blocktypes.json")
+	fCreateWorld = flag.Bool("c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json")
 )
 
 var (
@@ -58,7 +59,9 @@ func main() {
 	}
 	// Gen world initialises a new world
 	if *fCreateWorld {
-		createWorld()
+		createWorld(6)
+		logger.Info("Generated world, exiting...")
+		return
 	}
 	if config.ServeGame {
 		go gameserver.Run(logger, gdb, adb, ":8081")
@@ -72,7 +75,7 @@ func main() {
 	select {}
 }
 
-func createWorld() {
+func createWorld(size int) {
 	// Load all the settings from files
 	var winfo WorldConfig
 	err := common.LoadJsonFile("world.json", &winfo)
@@ -100,5 +103,19 @@ func createWorld() {
 	}
 	// Save the settings to the game db
 	err = w.SaveSettingsToDb()
+
+	generator := w.NewGenerator()
+
+	for x := -1 * (size / 2); x < size/2; x++ {
+		for y := -1 * (size / 2); y < size/2; y++ {
+			logger.Debug("Generating chunk @ ", x, ":", y)
+			err := generator.GenerateChunk(vec.Vec2I{x, y})
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+		}
+	}
+
 	panicErr(err)
 }
