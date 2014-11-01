@@ -4,7 +4,7 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/simplex"
 	"github.com/jonas747/fortia/vec"
-	//"math/rand"
+	"math/rand"
 	"strconv"
 )
 
@@ -72,14 +72,18 @@ func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed
 
 // Generates a chunk, saves chunk information and layers to db.
 func (g *Generator) GenerateChunk(position vec.Vec2I) ferr.FortiaError {
-	biome := g.getBiome(position)
+	biome, potency, err := g.getBiome(position)
 
 	chunk := g.generateLandscape(position, biome)
-
-	chunk, err := g.smoothEedges(chunk)
 	if err != nil {
 		return err
 	}
+
+	chunk, err = g.smoothEedges(chunk)
+	if err != nil {
+		return err
+	}
+	chunk.Potency = potency
 
 	chunk = g.placeBlocks(chunk)
 
@@ -88,8 +92,39 @@ func (g *Generator) GenerateChunk(position vec.Vec2I) ferr.FortiaError {
 }
 
 // First stage
-func (g *Generator) getBiome(position vec.Vec2I) Biome {
-	return Biome{}
+// Returns the biome and the potency
+// the dominating biome is the one with the most potency? or the ones with most neighbours?(going with potency for now, experimenting later)
+func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) {
+	highestPotency := 0
+	highestBiome := Biome{}
+	// Get souroding chunks
+	for x := -1; x < 1; x++ {
+		for y := -1; y < 1; y++ {
+			chunk, err := g.W.GetChunk(x+position.X, y+position.Y, false)
+			if err != nil {
+				return Biome{}, 0, err
+			}
+			if chunk.Potency > highestPotency {
+				highestPotency = chunk.Potency
+				highestBiome = chunk.Biome
+			}
+		}
+	}
+
+	// if there were no souronding chunks assign a random biome based on biome probabilities
+	if highestPotency == 0 {
+		// Get a random biome
+		biomes := make([]int, 0)
+		for k, v := range g.Biomes.Biomes {
+			for i := 0; i < int(v.Propbability); i++ {
+				biomes = append(biomes, k)
+			}
+		}
+		bNum := rand.Intn(len(biomes))
+		highestBiome = g.Biomes.Biomes[bNum]
+		highestPotency = 5 // Add one because we subtract one later
+	}
+	return highestBiome, highestPotency - 1, nil
 }
 
 // Second stage: Returns a chunk, at this stage it only sets the block id to one of 2, 0 for air and 1 for land
@@ -141,12 +176,34 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 	}
 }
 
+// TODO
+func (g *Generator) caves(chunk *Chunk) *Chunk {
+	return chunk
+}
+
 // Smooths the chunk edges
 func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
-	return &Chunk{}, nil
+	return chunk, nil
 }
 
 // Assigns proper blocks to everything, stone should be stone etc...
+// TODO: More advanced block placement
 func (g *Generator) placeBlocks(chunk *Chunk) *Chunk {
-	return &Chunk{}
+	for x := 0; x < g.W.LayerSize; x++ {
+		for y := 0; y < g.W.LayerSize; y++ {
+			for z := 0; z < g.W.WorldHeight; z++ {
+				l := chunk.Layers[z]
+				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
+				b := l.Blocks[index]
+				if b.Id > 50 {
+					b.Id = 1 // rock
+				} else if b.Id <= 50 && b.Id > 0 {
+					b.Id = 2 // grass
+				} else {
+					b.Id = 0 // Air
+				}
+			}
+		}
+	}
+	return chunk
 }
