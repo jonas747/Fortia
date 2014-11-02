@@ -159,7 +159,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				if l == nil {
 					l = &Layer{
 						World:    g.W,
-						Position: vec.Vec3I{wx, wy, z},
+						Position: vec.Vec3I{position.X, position.Y, z},
 					}
 					layers[z] = l
 				}

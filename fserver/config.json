@@ -4,5 +4,5 @@
 	"master": "todo",
 	"version": "alpha-0.1",
 	"servegame": true,
-	"serverauth": true
+	"serveauth": true
 }
