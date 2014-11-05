@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/vec"
 	"strconv"
 )
 
@@ -39,6 +40,7 @@ func (g *GameDB) SetLayer(x, y, z int, layer []byte) ferr.FortiaError {
 	return err
 }
 
+// Returns the specified layer
 func (g *GameDB) GetLayer(x, y, z int) ([]byte, ferr.FortiaError) {
 	reply, err := g.Cmd("GET", fmt.Sprintf("l:%d:%d:%d", x, y, z))
 	if err != nil {
@@ -48,6 +50,33 @@ func (g *GameDB) GetLayer(x, y, z int) ([]byte, ferr.FortiaError) {
 	if nErr != nil {
 		return []byte{}, ferr.Wrap(nErr, "")
 	}
+	return out, nil
+}
+
+// Returns multiple layers
+func (g *GameDB) GetLayers(positions []*vec.Vec3I) ([][]byte, ferr.FortiaError) {
+	out := make([][]byte, len(positions))
+
+	keys := make([]interface{}, len(positions))
+	for k, v := range positions {
+		keys[k] = fmt.Sprintf("l:%d:%d:%d", v.X, v.Y, v.Z)
+	}
+	reply, err := g.Cmd("MGET", keys...)
+	if err != nil {
+		return out, err
+	}
+
+	for k, v := range reply.Elems {
+		if v == nil {
+			continue
+		}
+		b, err := v.Bytes()
+		if err != nil {
+			return out, ferr.Wrap(err, "")
+		}
+		out[k] = b
+	}
+
 	return out, nil
 }
 

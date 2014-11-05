@@ -25,6 +25,7 @@ type Generator struct {
 	BlockTypes      []BlockType         // The blocktypes this generator uses, accessed by id
 	BiomeBlockType  map[int][]BlockType // The blocktypes but accessed by biome id instead
 	NoiseGenerators map[string]*simplex.Noise
+	Size            int
 }
 
 func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seeds map[string]int64) *Generator {
@@ -70,27 +71,66 @@ func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed
 	return generator
 }
 
+// Generates a world
+func (g *Generator) GenerateWorld() ferr.FortiaError {
+	// Start by generating the base chunks
+	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
+		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
+			pos := vec.Vec2I{x, y}
+			chunk, err := g.generateBaseChunk(pos)
+			if err != nil {
+				return err
+			}
+			// Save the chunk
+			err = g.W.SetChunk(chunk, true)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Smooth between chunks
+	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
+		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
+			chunk, err := g.W.GetChunk(x, y, true)
+			if err != nil {
+				return err
+			}
+			err = g.smoothChunk(chunk)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	// Grow trees
+	// More advanced block placement
+	// Flag blocks
+	return nil
+}
+
+// 0.2
+func (g *Generator) ExpandWorld() {
+
+}
+
+func (g *Generator) smoothChunk(chunk *Chunk) ferr.FortiaError {
+	return nil
+}
+
 // Generates a chunk, saves chunk information and layers to db.
-func (g *Generator) GenerateChunk(position vec.Vec2I) ferr.FortiaError {
+func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaError) {
 	biome, potency, err := g.getBiome(position)
 
 	chunk := g.generateLandscape(position, biome)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	chunk, err = g.smoothEedges(chunk)
-	if err != nil {
-		return err
-	}
 	chunk.Potency = potency
 
 	chunk = g.placeBlocks(chunk)
 
-	chunk.FlagSurounded()
-
-	err = g.W.SetChunk(chunk, true)
-	return err
+	return chunk, err
 }
 
 // First stage

@@ -1,6 +1,8 @@
 Alpha 0.1: 
   Tasks to do before alpha 0.1 release, check todo.md for a complete list of tasks
   as i started tracking them via this method not long ago
+  db:
+   ✔ Add being able to get multiple chunks in a mget command @done (14-11-05 18:56)
   fserver:
    ✔ Add Ticker @done (14-10-30 15:52)
       No implentation of said ticker, but make it possible to enable it

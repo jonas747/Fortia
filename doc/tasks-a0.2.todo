@@ -1,21 +1,37 @@
 Alpha 0.2:
+  Tasks to do before alpha 0.2 release
   General:
    ☐ Figure out an action system for unit and building actions and such
    ☐ 
+  
   Scheduler:
     (Main point create the scheduler)
     The shdeduler tells tickers when to tick, and what they should do
     ☐ Create the scheduler
     Connects to tickers over tcp
+ 
   Ticker:
     The ticker makes the world go around
     ☐ Figure out the action system and document it
+  DB:
+    General improvements and such
+    Have 2 options: 1 function for per type of db element(eg getLater and such)
+    option 2: Have more general get and set functions(eg gethash, getstring etc)
+    Option 1 offers more flexibility towards the db layer
+   ☐ Create game and auth interfaces
+   ☐ Change auth ang game structs to work with interfaces
+   ☐ Write tests and benchmarks
+
   World:
    ☐ Organise the world package better
    ☐ Check nearby chunks when flagging blocks covered or not
+   ☐ write tests and benchmarks
    Worldgen:
+    ☐ Implement world extending
+      Extends a allready generated world, making it bigger
     ☐ Rivers
     ☐ Oceans
+
   Auth:
    ☐ Password recovery
      Through email or something
