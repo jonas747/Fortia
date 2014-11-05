@@ -87,6 +87,8 @@ func (g *Generator) GenerateChunk(position vec.Vec2I) ferr.FortiaError {
 
 	chunk = g.placeBlocks(chunk)
 
+	chunk.FlagSurounded()
+
 	err = g.W.SetChunk(chunk, true)
 	return err
 }
@@ -137,7 +139,7 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 	wHeight := g.W.WorldHeight
 	lSize := g.W.LayerSize
-	rough := int(10 - biome.Properties.Roughness)
+	rough := int(100 - biome.Properties.Roughness*10)
 
 	noiseGen := g.NoiseGenerators["landscape"]
 
@@ -145,6 +147,13 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 	cWorldPos.MultiplyScalar(float64(lSize))
 
 	layers := make([]*Layer, wHeight)
+
+	c := &Chunk{
+		Position: position,
+		Layers:   layers,
+		Biome:    biome,
+		World:    g.W,
+	}
 
 	// The actual generation
 	for x := 0; x < lSize; x++ {
@@ -160,6 +169,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 					l = &Layer{
 						World:    g.W,
 						Position: vec.Vec3I{position.X, position.Y, z},
+						Chunk:    c,
 					}
 					layers[z] = l
 				}
@@ -168,7 +178,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				}
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				noise := noiseGen.Noise3(float64(wx/rough), float64(wy/rough), float64(z/rough))
-				noise -= float64((z / wHeight) * 5) //TODO: tweak this
+				noise += 1 - 2*(float64(z)/float64(wHeight)) //TODO: tweak this
 				noise *= 100
 
 				b := Block{
@@ -180,12 +190,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 			}
 		}
 	}
-
-	return &Chunk{
-		Position: position,
-		Layers:   layers,
-		Biome:    biome,
-	}
+	return c
 }
 
 // TODO

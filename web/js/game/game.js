@@ -50,16 +50,28 @@ Fortia.game = {
 		$(window).resize(Fortia.game.resize)
 		Fortia.game.resize();
 
-		this.cachedLayers = {};
-		this.fetchingLayers = {};
+		this.cameraHeight = 50;
+
+		this.sight = 3;
+		this.sightHeight = 3;
+
+		this.cpos = new THREE.Vector3(0,0,100)
+
+		this.blkMaterial = new THREE.MeshPhongMaterial({
+			vertexColors: THREE.FaceColors,
+			blending: THREE.AdditiveBlending,
+			shininess: 80,
+		});
+
+		var boundWheelCB = this.onWheel.bind(this);
+		window.addWheelListener(this.canvas, boundWheelCB);
 	},
 	initScene: function(){
-		this.canvas = $("#game-canvas")
-
+		this.canvas = $("#game-canvas")[0];
 		var width = Fortia.gameView.canvasWidth;
 		var height = Fortia.gameView.canvasHeigh;
 
-		var renderer = new THREE.WebGLRenderer({canvas: this.canvas[0]});
+		var renderer = new THREE.WebGLRenderer({canvas: this.canvas});
 		renderer.setSize( width, height );
 
 		var scene = new THREE.Scene();
@@ -70,12 +82,13 @@ Fortia.game = {
 		                                1,            		// Near plane
 		                                10000				// Far plane
 		                            );
-		camera.position.set( 0, 0, 10 );
-		camera.lookAt( new THREE.Vector3(0, 0, 0));
+		camera.position.set( 0, -2, 10 );
+		camera.lookAt(new THREE.Vector3(0,0,0));
+		//camera.rotation.z = -0.78;
 		scene.add( camera );
 
-		var light = new THREE.PointLight( 0xffffff );
-		light.position.set( 10, 50, 10 );
+		var light = new THREE.HemisphereLight( 0xffffff, 0xff0000, 1 );
+		light.position.set( 0, 0, 1000 );
 		scene.add( light );
 
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -99,9 +112,9 @@ Fortia.game = {
 			that.running = true;
 			that.loop();
 		});
-	
-		//this.camera.move({x:0, y:0, z: 50});
-	
+		
+		var boundUptLayer = this.updateLayers.bind(this);
+		setInterval(boundUptLayer, 1000)
 		this.loop();
 	},
 	stop: function(){
@@ -204,13 +217,6 @@ Fortia.game = {
 		return new THREE.Vector2(x, y)
 	},	
 	moveCamera: function(by){
-		// Start by fetching sourunding layers
-		var cachedLayers = this.cachedLayers;
-		var fetchingLayers = this.fetchingLayers;
-
-		var sight = 2;
-		var seightHeight = 2;
-
 		if (!this.cpos){
 			this.cpos = new THREE.Vector3(0,0,0); // Default camera position
 		}
@@ -218,35 +224,73 @@ Fortia.game = {
 		var newPos = this.cpos.clone();
 		newPos.add(by);
 
+		// if we moved to a new layer/chunk we fetch/update the cache
 		var oldLPos = this.worldToLayerPos(this.cpos)
 		var newLPos = this.worldToLayerPos(newPos)
 
-		if (newLPos.equals(oldLPos)) {
-			this.camera.position.copy(newPos);
-			this.camera.position.z += 10
-			this.cpos.copy(newPos);
-			console.log("still on same chunk")
-			return
+		if (!newLPos.equals(oldLPos)) {
+			console.log("Moved to a new Layer!")
+			this.layersDirty = true;
 		};
-		for (var x = -1*sight; x < sight; x++) {
-			for (var y = -1*sight; y < sight; y++) {
-				var pos = newLPos.clone().add(new THREE.Vector3(x, y, 0))
-				if (cachedLayers[pos.x+":"+pos.y+":"+pos.z]) {
-					continue
-				}else if(fetchingLayers[pos.x+":"+pos.y+":"+pos.z]){
-					continue
-				}
-				this.fetchLayer(pos)
+		
+		this.camera.position.copy(newPos);
+		this.camera.position.z += Fortia.game.cameraHeight;
+		this.cpos = newPos
+
+	},
+	updateLayers: function(){
+		if (!this.layersDirty) {
+			return;
+		};
+
+		this.cachedLayers = this.cachedLayers || {};
+		this.fetchingLayers = this.fetchingLayers || {};
+
+		var newLPos = this.worldToLayerPos(this.cpos)
+
+		for (var x = -1*this.sight; x < this.sight; x++) {
+			for (var y = -1*this.sight; y < this.sight; y++) {
+				for (var z = -1*this.sightHeight; z < this.sightHeight; z++) {
+					var pos = newLPos.clone().add(new THREE.Vector3(x, y, 0))
+					var index = pos.x+":"+pos.y+":"+pos.z;
+					var l = this.cachedLayers[index];
+					if (l) {
+						if (!l.mesh.surfaceMesh.parent) {
+							this.scene.add(l.mesh.surfaceMesh);
+						};
+						continue;
+					}else if(this.fetchingLayers[pos.x+":"+pos.y+":"+pos.z]){
+						continue;
+					}
+					this.fetchLayer(pos)
+				};
 			};
 		};
-		this.camera.position.copy(newPos);
-		this.camera.position.z += 10
-		this.cpos = newPos
+		this.cleanScene();
+		this.layersDirty = false
 	},
 	cleanCache: function(){
 
 	},
+	cleanScene: function(){
+		for( var key in this.cachedLayers ){
+			var l = this.cachedLayers[key];
+			var pos = l.pos.clone();
+
+			var lpos = this.worldToLayerPos(this.cpos);
+
+			var delta = lpos.sub(pos);
+
+			if (delta.x > this.sight || delta.x < -1*this.sight || 
+				delta.y > this.sight || delta.y < -1*this.sight ||
+				delta.z > this.sightHeight || delta.z < 0) {
+				this.scene.remove(l.mesh.surfaceMesh);
+			};
+		}
+	},
 	fetchLayer: function(pos){
+		this.fetchingLayers = this.fetchingLayers || {};
+
 		var indexStr = pos.x+":"+pos.y+":"+pos.z
 		this.fetchingLayers[indexStr] = true;
 
@@ -263,7 +307,6 @@ Fortia.game = {
 				that.cachedLayers[indexStr] = layer;
 				that.fetchingLayers[indexStr] = false;
 			}
-			that.cleanCache();
 		}, function(e, r){
 			that.fetchingLayers[indexStr] = false
 			console.log("Error fetching layer", e)
@@ -274,5 +317,11 @@ Fortia.game = {
 		t.x = Math.floor(t.x / this.worldInfo.layerSize);
 		t.y = Math.floor(t.y / this.worldInfo.layerSize);
 		return t
+	},
+	onWheel: function(details){
+		var deltaY = details.deltaY;
+		this.cameraHeight += deltaY;
+		this.camera.position = this.cpos.clone().add(new THREE.Vector3(0,0,this.cameraHeight));
 	}
 }
+

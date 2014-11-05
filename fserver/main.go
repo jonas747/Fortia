@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	fUpdateWorld = flag.Bool("u", false, "Updates the world with the wgen.json and blocktypes.json")
-	fCreateWorld = flag.Bool("c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json")
+	fUpdateWorld = flag.Bool("u", false, "Updates the world with the wgen.json and blocktypes.json, then exits")
+	fCreateWorld = flag.Bool("c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json, then exits")
 )
 
 var (

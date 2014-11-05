@@ -35,14 +35,30 @@ Fortia.Layer.prototype.generateMesh = function(){
 				continue;
 			};
 			if (curBlock.Id > 0) {
-				this.voxels[num] = 0xCC9900;
+				var color = 0x0000ff
+				switch (curBlock.Id){
+					case 1: // stone 
+						//color = 0x555555;
+						var color1c = (Math.random() * 0x05)+0x20 
+						color = (color1c) | (color1c << 8) | (color1c << 16);
+						break;
+					case 2:
+						var color1c = ((Math.random() * 0x08) + 0x70) << 8
+						color = 0x220022 | color1c
+						break;
+				}
+				if (curBlock.Flags && curBlock.Flags & 1) { // fully covered
+					//color -= 0x222222;
+				};
+				this.voxels[num] = color;
 			}else{
 				this.voxels[num] = 0;
 			}
 		};
 	};
 	this.mesh = new Mesh(this, GreedyMesh, new THREE.Vector3(1,1,1));
-	this.mesh.createSurfaceMesh();
+	console.log(Fortia.game.blkMaterial)
+	this.mesh.createSurfaceMesh(Fortia.game.blkMaterial);
 	this.mesh.setPosition(this.pos.x*this.size, this.pos.y*this.size, this.pos.z);
 	console.log(this)
 }

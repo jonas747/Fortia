@@ -14,6 +14,10 @@ var (
 	ErrPropertyNotFound = errors.New("Property not found")
 )
 
+const (
+	BFlagCovered = 1 << iota // On if the block is souronded by blocks and cannot be seen
+)
+
 type BlockProbability struct {
 	Everywhere int
 	Outside    int
@@ -111,6 +115,53 @@ type Block struct {
 	Id int
 }
 
+// TODO check chunks nearby
+// Should we still check even if this block is air?
+func (b *Block) IsSurounded() (bool, ferr.FortiaError) {
+	if b.Layer == nil {
+		return false, ferr.New("Layer nil")
+	}
+	if b.Layer.Chunk == nil {
+		return false, ferr.New("Chunk nil")
+	}
+
+	pos := b.LocalPosition
+
+	// Set chunk edges to not covered for now
+	if pos.X == 0 || pos.X >= b.Layer.World.LayerSize ||
+		pos.Y == 0 || pos.Y >= b.Layer.World.LayerSize {
+		return false, nil
+	}
+
+	// get surounding blocks
+	blocks := make([]*Block, 0)
+	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X+1, pos.Y))
+	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X-1, pos.Y))
+	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y+1))
+	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y-1))
+
+	if b.Layer.Position.Z > 0 {
+		// Check block below
+		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z-1]
+		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
+	}
+
+	if b.Layer.Position.Z < b.Layer.World.WorldHeight-1 {
+		// Check block above
+		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z+1]
+		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
+	}
+
+	for _, v := range blocks {
+		if v == nil || v.Id <= 0 {
+			// air
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
 func (w *World) SetLayer(layer *Layer) ferr.FortiaError {
 	raw, err := layer.Json()
 	if err != nil {
@@ -139,12 +190,23 @@ func (w *World) GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError) {
 
 type Layer struct {
 	World    *World `json:"-"`
+	Chunk    *Chunk `json:"-"`
 	Position vec.Vec3I
 	Blocks   []*Block
 	Flags    int
 	IsAir    bool // True if this layer is just air
 }
 
+// Gets the block at local position lx ly, return nil if out of bounds
+func (l *Layer) GetLocalBlock(lx, ly int) *Block {
+	index := l.World.CoordsToIndex(vec.Vec3I{lx, ly, 0})
+	if index >= len(l.Blocks) || index < 0 {
+		return nil
+	}
+	return l.Blocks[index]
+}
+
+// Returns a json of the layer
 func (l *Layer) Json() ([]byte, ferr.FortiaError) {
 	out, err := json.Marshal(l)
 	if err != nil {
@@ -205,6 +267,19 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 		}
 	}
 	return out, nil
+}
+
+// Flags all surounded blocks as surounded
+// TODO remove flag if not covered and flagged allready
+func (c *Chunk) FlagSurounded() {
+	for _, layer := range c.Layers {
+		for _, block := range layer.Blocks {
+			surounded, _ := block.IsSurounded()
+			if surounded {
+				block.Flags |= BFlagCovered
+			}
+		}
+	}
 }
 
 // Saves the chunk to the database

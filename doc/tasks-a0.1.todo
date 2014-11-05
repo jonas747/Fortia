@@ -5,8 +5,9 @@ Alpha 0.1:
    ✔ Add Ticker @done (14-10-30 15:52)
       No implentation of said ticker, but make it possible to enable it
   World:
-   ☐ Apply default properties to biomes
+   ✔ Apply default properties to biomes @done (14-11-02 16:32)
    ✔ Assign biomes to chunks at world gen @done (14-11-01 01:14)
+     Need to find a better mtethod
    ✔ Add Get neighbours to layers and/or chunks @done (14-10-31 22:46)
    ✔ Basic landscape in worldgen @done (14-10-31 18:06)
      Simplex noise map for landscape
@@ -25,14 +26,18 @@ Alpha 0.1:
      Take the output from the landscape generator and turn it all into blocks
    ☐ More advanced block placement in worldgen
      Using the blocks.json
+   ✔ Flag fully covered blocks "covered" or something @done (14-11-05 01:45)
+     Using a bitmask
 
   Client: 
    ✔ Prototype 2D renderer @done (14-10-30 16:11)
      The 2d renderer did not look good, so i deiceded to start working on the 3d one
      right away instead.
-   ☐ 3D Renderer
-   ☐ Improved layer-fetching code
-     Dont fetch layers that are allready being fetched, remove layers not used from cache etc...
-     Maybe make so that only 1 layer can be added per frame to prevent slow down
-   ☐ Look around
+   ☐ Improved layer-fetch/cache/remove from scene etc code
+     Currently, Chunks are stored in the cache, removed from the scene when not supposed to be seen but still in cache, never removed from cache.
+     Queue system maybe?
+   ✔ Look around @done (14-11-04 23:16)
    ✔ Input @done (14-10-30 16:05)
+   ✔ Make scrollwheel change camera height @done (14-11-05 00:33)
+   3D Renderer:
+    ✔ Basic renderer @done (14-11-04 23:15)

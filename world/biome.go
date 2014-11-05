@@ -39,6 +39,31 @@ func BiomesFromJson(data []byte) (BiomesInfo, ferr.FortiaError) {
 	if err != nil {
 		return BiomesInfo{}, ferr.Wrap(err, "")
 	}
+
+	// Apply default propterties
+	// Todo find an easier way to do this, reflection perhaps?
+	for k, v := range bi.Biomes {
+		if v.Properties.Caves == 0 {
+			v.Properties.Caves = bi.DefaultProperties.Caves
+		}
+		if v.Properties.Trees == 0 {
+			v.Properties.Trees = bi.DefaultProperties.Trees
+		}
+		if v.Properties.Roughness == 0 {
+			v.Properties.Roughness = bi.DefaultProperties.Roughness
+		}
+		if v.Properties.Soil == 0 {
+			v.Properties.Soil = bi.DefaultProperties.Soil
+		}
+		if v.Properties.Metals == 0 {
+			v.Properties.Metals = bi.DefaultProperties.Metals
+		}
+		if v.Properties.Wildlife == 0 {
+			v.Properties.Wildlife = bi.DefaultProperties.Wildlife
+		}
+		bi.Biomes[k] = v
+	}
+
 	return bi, nil
 }
 

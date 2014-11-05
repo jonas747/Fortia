@@ -1,0 +1,42 @@
+Alpha 0.2:
+  General:
+   ☐ Figure out an action system for unit and building actions and such
+   ☐ 
+  Scheduler:
+    (Main point create the scheduler)
+    The shdeduler tells tickers when to tick, and what they should do
+    ☐ Create the scheduler
+    Connects to tickers over tcp
+  Ticker:
+    The ticker makes the world go around
+    ☐ Figure out the action system and document it
+  World:
+   ☐ Organise the world package better
+   ☐ Check nearby chunks when flagging blocks covered or not
+   Worldgen:
+    ☐ Rivers
+    ☐ Oceans
+  Auth:
+   ☐ Password recovery
+     Through email or something
+   ☐ Change password and username
+  Master Server:
+    ☐ Create a simple package for interacting with the master server
+    ☐ Create the master server itself
+  Frontend: 
+   ☐ Maybe change from backbone.js to knockout.js
+     Need to read more up on it
+    Client:
+     ☐ Complete rewrite of the client 
+     ☐ Simple ui
+     ☐ Simple selection(units, tiles, buildings)
+     ☐ Model loading and handling
+     ☐ Animations
+       Maybe save this one for 0.3
+     ☐ Try out isometric 
+    Lobby:
+     ☐ Password recovery in login
+     ☐ Make it possible to change password and username in settings
+    Admin:
+     ☐ Simple overview
+     ☐ Simple log view
