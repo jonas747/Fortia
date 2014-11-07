@@ -29,11 +29,13 @@ type AuthDB interface {
 	ExtendSessionToken(token string, newDuration int) ferr.FortiaError        // Sets the tll of specified token to newDuration
 	CheckSessionToken(token string) (user string, err ferr.FortiaError)       // Returns the user the specified token belongs to, "" if not found
 
-	GetUserInfo(user string) (*UserInfo, ferr.FortiaError) // Returns info about the specified user
-	SetUserInfo(info *UserInfo) ferr.FortiaError           // Overwrite the users info with the info provided
-	EditUserInfoFields(fields map[string]interface{})      // Sets the users fields with the fields provided
+	GetUserInfo(user string) (*UserInfo, ferr.FortiaError)                          // Returns info about the specified user
+	SetUserInfo(info *UserInfo) ferr.FortiaError                                    // Overwrite the users info with the info provided
+	EditUserInfoFields(user string, fields map[string]interface{}) ferr.FortiaError // Sets the users fields with the fields provided
+	EditUserWorlds(user string, add []string, del []string) ferr.FortiaError        // Add the worlds in add and removes the worlds in remove
 
-	GetWorldListing() ([]*WorldInfo, ferr.FortiaError)        // Returns all worlds
-	GetWorldInfo(world string) (*WorldInfo, ferr.FortiaError) // Returns info about specified world
-	SetWorldInfo(info *WorldInfo) ferr.FortiaError            // Saves the specified world info to the database
+	GetWorldListing() ([]*WorldInfo, ferr.FortiaError)                          // Returns all worlds
+	GetWorldInfo(world string) (*WorldInfo, ferr.FortiaError)                   // Returns info about specified world
+	SetWorldInfo(info *WorldInfo) ferr.FortiaError                              // Saves the specified world info to the database
+	EditWorldInfo(world string, fields map[string]interface{}) ferr.FortiaError // Overwrites the stored world info fields with the fields provided
 }

@@ -3,12 +3,12 @@ Alpha 0.1:
   as i started tracking them via this method not long ago
   db:
    ✔ Add being able to get multiple chunks in a mget command @done (14-11-05 18:56)
-    Have 2 options: 1 function for per type of db element(eg getLater and such)
-    option 2: Have more general get and set functions(eg gethash, getstring etc)
-    Option 1 offers more flexibility towards the db layer
-   ☐ Create game and auth interfaces - Tomorrow
-     Have game db interface in world package and auth one in in db package.. maybe
-   ☐ Change auth ang game structs to work with interfaces - Tomorrow
+   ✔ Create game and auth interfaces @done (14-11-07 18:56)
+    Have game db interface in world package and auth one in in db package
+   ✔ Update all packages to work with said interfaces @done (14-11-07 18:57)
+   ☐ Write a redis implementation of world.GameDB
+   ✔ Write a redis implementation of authserver.AuthDB  @done (14-11-08 00:23)
+    Updating from the db package to the rdb (redis db) package instead of doing it form scratch so shouldnt take so long
   fserver:
    ✔ Add Ticker @done (14-10-30 15:52)
       No implentation of said ticker, but make it possible to enable it
@@ -24,7 +24,7 @@ Alpha 0.1:
      Simplex noise map for caves
    ✘ Rivers @cancelled (14-10-30 16:13)
      For alpha 0.2 instead
-   ☐ Smoothing between chunks in worldgen - friday
+   ☐ Smoothing between chunks in worldgen
    ☐ Grow trees in worldgen
      Simplex noise map for tress with higher sensitivity for higher amount of trees
      Trees can also only grow on soil
@@ -41,8 +41,8 @@ Alpha 0.1:
    ✔ Prototype 2D renderer @done (14-10-30 16:11)
      The 2d renderer did not look good, so i deiceded to start working on the 3d one
      right away instead.
-   ☐ Improved layer-fetch/cache/remove from scene etc code - frida
-y     Currently, Chunks are stored in the cache, removed from the scene when not supposed to be seen but still in cache, never removed from cache.
+   ☐ Improved layer-fetch/cache/remove from scene etc code
+     Currently, Chunks are stored in the cache, removed from the scene when not supposed to be seen but still in cache, never removed from cache.
      Queue system maybe?
    ✔ Look around @done (14-11-04 23:16)
    ✔ Input @done (14-10-30 16:05)

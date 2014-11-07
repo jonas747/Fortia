@@ -3,8 +3,8 @@ package rdb
 /*
 	This is a redis implementation of authserver.AuthDB and world.GameDB
 */
-
 import (
+	"encoding/json"
 	"github.com/fzzy/radix/extra/pool"
 	"github.com/fzzy/radix/redis"
 	ferr "github.com/jonas747/fortia/error"
@@ -14,6 +14,7 @@ var (
 	emptyStrStrMap = make(map[string]string)
 )
 
+// Base database
 type Database struct {
 	Pool *pool.Pool
 }
@@ -40,6 +41,7 @@ func (db *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, ferr.For
 	return reply, nil
 }
 
+// Represents a redis command
 type RedisCmd struct {
 	Cmd  string
 	Args []interface{}
@@ -60,6 +62,7 @@ func (db *Database) MultiCmd(cmds []RedisCmd) ([]*redis.Reply, ferr.FortiaError)
 	return replies, nil
 }
 
+// Does HGETALL on "key"
 func (db *Database) GetHash(key string) (map[string]string, ferr.FortiaError) {
 	reply, err := db.Cmd("HGETALL", key)
 	if err != nil {
@@ -72,7 +75,38 @@ func (db *Database) GetHash(key string) (map[string]string, ferr.FortiaError) {
 	return hMap, err
 }
 
+// Does HMSET on "key" with all the fialds in info map
 func (db *Database) SetHash(key string, info map[string]interface{}) ferr.FortiaError {
 	_, err := db.Cmd("HMSET", key, info)
+	return err
+}
+
+// Decodes the json at "key" info "val", returns any errors if any
+func (db *Database) GetJson(key string, val interface{}) ferr.FortiaError {
+	reply, err := db.Cmd("GET", key)
+	if err != nil {
+		return err
+	}
+
+	raw, nErr := reply.Bytes()
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+	nErr = json.Unmarshal(raw, val)
+
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+	return nil
+}
+
+// Sets "key" to json encoded "val"
+func (db *Database) SetJson(key string, val interface{}) ferr.FortiaError {
+	serialized, nErr := json.Marshal(val)
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+
+	_, err := db.Cmd("SET", key, serialized)
 	return err
 }

@@ -2,7 +2,10 @@ Alpha 0.2:
   Tasks to do before alpha 0.2 release
   General:
    ☐ Figure out an action system for unit and building actions and such
-   ☐ 
+   Change from login usernames to emails and prompt users when joining worlds for a name to use in that world:
+     Requires some changes to the database layer and api layer
+    ☐ db
+    ☐ api
   
   Scheduler:
     (Main point create the scheduler)
@@ -13,14 +16,16 @@ Alpha 0.2:
   Ticker:
     The ticker makes the world go around
     ☐ Figure out the action system and document it
+
   DB:
-    General improvements and such
+    General improvements and such to the redis implementation
    ☐ Write tests and benchmarks
 
   World:
    ☐ Organise the world package better
    ☐ Check nearby chunks when flagging blocks covered or not
    ☐ write tests and benchmarks
+
    Worldgen:
     ☐ Implement world extending
       Extends a allready generated world, making it bigger
@@ -31,12 +36,15 @@ Alpha 0.2:
    ☐ Password recovery
      Through email or something
    ☐ Change password and username
+
   Master Server:
     ☐ Create a simple package for interacting with the master server
     ☐ Create the master server itself
+
   Frontend: 
    ☐ Maybe change from backbone.js to knockout.js
      Need to read more up on it
+
     Client:
      ☐ Complete rewrite of the client 
      ☐ Simple ui
@@ -45,9 +53,11 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
+
     Lobby:
      ☐ Password recovery in login
      ☐ Make it possible to change password and username in settings
+       
     Admin:
      ☐ Simple overview
      ☐ Simple log view
