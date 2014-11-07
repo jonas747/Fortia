@@ -1,7 +1,7 @@
 package gameserver
 
 import (
-	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/authserver"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
@@ -11,13 +11,13 @@ import (
 
 var (
 	logger    *log.LogClient
-	authDb    *db.AuthDB
-	gameDb    *db.GameDB
+	authDb    authserver.AuthDB
+	gameDb    world.GameDB
 	gameWorld *world.World
 	server    *rest.Server
 )
 
-func Run(l *log.LogClient, gdb *db.GameDB, adb *db.AuthDB, addr string) ferr.FortiaError {
+func Run(l *log.LogClient, gdb world.GameDB, adb authserver.AuthDB, addr string) ferr.FortiaError {
 	l.Info("Starting gameserver")
 	logger = l
 	authDb = adb

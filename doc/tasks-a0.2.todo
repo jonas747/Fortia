@@ -15,11 +15,6 @@ Alpha 0.2:
     ☐ Figure out the action system and document it
   DB:
     General improvements and such
-    Have 2 options: 1 function for per type of db element(eg getLater and such)
-    option 2: Have more general get and set functions(eg gethash, getstring etc)
-    Option 1 offers more flexibility towards the db layer
-   ☐ Create game and auth interfaces
-   ☐ Change auth ang game structs to work with interfaces
    ☐ Write tests and benchmarks
 
   World:

@@ -1,7 +1,12 @@
 package authserver
 
+/*
+	Fortia authorisation server
+	Serves a resp api
+*/
+
 import (
-	"github.com/jonas747/fortia/db"
+	//"github.com/jonas747/fortia/rdb"
 	//ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/rest"
@@ -10,7 +15,7 @@ import (
 
 var (
 	logger *log.LogClient
-	authDb *db.AuthDB
+	authDb AuthDB
 	server *rest.Server
 )
 
@@ -20,7 +25,8 @@ func panicErr(err error) {
 	}
 }
 
-func Run(l *log.LogClient, adb *db.AuthDB, addr string) {
+// Runs the server witht the specified db and address
+func Run(l *log.LogClient, adb AuthDB, addr string) {
 	l.Info("Starting Authserver")
 	logger = l
 	authDb = adb

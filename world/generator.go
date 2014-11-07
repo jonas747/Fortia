@@ -177,8 +177,8 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 // Second stage: Returns a chunk, at this stage it only sets the block id to one of 2, 0 for air and 1 for land
 // Needs to be tweaked
 func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
-	wHeight := g.W.WorldHeight
-	lSize := g.W.LayerSize
+	wHeight := g.W.GeneralInfo.Height
+	lSize := g.W.GeneralInfo.LayerSize
 	rough := int(100 - biome.Properties.Roughness*10)
 
 	noiseGen := g.NoiseGenerators["landscape"]
@@ -246,9 +246,9 @@ func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
 func (g *Generator) placeBlocks(chunk *Chunk) *Chunk {
-	for x := 0; x < g.W.LayerSize; x++ {
-		for y := 0; y < g.W.LayerSize; y++ {
-			for z := 0; z < g.W.WorldHeight; z++ {
+	for x := 0; x < g.W.GeneralInfo.LayerSize; x++ {
+		for y := 0; y < g.W.GeneralInfo.LayerSize; y++ {
+			for z := 0; z < g.W.GeneralInfo.Height; z++ {
 				l := chunk.Layers[z]
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				b := l.Blocks[index]

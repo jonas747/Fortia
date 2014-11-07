@@ -4,11 +4,10 @@ import (
 	"flag"
 	"github.com/jonas747/fortia/authserver"
 	"github.com/jonas747/fortia/common"
-	"github.com/jonas747/fortia/db"
 	"github.com/jonas747/fortia/gameserver"
 	"github.com/jonas747/fortia/log"
-	"github.com/jonas747/fortia/ticker"
-	"github.com/jonas747/fortia/vec"
+	"github.com/jonas747/fortia/rdb"
+	//"github.com/jonas747/fortia/ticker"
 	"github.com/jonas747/fortia/world"
 )
 
@@ -18,8 +17,8 @@ var (
 )
 
 var (
-	gdb    *db.GameDB
-	adb    *db.AuthDB
+	gdb    *rdb.GameDB
+	adb    *rdb.AuthDB
 	logger *log.LogClient
 )
 
@@ -49,13 +48,13 @@ func main() {
 	// TODO: Master server
 	if config.ServeAuth || config.ServeGame || *fCreateWorld {
 		if config.ServeGame || *fCreateWorld {
-			gdbRaw, err := db.NewDatabase(config.Game)
+			gdbRaw, err := rdb.NewDatabase(config.Game)
 			panicErr(err)
-			gdb = &db.GameDB{gdbRaw}
+			gdb = &rdb.GameDB{gdbRaw}
 		}
-		adbRaw, err := db.NewDatabase(config.Auth)
+		adbRaw, err := rdb.NewDatabase(config.Auth)
 		panicErr(err)
-		adb = &db.AuthDB{adbRaw}
+		adb = &rdb.AuthDB{adbRaw}
 	}
 	// Gen world initialises a new world
 	if *fCreateWorld {
@@ -70,52 +69,16 @@ func main() {
 		go authserver.Run(logger, adb, ":8080")
 	}
 	if config.RunTicker {
-		go ticker.Run(logger, adb, gdb)
+		//go ticker.Run(logger, adb, gdb)
 	}
 	select {}
 }
 
 func createWorld(size int) {
-	// Load all the settings from files
-	var winfo WorldConfig
-	err := common.LoadJsonFile("world.json", &winfo)
-	panicErr(err)
-
-	logger.Info("Creating world", winfo.Name)
-
-	btypes, err := world.BlockTypesFromFile("blocks.json")
-	panicErr(err)
-
-	biomes, err := world.BiomesFromFile("wgen.json")
-	panicErr(err)
-
-	// Set the world info to the auth db
-	err = adb.SetWorldInfo(winfo.Name, map[string]interface{}{"size": winfo.LayerSize, "name": winfo.Name})
-	panicErr(err)
-
-	w := &world.World{
-		Logger:      logger,
-		Db:          gdb,
-		LayerSize:   winfo.LayerSize,
-		WorldHeight: winfo.WorldHeight,
-		BlockTypes:  btypes,
-		Biomes:      biomes,
+	world := &world.World{
+		Logger: logger,
+		Db:     gdb,
 	}
-	// Save the settings to the game db
-	err = w.SaveSettingsToDb()
-
-	generator := w.NewGenerator()
-
-	for x := -1 * (size / 2); x < size/2; x++ {
-		for y := -1 * (size / 2); y < size/2; y++ {
-			logger.Debug("Generating chunk @ ", x, ":", y)
-			err := generator.GenerateChunk(vec.Vec2I{x, y})
-			if err != nil {
-				logger.Error(err)
-				return
-			}
-		}
-	}
-
+	err := world.LoadSettingsFromDb()
 	panicErr(err)
 }

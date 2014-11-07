@@ -1,4 +1,4 @@
-package db
+package rdb
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// Basic implementation of world.GameDB
 type GameDB struct {
 	*Database
 }

@@ -128,8 +128,8 @@ func (b *Block) IsSurounded() (bool, ferr.FortiaError) {
 	pos := b.LocalPosition
 
 	// Set chunk edges to not covered for now
-	if pos.X == 0 || pos.X >= b.Layer.World.LayerSize ||
-		pos.Y == 0 || pos.Y >= b.Layer.World.LayerSize {
+	if pos.X == 0 || pos.X >= b.Layer.World.GeneralInfo.LayerSize ||
+		pos.Y == 0 || pos.Y >= b.Layer.World.GeneralInfo.LayerSize {
 		return false, nil
 	}
 
@@ -146,7 +146,7 @@ func (b *Block) IsSurounded() (bool, ferr.FortiaError) {
 		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
 	}
 
-	if b.Layer.Position.Z < b.Layer.World.WorldHeight-1 {
+	if b.Layer.Position.Z < b.Layer.World.GeneralInfo.Height-1 {
 		// Check block above
 		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z+1]
 		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))

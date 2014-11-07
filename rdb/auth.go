@@ -1,4 +1,4 @@
-package db
+package rdb
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
@@ -7,22 +7,17 @@ import (
 	"time"
 )
 
+// Implements authserver.AuthDB
 type AuthDB struct {
 	*Database
 }
 
 var validSessionTokenChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
+// Creates a session token
 func createSessionToken(length int) string {
 	seed := time.Now().Nanosecond()
 	rand.Seed(int64(seed))
-	/*
-		arr := make([]byte, length)
-		for i := 0; i < length; i++ {
-			arr[i] = byte(rand.Intn(255))
-		}
-		return string(arr)
-	*/
 	finalString := ""
 	for i := 0; i < length; i++ {
 		rNum := rand.Intn(len(validSessionTokenChars))

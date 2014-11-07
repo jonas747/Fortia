@@ -130,8 +130,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	if server.HandleFortiaError(w, r, err) {
 		return
 	}
-	_, ok := existingInfo["name"]
-	if ok {
+	if existingInfo.Name != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(rest.ApiError(rest.ErrUsernameTaken, "Username is taken"))
 		return
@@ -144,12 +143,13 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 		return
 	}
 
-	infoMap := make(map[string]interface{})
-	infoMap["name"] = rBody.Username
-	infoMap["pw"] = string(pwHash)
-	infoMap["mail"] = rBody.Email
+	user := &UserInfo{
+		Name:   rBody.Username,
+		PwHash: pwHash,
+		Email:  rBody.Email,
+	}
 
-	err = authDb.SetUserInfo(rBody.Username, infoMap)
+	err = authDb.SetUserInfo(user)
 	if !server.HandleFortiaError(w, r, err) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("{\"ok\": true}"))
@@ -169,10 +169,8 @@ func handleMe(w http.ResponseWriter, r *http.Request, body interface{}) {
 		return
 	}
 
-	// Add ok true, because everythign is ok
-	info["ok"] = "true"
 	// We dont want to send the password hash...
-	info["pw"] = ""
+	info.PwHash = []byte{} // We dont want to expose the password hash for obvious reasons
 
 	out, nerr := json.Marshal(info)
 	if nerr != nil {

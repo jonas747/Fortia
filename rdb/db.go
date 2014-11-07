@@ -1,8 +1,8 @@
-/*
-	Provides an abstraction from the server stack to the database to make it easier to switch/ make improvements
-*/
+package rdb
 
-package db
+/*
+	This is a redis implementation of authserver.AuthDB and world.GameDB
+*/
 
 import (
 	"github.com/fzzy/radix/extra/pool"
