@@ -39,6 +39,6 @@ type GameDB interface {
 	SetChunkInfo(chunk *Chunk) ferr.FortiaError
 
 	// Todo
-	GetEntity()
-	SetEntity()
+	//GetEntity()
+	//SetEntity()
 }

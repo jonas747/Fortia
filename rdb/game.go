@@ -78,58 +78,43 @@ func (g *GameDB) SetLayer(layer *world.Layer) ferr.FortiaError {
 func (g *GameDB) GetLayer(pos vec.Vec3I) (*world.Layer, ferr.FortiaError) {
 	var layer world.Layer
 	err := g.GetJson(fmt.Sprintf("l:%d:%d:%d", pos.X, pos.Y, pos.Z), &layer)
-	if err != nil {
-		return nil, err
-	}
-	return &layer, nil
+	return &layer, err
 }
-// I AM HERE!
+
 // Returns multiple layers
-func (g *GameDB) GetLayers(positions []*vec.Vec3I) ([]*], ferr.FortiaError) {
-	out := make([][]byte, len(positions))
+func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaError) {
+	out := make([]*world.Layer, len(positions))
 
-	keys := make([]interface{}, len(positions))
 	for k, v := range positions {
-		keys[k] = fmt.Sprintf("l:%d:%d:%d", v.X, v.Y, v.Z)
-	}
-	reply, err := g.Cmd("MGET", keys...)
-	if err != nil {
-		return out, err
-	}
-
-	for k, v := range reply.Elems {
-		if v == nil {
-			continue
-		}
-		b, err := v.Bytes()
+		layer, err := g.GetLayer(v)
 		if err != nil {
-			return out, ferr.Wrap(err, "")
+			return out, err
 		}
-		out[k] = b
+		out[k] = layer
 	}
-
 	return out, nil
 }
 
-// Stores information about a chunk
-// c:{x}:{y}
-// Returns the chunkinfo, wether the chunk exists, and any errors
-func (g *GameDB) GetChunkInfo(x, y int) ([]byte, bool, ferr.FortiaError) {
-	reply, err := g.Cmd("GET", fmt.Sprintf("c:%d:%d", x, y))
-	if err != nil {
-		return []byte{}, false, err
+// Saves multiple layers
+func (g *GameDB) SetLayers(layers []*world.Layer) ferr.FortiaError {
+	for _, v := range layers {
+		err := g.SetLayer(v)
+		if err != nil {
+			return err
+		}
 	}
-
-	out, nErr := reply.Bytes()
-	if nErr != nil {
-		return []byte{}, false, nil
-	}
-	return out, true, nil
+	return nil
 }
 
-func (g *GameDB) SetChunkInfo(x, y int, info []byte) ferr.FortiaError {
-	_, err := g.Cmd("SET", fmt.Sprintf("c:%d:%d", x, y), info)
-	return err
+// Returns the chunkinfo
+func (g *GameDB) GetChunkInfo(pos vec.Vec2I) (*world.Chunk, ferr.FortiaError) {
+	var chunk world.Chunk
+	err := g.GetJson(fmt.Sprintf("c:%d:%d", pos.X, pos.Y), &chunk)
+	return &chunk, err
+}
+
+func (g *GameDB) SetChunkInfo(chunk *world.Chunk) ferr.FortiaError {
+	return g.SetJson(fmt.Sprintf("c:%d:%d", chunk.Position.X, chunk.Position.Y), chunk)
 }
 
 // Get and set entities
