@@ -1,6 +1,9 @@
 General:
   This is general tasks to be completed whenever i get around to it, with no set deadline
   
+  ☐ Zoomed out view
+    A zoomed out view that does not view all blocks, but say 1 block represents 10 blocks or something along those lines
+  ☐ Fun progress bar for world gen
   Ticker:
     ☐ Add a scheduler
 

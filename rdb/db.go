@@ -29,16 +29,25 @@ func NewDatabase(addr string) (*Database, error) {
 
 // Same as redis.Client.Cmd but uses a connection from a pool
 func (db *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, ferr.FortiaError) {
+	reply, client, err := db.CmdChain(cmd, args)
+	if client != nil {
+		db.Pool.Put(client)
+	}
+	return reply, err
+}
+
+// Same as cmd but returns the connection after the command for more use
+func (db *Database) CmdChain(cmd string, args ...interface{}) (*redis.Reply, *redis.Client, ferr.FortiaError) {
 	client, err := db.Pool.Get()
 	if err != nil {
-		return nil, ferr.Wrap(err, "Error Get db client")
+		return nil, nil, ferr.Wrap(err, "Error Get db client")
 	}
-	defer db.Pool.Put(client)
 	reply := client.Cmd(cmd, args)
 	if reply.Err != nil {
-		return nil, ferr.Wrapa(reply.Err, "Redis cmd", map[string]interface{}{"cmd": cmd, "args": args})
+		db.Pool.Put(client)
+		return nil, nil, ferr.Wrapa(reply.Err, "Redis cmd", map[string]interface{}{"cmd": cmd, "args": args})
 	}
-	return reply, nil
+	return reply, client, nil
 }
 
 // Represents a redis command
@@ -109,4 +118,64 @@ func (db *Database) SetJson(key string, val interface{}) ferr.FortiaError {
 
 	_, err := db.Cmd("SET", key, serialized)
 	return err
+}
+
+// Find a better way to edit sets later
+// Edit a set of integers
+func (db *Database) EditSet(add []interface{}, del []interface{}) ferr.FortiaError {
+	if len(add) > 1 || len(del) > 1 {
+		client, err := db.Pool.Get()
+		if err != nil {
+			return ferr.Wrap(err, "")
+		}
+		defer db.Pool.Put(client)
+
+		if len(add) > 1 {
+			reply := client.Cmd("SADD", add...)
+			if reply.Err != nil {
+				return ferr.Wrap(reply.Err, "")
+			}
+		}
+
+		if len(del) > 1 {
+			reply := client.Cmd("SDEL", del...)
+			if reply.Err != nil {
+				return ferr.Wrap(reply.Err, "")
+			}
+		}
+	}
+	return nil
+}
+
+func (db *Database) EditSetI(key string, add, del []int) ferr.FortiaError {
+	argAddSlice := make([]interface{}, len(add)+1)
+	for k, v := range add {
+		argAddSlice[k+1] = v
+	}
+	argAddSlice[0] = key
+
+	argDelSlice := make([]interface{}, len(del)+1)
+	for k, v := range del {
+		argDelSlice[k+1] = v
+	}
+	argDelSlice[0] = key
+
+	return db.EditSet(argAddSlice, argDelSlice)
+}
+
+// Edit a set of strings
+func (db *Database) EditSetS(key string, add, del []string) ferr.FortiaError {
+	argAddSlice := make([]interface{}, len(add)+1)
+	for k, v := range add {
+		argAddSlice[k+1] = v
+	}
+	argAddSlice[0] = key
+
+	argDelSlice := make([]interface{}, len(del)+1)
+	for k, v := range del {
+		argDelSlice[k+1] = v
+	}
+	argDelSlice[0] = key
+
+	return db.EditSet(argAddSlice, argDelSlice)
 }

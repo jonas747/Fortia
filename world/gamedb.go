@@ -14,16 +14,21 @@ type WorldInfo struct {
 	Biomes     BiomesInfo  // ..
 }
 
-// TODO
+// Represents a user
 type UserInfo struct {
+	Name string // Name of the user
 }
 
+// The way world information is stored may be changed in the future
 type GameDB interface {
 	GetWorldInfo() (*WorldInfo, ferr.FortiaError)  // Returns info about the world
 	SetWorldInfo(info *WorldInfo) ferr.FortiaError // Saves world information to the database
 
 	GetUserInfo(user string) (*UserInfo, ferr.FortiaError)
 	SetUserInfo(info *UserInfo) ferr.FortiaError
+
+	GetUserEntities(user string) ([]int, ferr.FortiaError)         // Returns the users owned entities
+	EditUserEntities(user string, add, del []int) ferr.FortiaError // Adds and removes entities from the users owned list
 
 	GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError)
 	SetLayer(layer *Layer) ferr.FortiaError
@@ -33,6 +38,7 @@ type GameDB interface {
 	GetChunkInfo(pos vec.Vec2I) (*Chunk, ferr.FortiaError)
 	SetChunkInfo(chunk *Chunk) ferr.FortiaError
 
+	// Todo
 	GetEntity()
 	SetEntity()
 }

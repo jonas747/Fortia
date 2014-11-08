@@ -52,7 +52,10 @@ Game database is entirely in redis
  - u:{name}
      + hash
      + World specific info about this user
-    
+ - ue:{name}
+     + Set of entity id's
+     + User Entities 
+     + List of entities this user owns
 Entity specific properties:
  - Units
      + CurrentAction

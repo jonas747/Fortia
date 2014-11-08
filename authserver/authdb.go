@@ -37,5 +37,5 @@ type AuthDB interface {
 	GetWorldListing() ([]*WorldInfo, ferr.FortiaError)                          // Returns all worlds
 	GetWorldInfo(world string) (*WorldInfo, ferr.FortiaError)                   // Returns info about specified world
 	SetWorldInfo(info *WorldInfo) ferr.FortiaError                              // Saves the specified world info to the database
-	EditWorldInfo(world string, fields map[string]interface{}) ferr.FortiaError // Overwrites the stored world info fields with the fields provided
+	EditWorldInfo(world string, fields map[string]interface{}) ferr.FortiaError // (Redundant perhaps?) Overwrites the stored world info fields with the fields provided
 }

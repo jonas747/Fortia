@@ -1,9 +1,5 @@
 /*
-	Simple REST api package
-
-	TODO: Use proper status codes
-	TODO: Maybe more logging
-	TODO: Add export function
+	Simple REST server package
 
 	If a body is provided and is needed for the specific handler the muxer will decode
 	the body for you
@@ -43,7 +39,7 @@ func NewServer(addr string, logger *log.LogClient) *Server {
 	return server
 }
 
-// Starts serving
+// Start serving
 func (s *Server) Run() error {
 	s.logger.Debug("Starting listen and serve on \"", s.hServer.Addr, "\"")
 	return s.hServer.ListenAndServe()
