@@ -1,6 +1,7 @@
 package world
 
 import (
+	"github.com/cheggaaa/pb"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/simplex"
 	"github.com/jonas747/fortia/vec"
@@ -74,6 +75,9 @@ func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed
 // Generates a world
 func (g *Generator) GenerateWorld() ferr.FortiaError {
 	// Start by generating the base chunks
+	g.W.Logger.Debug("Generating landscape")
+	p := pb.StartNew(g.Size * g.Size)
+	defer p.Finish()
 	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
 		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
 			pos := vec.Vec2I{x, y}
@@ -86,10 +90,13 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 			if err != nil {
 				return err
 			}
+			p.Increment()
 		}
 	}
-
+	p.Finish()
 	// Smooth between chunks
+	g.W.Logger.Debug("Smoothing chunk borders")
+	p = pb.StartNew(g.Size * g.Size)
 	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
 		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
 			chunk, err := g.W.GetChunk(x, y, true)
@@ -100,6 +107,7 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 			if err != nil {
 				return err
 			}
+			p.Increment()
 		}
 	}
 	// Grow trees
@@ -128,7 +136,7 @@ func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaEr
 
 	chunk.Potency = potency
 
-	chunk = g.placeBlocks(chunk)
+	chunk = g.basePlaceBlocks(chunk)
 
 	return chunk, err
 }
@@ -144,7 +152,9 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 		for y := -1; y < 1; y++ {
 			chunk, err := g.W.GetChunk(x+position.X, y+position.Y, false)
 			if err != nil {
-				return Biome{}, 0, err
+				if err.GetMessage() != "404" {
+					return Biome{}, 0, err
+				}
 			}
 
 			// skip if the chunk is not found
@@ -179,10 +189,9 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 	wHeight := g.W.GeneralInfo.Height
 	lSize := g.W.GeneralInfo.LayerSize
-	rough := int(100 - biome.Properties.Roughness*10)
-
 	noiseGen := g.NoiseGenerators["landscape"]
 
+	//rough := biome.Properties.Roughness
 	cWorldPos := position.Clone()
 	cWorldPos.MultiplyScalar(float64(lSize))
 
@@ -217,7 +226,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 					l.Blocks = make([]*Block, lSize*lSize)
 				}
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-				noise := noiseGen.Noise3(float64(wx/rough), float64(wy/rough), float64(z/rough))
+				noise := noiseGen.Noise3(float64(wx/10), float64(wy/10), float64(z/10))
 				noise += 1 - 2*(float64(z)/float64(wHeight)) //TODO: tweak this
 				noise *= 100
 
@@ -245,7 +254,7 @@ func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
 
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
-func (g *Generator) placeBlocks(chunk *Chunk) *Chunk {
+func (g *Generator) basePlaceBlocks(chunk *Chunk) *Chunk {
 	for x := 0; x < g.W.GeneralInfo.LayerSize; x++ {
 		for y := 0; y < g.W.GeneralInfo.LayerSize; y++ {
 			for z := 0; z < g.W.GeneralInfo.Height; z++ {

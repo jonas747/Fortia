@@ -1,11 +1,13 @@
 package rdb
 
 import (
+	"encoding/json"
 	"fmt"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
 	"strconv"
+	"sync"
 )
 
 // Basic implementation of world.GameDB
@@ -82,26 +84,58 @@ func (g *GameDB) GetLayer(pos vec.Vec3I) (*world.Layer, ferr.FortiaError) {
 }
 
 // Returns multiple layers
+// Uses goroutines to do it concurrently
 func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaError) {
 	out := make([]*world.Layer, len(positions))
 
+	// conn, nErr := g.Pool.Get()
+	// if nErr != nil {
+	// 	return out, ferr.Wrap(nErr, "")
+	// }
+	// defer g.Pool.Put(conn)
+	//cmds := make([]RedisCmd, len(positions))
+	args := make([]interface{}, len(positions))
 	for k, v := range positions {
-		layer, err := g.GetLayer(v)
-		if err != nil {
-			return out, err
-		}
-		out[k] = layer
+		args[k] = fmt.Sprintf("l:%d:%d:%d", v.X, v.Y, v.Z)
 	}
+
+	reply, err := g.Cmd("MGET", args...)
+	if err != nil {
+		return out, err
+	}
+
+	list, nErr := reply.List()
+	if nErr != nil {
+		return out, ferr.Wrap(nErr, "")
+	}
+
+	var wg sync.WaitGroup
+	decodeLayer := func(raw []byte, index int) {
+		defer wg.Done()
+		var layer world.Layer
+		nErr = json.Unmarshal(raw, &layer)
+		if nErr != nil {
+			return
+		}
+		out[index] = &layer
+	}
+
+	for k, v := range list {
+		raw := []byte(v)
+		wg.Add(1)
+		go decodeLayer(raw, k)
+	}
+
+	wg.Wait()
+
 	return out, nil
 }
 
 // Saves multiple layers
 func (g *GameDB) SetLayers(layers []*world.Layer) ferr.FortiaError {
 	for _, v := range layers {
-		err := g.SetLayer(v)
-		if err != nil {
-			return err
-		}
+		go g.SetLayer(v)
+
 	}
 	return nil
 }

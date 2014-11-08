@@ -6,7 +6,7 @@ Alpha 0.1:
    ✔ Create game and auth interfaces @done (14-11-07 18:56)
     Have game db interface in world package and auth one in in db package
    ✔ Update all packages to work with said interfaces @done (14-11-07 18:57)
-   ☐ Write a redis implementation of world.GameDB
+   ✔ Write a redis implementation of world.GameDB @done (14-11-08 14:52)
    ✔ Write a redis implementation of authserver.AuthDB  @done (14-11-08 00:23)
     Updating from the db package to the rdb (redis db) package instead of doing it form scratch so shouldnt take so long
   fserver:

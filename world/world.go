@@ -26,7 +26,7 @@ type World struct {
 }
 
 func (w *World) NewGenerator() *Generator {
-	return NewGenerator(w, &w.GeneralInfo.Biomes, w.GeneralInfo.BlockTypes, map[string]int64{"landscape": 1})
+	return NewGenerator(w, &w.GeneralInfo.Biomes, w.GeneralInfo.BlockTypes, map[string]int64{"landscape": 123089})
 }
 
 func (w *World) LoadSettingsFromDb() ferr.FortiaError {

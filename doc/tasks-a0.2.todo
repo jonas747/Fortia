@@ -20,6 +20,7 @@ Alpha 0.2:
   DB:
     General improvements and such to the redis implementation
    ☐ Write tests and benchmarks
+   ☐ Optimise and use more concurrency
    ☐ Do checking to see if the actual chunks/layers/user etc werer getting exists(return a predefined error then)
   World:
    ☐ Organise the world package better

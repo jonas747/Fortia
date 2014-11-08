@@ -43,7 +43,7 @@ func (a *AuthDB) LoginUser(user string, duration int) (string, ferr.FortiaError)
 
 // Returns true if the users password is correct
 func (a *AuthDB) CheckUserPw(user, pw string) (bool, ferr.FortiaError) {
-	pwReply, err := a.Cmd("HGET", "u:"+user, "pw")
+	pwReply, err := a.Cmd("HGET", "u:"+user, "pwHash")
 	if err != nil {
 		return false, err
 	}

@@ -12,6 +12,7 @@ import (
 
 var (
 	emptyStrStrMap = make(map[string]string)
+	errNotFound    = "404"
 )
 
 // Base database
@@ -56,17 +57,24 @@ type RedisCmd struct {
 	Args []interface{}
 }
 
-// Todo use redis transaction
-func (db *Database) MultiCmd(cmds []RedisCmd) ([]*redis.Reply, ferr.FortiaError) {
+// Uses pipeline
+func (db *Database) PipelinedCmds(cmds []RedisCmd) ([]*redis.Reply, ferr.FortiaError) {
 	client, err := db.Pool.Get()
 	if err != nil {
 		return nil, ferr.Wrap(err, "Error Get db client")
 	}
 	defer db.Pool.Put(client)
-	replies := make([]*redis.Reply, 0)
 	for _, cmd := range cmds {
-		reply := client.Cmd(cmd.Cmd, cmd.Args...)
-		replies = append(replies, reply)
+		client.Append(cmd.Cmd, cmd.Args...)
+	}
+
+	replies := make([]*redis.Reply, len(cmds))
+	for i := 0; i < len(cmds); i++ {
+		reply := client.GetReply()
+		if reply.Err != nil {
+			return replies, ferr.Wrap(reply.Err, "")
+		}
+		replies[i] = reply
 	}
 	return replies, nil
 }
@@ -91,6 +99,7 @@ func (db *Database) SetHash(key string, info map[string]interface{}) ferr.Fortia
 }
 
 // Decodes the json at "key" info "val", returns any errors if any
+// val and err is nil if not found
 func (db *Database) GetJson(key string, val interface{}) ferr.FortiaError {
 	reply, err := db.Cmd("GET", key)
 	if err != nil {
@@ -99,6 +108,9 @@ func (db *Database) GetJson(key string, val interface{}) ferr.FortiaError {
 
 	raw, nErr := reply.Bytes()
 	if nErr != nil {
+		if reply.Type == redis.NilReply {
+			return ferr.New(errNotFound)
+		}
 		return ferr.Wrap(nErr, "")
 	}
 	nErr = json.Unmarshal(raw, val)

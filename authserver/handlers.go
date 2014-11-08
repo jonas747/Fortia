@@ -54,6 +54,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
 		return
 	}
 	if !correctPw {
+		logger.Debug(bl.Pw)
 		logger.Warna("User tried logging in with invalid password", map[string]interface{}{"remoteaddr": r.RemoteAddr, "user": bl.Username})
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(rest.ApiError(rest.ErrWrongLoginDetails, "Username or password incorrect"))
@@ -130,7 +131,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	if server.HandleFortiaError(w, r, err) {
 		return
 	}
-	if existingInfo.Name != "" {
+	if existingInfo.Email != "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(rest.ApiError(rest.ErrUsernameTaken, "Username is taken"))
 		return

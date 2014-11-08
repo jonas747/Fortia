@@ -1,5 +1,5 @@
 {
-	"name": "alpha",
-	"layerSize": 20,
-	"worldHeight": 200
+	"Size":       10,
+	"Height":     200,
+	"LayerSize":  25
 }
