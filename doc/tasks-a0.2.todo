@@ -10,12 +10,13 @@ Alpha 0.2:
   Scheduler:
     (Main point create the scheduler)
     The shdeduler tells tickers when to tick, and what they should do
-    ☐ Create the scheduler
+    ☐ Plan/doc the scheduler
     Connects to tickers over tcp
  
   Ticker:
     The ticker makes the world go around
     ☐ Figure out the action system and document it
+    ☐ Implement said action system
 
   DB:
     General improvements and such to the redis implementation
@@ -32,6 +33,11 @@ Alpha 0.2:
       Extends a allready generated world, making it bigger
     ☐ Rivers
     ☐ Oceans
+    ☐ Trees
+    ☐ Caves
+    Wgen options:
+     ☐ Add more advaned world gen options
+     ☐ Use blocks.json and biomes.json in worldgen
 
   Auth:
    ☐ Password recovery
@@ -54,6 +60,9 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
+     ☐ Move chunk decoding and meshing to a backrgound worker
+     ☐ Change to buffer geometry from normal geometry
+       Buffergeometry stores everything in buffers on the gpu rather than in ram(e.g a lot faster)
 
     Lobby:
      ☐ Password recovery in login

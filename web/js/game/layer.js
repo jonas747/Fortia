@@ -5,7 +5,7 @@ Fortia.Layer = function(pos){
 	this.blocks = [];
 	this.voxels = [];
 
-	this.size = Fortia.game.worldInfo.layerSize;
+	this.size = Fortia.game.worldInfo.LayerSize;
 	this.dims = [this.size, this.size, 1];
 	
 	this.mesh;
@@ -29,7 +29,7 @@ Fortia.Layer.prototype.generateMesh = function(){
 	var num = 0;
 	for (var k = 0; k < this.size; k++) {
 		for (var j = 0; j < this.size; j++, num++) {
-			var curBlock = this.blocks[Fortia.game.coordsToIndex(new THREE.Vector2(k, j))];
+			var curBlock = this.blocks[Fortia.game.coordsToIndex(new THREE.Vector2(j, k))];
 			if (!curBlock) {
 				this.voxels[num] = 0;
 				continue;
@@ -47,9 +47,9 @@ Fortia.Layer.prototype.generateMesh = function(){
 						color = 0x220022 | color1c
 						break;
 				}
-				if (curBlock.Flags && curBlock.Flags & 1) { // fully covered
-					//color -= 0x222222;
-				};
+				// if (curBlock.Flags && curBlock.Flags & 1) { // fully covered
+				// 	color = 0xbbbbbb;
+				// };
 				this.voxels[num] = color;
 			}else{
 				this.voxels[num] = 0;

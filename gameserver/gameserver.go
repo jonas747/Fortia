@@ -76,7 +76,7 @@ func initApi(s *rest.Server) {
 		Method:          "GET",
 		Handler:         handleLayers,
 		RequiredCookies: []string{"fortia-session"},
-		RequiredParams:  []string{"x", "y", "layers"},
+		RequiredParams:  []string{"x", "y", "z"},
 	})
 	s.RegisterHandler(&rest.RestHandler{
 		Path:            "/visiblechunks",

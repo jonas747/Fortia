@@ -76,11 +76,9 @@ func (c *Chunk) FlagSurounded() {
 // Saves the chunk to the database
 func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 	if setLayers {
-		for _, l := range chunk.Layers {
-			err := w.SetLayer(l)
-			if err != nil {
-				return err
-			}
+		err := w.Db.SetLayers(chunk.Layers)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -107,15 +105,15 @@ func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
 		if err != nil {
 			return nil, err
 		}
-
-		for k, l := range layers {
+		realLayers := make([]*Layer, 200)
+		for _, l := range layers {
 
 			l.World = w
 			l.Chunk = chunk
 
-			layers[k] = l
+			realLayers[l.Position.Z] = l
 		}
-		chunk.Layers = layers
+		chunk.Layers = realLayers
 
 	}
 

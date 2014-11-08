@@ -47,7 +47,7 @@ func (s *Server) Run() error {
 
 // Implements http.Handler
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+	started := time.Now()
 	// Set some CORS headers
 	// Simply setting the allow origin to * is not enough since that wont
 	// Let requests be made with cookies if they are on a different origin
@@ -59,7 +59,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if path == "" {
 		path = "/"
 	}
-	s.logger.Debug("Incoming ", r.Method, " request for path \"", r.URL.Path, "\" From \"", r.RemoteAddr, "\"")
+	defer func() {
+		taken := time.Since(started)
+		s.logger.Debug("Handled ", r.Method, " request. Path: \"", r.URL.Path, "\", From \"", r.RemoteAddr, "\" Took: ", taken.String())
+	}()
 	handler, found := s.handlers[path]
 	if !found {
 		// 404

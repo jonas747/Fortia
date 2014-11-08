@@ -20,19 +20,19 @@ Alpha 0.1:
    ✔ Basic landscape in worldgen @done (14-10-31 18:06)
      Simplex noise map for landscape
      Needs to be tweaked
-   ☐ Caves
+   ✘ Caves @cancelled (14-11-09 00:18)
      Simplex noise map for caves
    ✘ Rivers @cancelled (14-10-30 16:13)
      For alpha 0.2 instead
-   ☐ Smoothing between chunks in worldgen
-   ☐ Grow trees in worldgen
+   ✘ Smoothing between chunks in worldgen @cancelled (14-11-09 00:18)
+   ✘ Grow trees in worldgen @cancelled (14-11-09 00:18)
      Simplex noise map for tress with higher sensitivity for higher amount of trees
      Trees can also only grow on soil
    ✘ Oceans @cancelled (14-10-30 16:14)
      For alpha 0.2 instead
    ✔ Basic block placement in worldgen @done (14-11-01 01:10)
      Take the output from the landscape generator and turn it all into blocks
-   ☐ More advanced block placement in worldgen
+   ✘ More advanced block placement in worldgen @cancelled (14-11-09 00:18)
      Using the blocks.json
    ✔ Flag fully covered blocks "covered" or something @done (14-11-05 01:45)
      Using a bitmask
@@ -41,7 +41,7 @@ Alpha 0.1:
    ✔ Prototype 2D renderer @done (14-10-30 16:11)
      The 2d renderer did not look good, so i deiceded to start working on the 3d one
      right away instead.
-   ☐ Improved layer-fetch/cache/remove from scene etc code
+   ✔ Improved layer-fetch/cache/remove from scene etc code @done (14-11-08 19:57)
      Currently, Chunks are stored in the cache, removed from the scene when not supposed to be seen but still in cache, never removed from cache.
      Queue system maybe?
    ✔ Look around @done (14-11-04 23:16)

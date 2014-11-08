@@ -219,6 +219,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 						World:    g.W,
 						Position: vec.Vec3I{position.X, position.Y, z},
 						Chunk:    c,
+						IsAir:    true,
 					}
 					layers[z] = l
 				}
@@ -226,14 +227,16 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 					l.Blocks = make([]*Block, lSize*lSize)
 				}
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-				noise := noiseGen.Noise3(float64(wx/10), float64(wy/10), float64(z/10))
-				noise += 1 - 2*(float64(z)/float64(wHeight)) //TODO: tweak this
-				noise *= 100
+				noise := noiseGen.Noise3(float64(wx)/float64(50), float64(wy)/float64(50), float64(z)/float64(50))
+				life := ((float64(wHeight) / float64(z)) * 5) - 10
+				// g.W.Logger.Debug(life, z, wHeight, float64(wHeight)/float64(z))
+				life += noise
+				life *= 100
 
 				b := Block{
 					LocalPosition: vec.Vec2I{x, y},
 					Layer:         l,
-					Id:            int(noise), // Actual id's are assigned later
+					Id:            int(life), // Actual id's are assigned later
 				}
 				l.Blocks[index] = &b
 			}
@@ -263,8 +266,10 @@ func (g *Generator) basePlaceBlocks(chunk *Chunk) *Chunk {
 				b := l.Blocks[index]
 				if b.Id > 50 {
 					b.Id = 1 // rock
-				} else if b.Id <= 50 && b.Id > 0 {
+					l.IsAir = false
+				} else if b.Id <= 50 && b.Id >= 0 {
 					b.Id = 2 // grass
+					l.IsAir = false
 				} else {
 					b.Id = 0 // Air
 				}

@@ -3,7 +3,7 @@ package gameserver
 import (
 	"encoding/json"
 	"github.com/jonas747/fortia/vec"
-	"github.com/jonas747/fortia/world"
+	//"github.com/jonas747/fortia/world"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,21 +20,24 @@ func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
 func handleUpdate(w http.ResponseWriter, r *http.Request, body interface{}) {}
 
 // /layers
+// TODO add a world.getRawLayers function so i dont decode and then encode the json
 func handleLayers(w http.ResponseWriter, r *http.Request, body interface{}) {
 	params := r.URL.Query()
-	x, _ := strconv.Atoi(params.Get("x"))
-	y, _ := strconv.Atoi(params.Get("y"))
-	rawLayers := params.Get("layers")
-	layerLocations := strings.Split(rawLayers, "-")
+	xList := strings.Split(params.Get("x"), ",")
+	yList := strings.Split(params.Get("y"), ",")
+	zList := strings.Split(params.Get("z"), ",")
 
-	layers := make([]*world.Layer, len(layerLocations))
-	for k, v := range layerLocations {
-		z, _ := strconv.Atoi(v)
-		layer, err := gameWorld.GetLayer(vec.Vec3I{x, y, z})
-		if server.HandleFortiaError(w, r, err) {
-			return
-		}
-		layers[k] = layer
+	positions := make([]vec.Vec3I, len(xList))
+	for k, _ := range xList {
+		x, _ := strconv.Atoi(xList[k])
+		y, _ := strconv.Atoi(yList[k])
+		z, _ := strconv.Atoi(zList[k])
+		positions[k] = vec.Vec3I{x, y, z}
+	}
+
+	layers, err := gameDb.GetLayers(positions)
+	if server.HandleFortiaError(w, r, err) {
+		return
 	}
 
 	serialized, nErr := json.Marshal(layers)

@@ -22,17 +22,11 @@ Method: `GET`
 
 Returns info such as moved units or new messages since last update
 
-####/chunk
+####/layers
 Method: `GET`
-
-Returns all the blocks visible to you in that chunk
-params: x y
-
-####/visiblechunks
-Method: `GET`
-
-Returns a list of chunks visible to you, or wether specified chunk is visible to you
-optional params: x y
+ - x: list (seperated by ,) of x coordinates
+ - y: list (seperated by ,) of y coordinates
+ - z: list (seperated by ,) of z coordinates
 
 #Types of game objects
 Todo: write doc on thi
