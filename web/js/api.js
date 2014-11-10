@@ -10,6 +10,7 @@ Fortia.REST = function(options){
 			this[prop] = options[prop]
 		}
 	};
+	this.dType = "json";
 }
 
 Fortia.REST.prototype = {
@@ -28,7 +29,7 @@ Fortia.REST.prototype = {
 			    url: this.urlRoot+path,
 			    type: method,
 			    data: d,
-			    dataType: "json",
+			    dataType: this.dType,
 			    success: success,
 			    error: failed
 			});

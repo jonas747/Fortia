@@ -1,15 +1,18 @@
 var Fortia = Fortia || {};
-Fortia.Layer = function(pos){
+Fortia.Layer = function(pos, size){
 	this.pos = pos || new THREE.Vector3(0, 0);
 
 	this.blocks = [];
 	this.voxels = [];
 
-	this.size = Fortia.game.worldInfo.LayerSize;
+	this.size = size || Fortia.game.worldInfo.LayerSize || 1;
 	this.dims = [this.size, this.size, 1];
 	
 	this.mesh;
 	this.geometry;
+
+	this.vertices;
+	this.colors;
 }
 
 /*
@@ -29,7 +32,7 @@ Fortia.Layer.prototype.generateMesh = function(){
 	var num = 0;
 	for (var k = 0; k < this.size; k++) {
 		for (var j = 0; j < this.size; j++, num++) {
-			var curBlock = this.blocks[Fortia.game.coordsToIndex(new THREE.Vector2(j, k))];
+			var curBlock = this.blocks[this.coordsToIndex(new THREE.Vector2(j, k))];
 			if (!curBlock) {
 				this.voxels[num] = 0;
 				continue;
@@ -56,11 +59,58 @@ Fortia.Layer.prototype.generateMesh = function(){
 			}
 		};
 	};
-	this.mesh = new Mesh(this, GreedyMesh, new THREE.Vector3(1,1,1));
-	console.log(Fortia.game.blkMaterial)
-	this.mesh.createSurfaceMesh(Fortia.game.blkMaterial);
-	this.mesh.setPosition(this.pos.x*this.size, this.pos.y*this.size, this.pos.z);
-	console.log(this)
+	this.vMesh = new VoxelMesh()
+	this.vMesh.mesh(this, GreedyMesh, new THREE.Vector3(1,1,1));
+	// console.log(Fortia.game.blkMaterial)
+	// this.mesh.createSurfaceMesh(Fortia.game.blkMaterial);
+	// this.mesh.setPosition(this.pos.x*this.size, this.pos.y*this.size, this.pos.z);
+	// console.log(this)
+}
+
+Fortia.Layer.prototype.createGeometry = function(){
+	var geometry = this.geometry = new THREE.BufferGeometry();
+
+	geometry.addAttribute("position", new THREE.BufferAttribute(new Float32Array(this.vertices), 3));
+	geometry.addAttribute("color", new THREE.BufferAttribute(new Float32Array(this.colors), 3));
+	geometry.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(this.uv), 2));
+	geometry.computeFaceNormals();
+	geometry.computeVertexNormals();
+	return geometry;
+}
+
+Fortia.Layer.prototype.createSurfaceMesh = function(material) {
+	if (!this.geometry) {this.createGeometry()};
+	material = material || new THREE.MeshNormalMaterial()
+	var surfaceMesh  = new THREE.Mesh( this.geometry, material )
+	surfaceMesh.scale = new THREE.Vector3(1,1,1);
+	surfaceMesh.doubleSided = false;
+	var pos = new THREE.Vector3(this.pos.x * this.size, this.pos.y * this.size, this.pos.z);
+	surfaceMesh.position.x = pos.x;
+	surfaceMesh.position.y = pos.y;
+	surfaceMesh.position.z = pos.z;
+	this.surfaceMesh = surfaceMesh;
+	return surfaceMesh;
+}
+
+Fortia.Layer.prototype.createWireMesh = function(hexColor) {    
+	if (!this.geometry) {this.createGeometry()};
+	var wireMaterial = new THREE.MeshBasicMaterial({
+		color : hexColor || 0xffffff,
+		wireframe : true
+	})
+	wireMesh = new THREE.Mesh(this.geometry, wireMaterial)
+	wireMesh.scale = new THREE.Vector3(1,1,1);
+	wireMesh.doubleSided = false
+	var pos = new THREE.Vector3(this.pos.x * this.size, this.pos.y * this.size, this.pos.z);
+	wireMesh.position.x = pos.x;
+	wireMesh.position.y = pos.y;
+	wireMesh.position.z = pos.z;
+	this.wireMesh = wireMesh;
+	return wireMesh;
+}
+
+Fortia.Layer.prototype.coordsToIndex =  function(pos) {
+	return this.size*pos.x + pos.y;
 }
 
 
