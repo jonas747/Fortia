@@ -1,17 +1,8 @@
 package world
 
 import (
-	"encoding/json"
-	"errors"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
-	"io/ioutil"
-	"strconv"
-	"strings"
-)
-
-var (
-	ErrPropertyNotFound = errors.New("Property not found")
 )
 
 type BlockFlag byte
@@ -22,92 +13,6 @@ const (
 	BlockOccupiedHalf                          // Only small units can pass
 	BlockHidden                                // Wether this block is visible or not
 )
-
-type BlockProbability struct {
-	Everywhere int
-	Outside    int
-	Inside     int
-	Biomes     map[string]int
-}
-
-type BlockType struct {
-	Id        int
-	Name      string
-	Flags     []string
-	Biomes    []string
-	AllBiomes bool
-	Type      string
-	Layer     string
-
-	Probability BlockProbability
-
-	LayerStart   int
-	LayerEnd     int
-	LayerOutSide bool
-
-	// Additional properties
-	Properties map[string]string
-}
-
-func BlockTypesFromJson(data []byte) ([]BlockType, ferr.FortiaError) {
-	// Decode the json
-	var btypes []BlockType
-	err := json.Unmarshal(data, &btypes)
-	if err != nil {
-		return []BlockType{}, ferr.Wrap(err, "")
-	}
-	for i, v := range btypes {
-		if v.LayerStart == 0 && v.LayerEnd == 0 {
-			if v.Layer == "outside" {
-				btypes[i].LayerOutSide = true
-			} else if v.Layer == "inside" {
-				btypes[i].LayerOutSide = false
-			} else if v.Layer == "*" {
-				btypes[i].LayerEnd = 1000
-			} else if strings.Contains(v.Layer, "-") {
-				split := strings.Split(v.Layer, "-")
-				start, err := strconv.Atoi(split[0])
-				if err != nil {
-					return []BlockType{}, ferr.Wrap(err, "")
-				}
-				end, err := strconv.Atoi(split[1])
-				if err != nil {
-					return []BlockType{}, ferr.Wrap(err, "")
-				}
-				btypes[i].LayerStart = start
-				btypes[i].LayerEnd = end
-			}
-		}
-
-		if len(v.Biomes) == 0 || v.Biomes[0] == "*" {
-			btypes[i].AllBiomes = true
-		}
-	}
-	return btypes, nil
-}
-
-func BlockTypesFromFile(file string) ([]BlockType, ferr.FortiaError) {
-	data, nErr := ioutil.ReadFile(file)
-	if nErr != nil {
-		return []BlockType{}, ferr.Wrap(nErr, "")
-	}
-	btypes, err := BlockTypesFromJson(data)
-	return btypes, err
-}
-
-func (j *BlockType) GetPropertyInt(key string) (value int, err error) {
-	value = -1
-	err = nil
-
-	strVal, ok := j.Properties[key]
-	if !ok {
-		err = ErrPropertyNotFound
-		return
-	}
-
-	value, err = strconv.Atoi(strVal)
-	return
-}
 
 type Block struct {
 	LocalPosition vec.Vec2I              `json:"-"` // Position relative to layer

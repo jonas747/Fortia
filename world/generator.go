@@ -300,3 +300,8 @@ func (g *Generator) basePlaceBlocks(chunk *Chunk) *Chunk {
 	}
 	return chunk
 }
+
+// TODO
+func (g *Generator) GrowTree() {
+
+}

@@ -1,6 +1,6 @@
 General:
   This is general tasks to be completed whenever i get around to it, with no set deadline
-  
+  ☐ seperate outside from the layer specification in the blocktype format
   ☐ Zoomed out view
     A zoomed out view that does not view all blocks, but say 1 block represents 10 blocks or something along those lines
   ☐ Fun progress bar for world gen
@@ -28,3 +28,7 @@ General:
 
   Client:
    ☐ Major cleanups
+
+  Error:
+   ☐ Add soem way to add a error
+     can be used to for example return a code for property not found while stil having unique messages

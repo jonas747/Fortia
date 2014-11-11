@@ -39,7 +39,7 @@ Alpha 0.2:
     Wgen options:
      ☐ Add more advaned world gen options
      ☐ Use blocks.json 
-     ☐ USer biomes.json
+     ☐ USe biomes.json
 
   Auth:
    ☐ Password recovery api
@@ -82,3 +82,6 @@ Alpha 0.2:
    ☐ Dont send layers that are completely hidden
    ☐ Add some form of compression
      built in browser gzip maybe, unless that decompresses in the main thread
+
+  Bugs:
+   ☐ The bottom layer is always air, shoudl be bedrock(to be implemented) 
