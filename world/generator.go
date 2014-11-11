@@ -99,7 +99,7 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 	p = pb.StartNew(g.Size * g.Size)
 	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
 		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
-			chunk, err := g.W.GetChunk(x, y, true)
+			chunk, err := g.W.GetChunk(x, y, true, false)
 			if err != nil {
 				return err
 			}
@@ -122,7 +122,7 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 	p = pb.StartNew(g.Size * g.Size)
 	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
 		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
-			chunk, err := g.W.GetChunk(x, y, true)
+			chunk, err := g.W.GetChunk(x, y, true, false)
 			if err != nil {
 				return err
 			}
@@ -172,7 +172,7 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 	// Get souroding chunks
 	for x := -1; x < 1; x++ {
 		for y := -1; y < 1; y++ {
-			chunk, err := g.W.GetChunk(x+position.X, y+position.Y, false)
+			chunk, err := g.W.GetChunk(x+position.X, y+position.Y, false, false)
 			if err != nil {
 				if err.GetMessage() != "404" {
 					return Biome{}, 0, err

@@ -3,7 +3,7 @@ package gameserver
 import (
 	"encoding/json"
 	"github.com/jonas747/fortia/vec"
-	//"github.com/jonas747/fortia/world"
+	"github.com/jonas747/fortia/world"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,7 +47,32 @@ func handleLayers(w http.ResponseWriter, r *http.Request, body interface{}) {
 	w.Write(serialized)
 }
 
-func handleVisibleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {}
+// /chunks
+func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
+	params := r.URL.Query()
+	xList := strings.Split(params.Get("x"), ",")
+	yList := strings.Split(params.Get("y"), ",")
+
+	positions := make([]vec.Vec2I, len(xList))
+	for k, _ := range xList {
+		x, _ := strconv.Atoi(xList[k])
+		y, _ := strconv.Atoi(yList[k])
+		positions[k] = vec.Vec2I{x, y}
+	}
+	chunks := make([]*world.Chunk, len(positions))
+	for k, v := range positions {
+		chunk, err := gameWorld.GetChunk(v.X, v.Y, true, true)
+		if server.HandleFortiaError(w, r, err) {
+			return
+		}
+		chunks[k] = chunk
+	}
+	serialized, nErr := json.Marshal(chunks)
+	if server.HandleError(w, r, nErr) {
+		return
+	}
+	w.Write(serialized)
+}
 
 // /info
 func handleInfo(w http.ResponseWriter, r *http.Request, body interface{}) {

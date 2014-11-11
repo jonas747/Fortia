@@ -39,16 +39,16 @@ func (c *Chunk) GetLayer(layer int, fetch, store bool) (*Layer, ferr.FortiaError
 }
 
 // returns chunk at x y, local to current chunk
-func (c *Chunk) GetNeighbour(x, y int) (*Chunk, ferr.FortiaError) {
+func (c *Chunk) GetNeighbour(x, y int, fetchLayers bool) (*Chunk, ferr.FortiaError) {
 	wPos := c.Position.Clone()
 	wPos.Add(vec.Vec2I{x, y})
 
-	chunk, err := c.World.GetChunk(wPos.X, wPos.Y, false)
+	chunk, err := c.World.GetChunk(wPos.X, wPos.Y, fetchLayers, false)
 	return chunk, err
 }
 
 // Returns all neighbours
-func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
+func (c *Chunk) GetAllNeighbours(fetchLayers bool) ([]*Chunk, ferr.FortiaError) {
 	out := make([]*Chunk, 0)
 	for x := -1; x < 1; x++ {
 		for y := -1; y < 1; y++ {
@@ -56,7 +56,7 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 				// Dont add istelf
 				continue
 			}
-			chunk, err := c.GetNeighbour(x, y)
+			chunk, err := c.GetNeighbour(x, y, fetchLayers)
 			if err != nil {
 				if err.GetMessage() == "404" { // continue even if the chunks was not found in the db
 					continue
@@ -73,7 +73,7 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 // If provided neighbours' len is 0 then it will fetch from db
 func (c *Chunk) FlagHidden(neighbours []*Chunk) {
 	if len(neighbours) < 1 {
-		n, err := c.GetAllNeighbours()
+		n, err := c.GetAllNeighbours(true)
 		if err != nil {
 			c.World.Logger.Error(err)
 		}
@@ -133,7 +133,8 @@ func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 
 // Fetches a chunk from the database at x,y
 // Chunk is nil if not found
-func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
+// If getlayers is true it will also fetch layers depending on what onlyVisible is set to
+func (w *World) GetChunk(x, y int, getLayers, onlyVisible bool) (*Chunk, ferr.FortiaError) {
 	chunk, err := w.Db.GetChunkInfo(vec.Vec2I{x, y})
 	if err != nil {
 		return nil, err
@@ -141,9 +142,17 @@ func (w *World) GetChunk(x, y int, getLayers bool) (*Chunk, ferr.FortiaError) {
 	chunk.World = w
 
 	if getLayers {
-		positions := make([]vec.Vec3I, w.GeneralInfo.Height)
-		for i := 0; i < w.GeneralInfo.Height; i++ {
-			positions[i] = vec.Vec3I{x, y, i}
+		var positions []vec.Vec3I
+		if onlyVisible {
+			positions = make([]vec.Vec3I, len(chunk.VisibleLayers))
+			for k, v := range chunk.VisibleLayers {
+				positions[k] = vec.Vec3I{x, y, v}
+			}
+		} else {
+			positions = make([]vec.Vec3I, w.GeneralInfo.Height)
+			for i := 0; i < w.GeneralInfo.Height; i++ {
+				positions[i] = vec.Vec3I{x, y, i}
+			}
 		}
 		layers, err := w.Db.GetLayers(positions)
 		if err != nil {

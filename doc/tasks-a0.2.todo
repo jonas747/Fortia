@@ -67,7 +67,7 @@ Alpha 0.2:
      ☐ Try out isometric 
      ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
      ✔ Change to buffer geometry from normal geometry @done (14-11-11 17:07)
-       Buffergeometry stores everything in buffers on the gpu rather than in ram
+       Makes it easier to move the chunk between workers, as i can just tranfser ownership of the typed arrays and fill the buffers on the main thread
      ☐ Change from getting indiidual layers, to a whole chunk
     Lobby:
      ☐ Password recovery in login
@@ -78,8 +78,9 @@ Alpha 0.2:
      ☐ Simple log view
 
   GameServer:
-   ☐ Add /chunk
-   ☐ Dont send layers that are completely hidden
+   ✔ Add /chunk @done (14-11-12 00:47)
+   ✔ Dont send layers that are completely hidden @done (14-11-12 00:47)
+     in /chunk request
    ☐ Add some form of compression
      built in browser gzip maybe, unless that decompresses in the main thread
 

@@ -28,6 +28,15 @@ Method: `GET`
  - y: list (seperated by ,) of y coordinates
  - z: list (seperated by ,) of z coordinates
 
+####/chunks
+Same as /layers but with whole chunks instead
+Only sends layers visible
+Method: `GET`
+ - x: list (seperated by ,) of x coordinates
+ - y: list (seperated by ,) of y coordinates
+
+
+
 #Types of game objects
 Todo: write doc on thi
 ###ItemsconvertTemp

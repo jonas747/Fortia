@@ -72,17 +72,18 @@ func initApi(s *rest.Server) {
 		RequiredCookies: []string{"fortia-session"},
 	})
 	s.RegisterHandler(&rest.RestHandler{
-		Path:            "/layers",
-		Method:          "GET",
-		Handler:         handleLayers,
-		RequiredCookies: []string{"fortia-session"},
-		RequiredParams:  []string{"x", "y", "z"},
+		Path:    "/layers",
+		Method:  "GET",
+		Handler: handleLayers,
+		//RequiredCookies: []string{"fortia-session"},
+		RequiredParams: []string{"x", "y", "z"},
 	})
 	s.RegisterHandler(&rest.RestHandler{
-		Path:            "/visiblechunks",
-		Method:          "GET",
-		Handler:         handleVisibleChunks,
-		RequiredCookies: []string{"fortia-session"},
+		Path:    "/chunks",
+		Method:  "GET",
+		Handler: handleChunks,
+		//RequiredCookies: []string{"fortia-session"},
+		RequiredParams: []string{"x", "y"},
 	})
 	s.RegisterHandler(&rest.RestHandler{
 		Path:    "/info",
