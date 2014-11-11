@@ -107,12 +107,34 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 			if err != nil {
 				return err
 			}
+			err = g.W.SetChunk(chunk, true)
+			if err != nil {
+				return err
+			}
 			p.Increment()
 		}
 	}
+	p.Finish()
 	// Grow trees
 	// More advanced block placement
 	// Flag blocks
+	g.W.Logger.Debug("Flagging hidden blocks and layers")
+	p = pb.StartNew(g.Size * g.Size)
+	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
+		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
+			chunk, err := g.W.GetChunk(x, y, true)
+			if err != nil {
+				return err
+			}
+			chunk.FlagHidden([]*Chunk{})
+			err = g.W.SetChunk(chunk, true)
+			if err != nil {
+				return err
+			}
+			p.Increment()
+		}
+	}
+
 	return nil
 }
 
@@ -228,7 +250,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				}
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				noise := noiseGen.Noise3(float64(wx)/float64(50), float64(wy)/float64(50), float64(z)/float64(50))
-				life := ((float64(wHeight) / float64(z)) * 5) - 10
+				life := ((float64(wHeight) / float64(z)) * 5) - 10 // should be adjusted by the roughness biome property
 				// g.W.Logger.Debug(life, z, wHeight, float64(wHeight)/float64(z))
 				life += noise
 				life *= 100

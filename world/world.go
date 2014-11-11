@@ -7,15 +7,6 @@ import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/vec"
-	"math/rand"
-)
-
-type BlockFlag byte
-
-const (
-	BlockConnectedGround BlockFlag = 1 << iota
-	BlockOccupiedFull
-	BlockOccupiedHalf
 )
 
 type World struct {
@@ -48,38 +39,6 @@ func (w *World) LayerToWorldPos(layePos vec.Vec3I) vec.Vec3I {
 	lw := layePos.Clone()
 	lw.Multiply(vec.Vec3I{X: w.GeneralInfo.LayerSize, Y: w.GeneralInfo.LayerSize})
 	return lw
-}
-
-func (w *World) GenLayer(pos vec.Vec3I) *Layer {
-	//chunkWorldPos := w.ChunkToWorldPos(pos)
-
-	layer := &Layer{
-		Position: pos,
-	}
-
-	blocks := make([]*Block, w.GeneralInfo.LayerSize*w.GeneralInfo.LayerSize)
-
-	for x := 0; x < w.GeneralInfo.LayerSize; x++ {
-		for y := 0; y < w.GeneralInfo.LayerSize; y++ {
-
-			id := rand.Intn(2) + 1
-			if layer.Position.Z > w.GeneralInfo.Height/2 {
-				id = 0
-				layer.IsAir = true
-			}
-
-			b := Block{
-				LocalPosition: vec.Vec2I{x, y},
-				Layer:         layer,
-				Id:            id,
-			}
-			blocks[w.CoordsToIndex(vec.Vec3I{x, y, 0})] = &b
-		}
-	}
-
-	layer.Blocks = blocks
-	layer.World = w
-	return layer
 }
 
 // index = size * x + y

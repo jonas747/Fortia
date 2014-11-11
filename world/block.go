@@ -14,8 +14,13 @@ var (
 	ErrPropertyNotFound = errors.New("Property not found")
 )
 
+type BlockFlag byte
+
 const (
-	BFlagCovered = 1 << iota // On if the block is souronded by blocks and cannot be seen
+	BlockConnectedGround BlockFlag = 1 << iota // Wether this block is connected to the grond or not
+	BlockOccupiedFull                          // If set, no units or anything can pass
+	BlockOccupiedHalf                          // Only small units can pass
+	BlockHidden                                // Wether this block is visible or not
 )
 
 type BlockProbability struct {
@@ -105,11 +110,11 @@ func (j *BlockType) GetPropertyInt(key string) (value int, err error) {
 }
 
 type Block struct {
-	LocalPosition vec.Vec2I              `json:"-"`
+	LocalPosition vec.Vec2I              `json:"-"` // Position relative to layer
 	Layer         *Layer                 `json:"-"`
 	Kind          *BlockType             `json:"-"`
 	Entities      []int                  `json:",omitempty"`
-	Flags         byte                   `json:",omitempty"`
+	Flags         BlockFlag              `json:",omitempty"`
 	Data          map[string]interface{} `json:",omitempty"`
 
 	Id int
@@ -117,29 +122,37 @@ type Block struct {
 
 // TODO check chunks nearby
 // Should we still check even if this block is air?
-func (b *Block) IsSurounded() (bool, ferr.FortiaError) {
+func (b *Block) CheckHidden(neighbours []*Chunk) (bool, ferr.FortiaError) {
+
 	if b.Layer == nil {
 		return false, ferr.New("Layer nil")
 	}
 	if b.Layer.Chunk == nil {
 		return false, ferr.New("Chunk nil")
 	}
-
-	pos := b.LocalPosition
-
-	// Set chunk edges to not covered for now
-	if pos.X == 0 || pos.X >= b.Layer.World.GeneralInfo.LayerSize ||
-		pos.Y == 0 || pos.Y >= b.Layer.World.GeneralInfo.LayerSize {
+	if b.Id == 0 { // Air so this is visible
 		return false, nil
 	}
 
-	// get surounding blocks
+	chunk := b.Layer.Chunk
+	pos := b.LocalPosition
+	layerSize := b.Layer.World.GeneralInfo.LayerSize
+
+	// Set chunk edges to not covered for now
+	// if pos.X == 0 || pos.X >= b.Layer.World.GeneralInfo.LayerSize ||
+	// 	pos.Y == 0 || pos.Y >= b.Layer.World.GeneralInfo.LayerSize {
+	// 	return false, nil
+	// }
+
 	blocks := make([]*Block, 0)
+
+	// get surounding blocks on same layer
 	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X+1, pos.Y))
 	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X-1, pos.Y))
 	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y+1))
 	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y-1))
 
+	// Below and above
 	if b.Layer.Position.Z > 0 {
 		// Check block below
 		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z-1]
@@ -152,8 +165,61 @@ func (b *Block) IsSurounded() (bool, ferr.FortiaError) {
 		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
 	}
 
+	// Check chunk neighbours
+	if pos.X == 0 || pos.X >= layerSize ||
+		pos.Y == 0 || pos.Y >= layerSize {
+		// map out the chunks to make it easier
+		var x1c *Chunk  // Chunk x + 1
+		var x_1c *Chunk // x - 1
+		var y1c *Chunk  // y + 1
+		var y_1c *Chunk // y -1 All relative
+
+		for _, v := range neighbours {
+			diff := v.Position.Clone()
+			diff.Sub(chunk.Position)
+
+			if diff.X == 1 && diff.Y == 0 {
+				x1c = v
+			} else if diff.X == -1 && diff.Y == 0 {
+				x_1c = v
+			} else if diff.X == 0 && diff.Y == 1 {
+				y1c = v
+			} else if diff.X == 0 && diff.Y == -1 {
+				y_1c = v
+			}
+		}
+
+		if pos.X == 0 {
+			if x1c != nil {
+				cl := x_1c.Layers[b.Layer.Position.Z]
+				blocks = append(blocks, cl.GetLocalBlock(layerSize-1, pos.Y))
+			}
+		} else if pos.X >= layerSize {
+			if x_1c != nil {
+				cl := x1c.Layers[b.Layer.Position.Z]
+				blocks = append(blocks, cl.GetLocalBlock(0, pos.Y))
+			}
+		}
+
+		if pos.Y == 0 {
+			if y1c != nil {
+				cl := y_1c.Layers[b.Layer.Position.Z]
+				blocks = append(blocks, cl.GetLocalBlock(pos.X, layerSize-1))
+			}
+		} else if pos.Y >= layerSize {
+			if y_1c != nil {
+				cl := y1c.Layers[b.Layer.Position.Z]
+				blocks = append(blocks, cl.GetLocalBlock(pos.X, 0))
+			}
+		}
+
+	}
+
 	for _, v := range blocks {
-		if v == nil || v.Id <= 0 {
+		if v == nil {
+			continue
+		}
+		if v.Id <= 0 {
 			// air
 			return false, nil
 		}

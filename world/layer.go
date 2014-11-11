@@ -13,6 +13,7 @@ type Layer struct {
 	Blocks   []*Block
 	Flags    int
 	IsAir    bool // True if this layer is just air
+	Hidden   bool // True if the layer has no visible blocks
 }
 
 // Saves a layer to the database
@@ -36,7 +37,11 @@ func (l *Layer) GetLocalBlock(lx, ly int) *Block {
 	if index >= len(l.Blocks) || index < 0 {
 		return nil
 	}
-	return l.Blocks[index]
+	block := l.Blocks[index]
+	if block.Layer == nil {
+		block.Layer = l
+	}
+	return block
 }
 
 // Returns serialized json of the layer

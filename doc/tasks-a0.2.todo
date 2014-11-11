@@ -25,11 +25,12 @@ Alpha 0.2:
    ☐ Do checking to see if the actual chunks/layers/user etc werer getting exists(return a predefined error then)
   World:
    ☐ Organise the world package better
-   ☐ Check nearby chunks when flagging blocks covered or not
+   ✔ Check nearby chunks when flagging blocks visible or not @done (14-11-11 17:44)
    ☐ write tests and benchmarks
 
    Worldgen:
     ☐ Implement world extending
+      Delay this for later versions perhaps?
       Extends a allready generated world, making it bigger
     ☐ Rivers
     ☐ Oceans
@@ -37,12 +38,14 @@ Alpha 0.2:
     ☐ Caves
     Wgen options:
      ☐ Add more advaned world gen options
-     ☐ Use blocks.json and biomes.json in worldgen
+     ☐ Use blocks.json 
+     ☐ USer biomes.json
 
   Auth:
-   ☐ Password recovery
+   ☐ Password recovery api
      Through email or something
-   ☐ Change password and username
+   ☐ Change password api
+   ☐ Change username api
 
   Master Server:
     ☐ Create a simple package for interacting with the master server
@@ -51,7 +54,9 @@ Alpha 0.2:
   Frontend: 
    ☐ Maybe change from backbone.js to knockout.js
      Need to read more up on it
-
+   ☐ Add Password recovery somewhere on the login page
+   ☐ Add accounts info settings page
+     email, password and username change are all located there
     Client:
      ☐ Complete rewrite of the client 
      ☐ Simple ui
@@ -60,10 +65,10 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
-     ☐ Move chunk decoding and meshing to a backrgound worker
-     ☐ Change to buffer geometry from normal geometry
-       Buffergeometry stores everything in buffers on the gpu rather than in ram(e.g a lot faster)
-
+     ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
+     ✔ Change to buffer geometry from normal geometry @done (14-11-11 17:07)
+       Buffergeometry stores everything in buffers on the gpu rather than in ram
+     ☐ Change from getting indiidual layers, to a whole chunk
     Lobby:
      ☐ Password recovery in login
      ☐ Make it possible to change password and username in settings
@@ -71,3 +76,9 @@ Alpha 0.2:
     Admin:
      ☐ Simple overview
      ☐ Simple log view
+
+  GameServer:
+   ☐ Add /chunk
+   ☐ Dont send layers that are completely hidden
+   ☐ Add some form of compression
+     built in browser gzip maybe, unless that decompresses in the main thread

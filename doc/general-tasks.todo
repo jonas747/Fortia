@@ -4,6 +4,9 @@ General:
   ☐ Zoomed out view
     A zoomed out view that does not view all blocks, but say 1 block represents 10 blocks or something along those lines
   ☐ Fun progress bar for world gen
+ 
+  ☐ Add challenges(like "what is five plus eight") to places that should be ratelimited severely 
+    places such as /register and /pwrecovery
   Ticker:
     ☐ Add a scheduler
 

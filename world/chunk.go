@@ -3,15 +3,17 @@ package world
 import (
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
+	"sync"
 )
 
 // Represents a chunk
 type Chunk struct {
-	World    *World   `json:"-"`
-	Layers   []*Layer `json:"-"` // No need to store layers twice...
-	Position vec.Vec2I
-	Biome    Biome
-	Potency  int // The biome potency this chunk has
+	World         *World   `json:"-"`
+	Layers        []*Layer `json:"-"` // No need to store layers twice...
+	Position      vec.Vec2I
+	Biome         Biome
+	Potency       int   // The biome potency this chunk has
+	VisibleLayers []int // Layers that have one or more visible blocks
 }
 
 // Rerturns a layer of the chunk, if it is in the chunk's cache then it will return that
@@ -50,8 +52,15 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 	out := make([]*Chunk, 0)
 	for x := -1; x < 1; x++ {
 		for y := -1; y < 1; y++ {
+			if x == 0 && y == 0 {
+				// Dont add istelf
+				continue
+			}
 			chunk, err := c.GetNeighbour(x, y)
 			if err != nil {
+				if err.GetMessage() == "404" { // continue even if the chunks was not found in the db
+					continue
+				}
 				return out, err
 			}
 			out = append(out, chunk)
@@ -60,15 +69,50 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 	return out, nil
 }
 
-// Flags all surounded blocks as surounded
-// TODO remove flag if not covered and flagged allready
-func (c *Chunk) FlagSurounded() {
-	for _, layer := range c.Layers {
-		for _, block := range layer.Blocks {
-			surounded, _ := block.IsSurounded()
-			if surounded {
-				block.Flags |= BFlagCovered
+// Flags all hidden blocks as hidden
+// If provided neighbours' len is 0 then it will fetch from db
+func (c *Chunk) FlagHidden(neighbours []*Chunk) {
+	if len(neighbours) < 1 {
+		n, err := c.GetAllNeighbours()
+		if err != nil {
+			c.World.Logger.Error(err)
+		}
+		neighbours = n
+	}
+	var wg sync.WaitGroup
+	wg.Add(c.World.GeneralInfo.Height)
+	visibleLayers := make([]bool, c.World.GeneralInfo.Height)
+	for k, layer := range c.Layers {
+		l := layer
+		n := k
+		go func() {
+			l.Hidden = true
+			for _, block := range l.Blocks {
+				if block.Layer == nil {
+					block.Layer = l
+				}
+				hidden, err := block.CheckHidden(neighbours)
+				if err != nil {
+					c.World.Logger.Error(err)
+				}
+				if hidden {
+					block.Flags |= BlockHidden
+				} else {
+					if block.Flags&BlockHidden != 0 {
+						block.Flags ^= BlockHidden
+					}
+					l.Hidden = false
+				}
 			}
+			visibleLayers[n] = !l.Hidden
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	c.VisibleLayers = make([]int, 0)
+	for k, v := range visibleLayers {
+		if v == true {
+			c.VisibleLayers = append(c.VisibleLayers, k)
 		}
 	}
 }

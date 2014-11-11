@@ -88,12 +88,6 @@ func (g *GameDB) GetLayer(pos vec.Vec3I) (*world.Layer, ferr.FortiaError) {
 func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaError) {
 	out := make([]*world.Layer, len(positions))
 
-	// conn, nErr := g.Pool.Get()
-	// if nErr != nil {
-	// 	return out, ferr.Wrap(nErr, "")
-	// }
-	// defer g.Pool.Put(conn)
-	//cmds := make([]RedisCmd, len(positions))
 	args := make([]interface{}, len(positions))
 	for k, v := range positions {
 		args[k] = fmt.Sprintf("l:%d:%d:%d", v.X, v.Y, v.Z)
@@ -110,6 +104,7 @@ func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaEr
 	}
 
 	var wg sync.WaitGroup
+
 	decodeLayer := func(raw []byte, index int) {
 		defer wg.Done()
 		var layer world.Layer
@@ -133,10 +128,16 @@ func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaEr
 
 // Saves multiple layers
 func (g *GameDB) SetLayers(layers []*world.Layer) ferr.FortiaError {
+	var wg sync.WaitGroup
+	wg.Add(len(layers))
 	for _, v := range layers {
-		go g.SetLayer(v)
-
+		l := v
+		go func() {
+			g.SetLayer(l)
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 	return nil
 }
 
