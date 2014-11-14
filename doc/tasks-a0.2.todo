@@ -68,7 +68,7 @@ Alpha 0.2:
      ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
      ✔ Change to buffer geometry from normal geometry @done (14-11-11 17:07)
        Makes it easier to move the chunk between workers, as i can just tranfser ownership of the typed arrays and fill the buffers on the main thread
-     ☐ Change from getting indiidual layers, to a whole chunk
+     ☐ Change from getting individual layers, to a whole chunk
     Lobby:
      ☐ Password recovery in login
      ☐ Make it possible to change password and username in settings
@@ -81,7 +81,7 @@ Alpha 0.2:
    ✔ Add /chunk @done (14-11-12 00:47)
    ✔ Dont send layers that are completely hidden @done (14-11-12 00:47)
      in /chunk request
-   ☐ Add some form of compression
+   ✔ Add some form of compression @done (14-11-14 21:49)
      built in browser gzip maybe, unless that decompresses in the main thread
 
   Bugs:

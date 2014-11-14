@@ -14,7 +14,7 @@ import (
 
 var (
 	fUpdateWorld = flag.Bool("u", false, "Updates the world with the wgen.json and blocktypes.json, then exits")
-	fCreateWorld = flag.Bool("c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json, then exits")
+	fCreateWorld = flag.Bool("c", false, "Creates a world with settings from world.json, wgen.json and blocktypes.json")
 )
 
 var (
@@ -61,9 +61,7 @@ func main() {
 	}
 	// Gen world initialises a new world
 	if *fCreateWorld {
-		createWorld(6)
-		logger.Info("Generated world, exiting...")
-		return
+		go createWorld(6)
 	}
 	if config.ServeGame {
 		go gameserver.Run(logger, gdb, adb, ":8081")

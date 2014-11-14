@@ -50,8 +50,8 @@ func (c *Chunk) GetNeighbour(x, y int, fetchLayers bool) (*Chunk, ferr.FortiaErr
 // Returns all neighbours
 func (c *Chunk) GetAllNeighbours(fetchLayers bool) ([]*Chunk, ferr.FortiaError) {
 	out := make([]*Chunk, 0)
-	for x := -1; x < 1; x++ {
-		for y := -1; y < 1; y++ {
+	for x := -1; x < 2; x++ {
+		for y := -1; y < 2; y++ {
 			if x == 0 && y == 0 {
 				// Dont add istelf
 				continue
@@ -87,10 +87,12 @@ func (c *Chunk) FlagHidden(neighbours []*Chunk) {
 		n := k
 		go func() {
 			l.Hidden = true
-			for _, block := range l.Blocks {
+			for k, block := range l.Blocks {
+				coords := c.World.IndexToCoords(k)
 				if block.Layer == nil {
 					block.Layer = l
 				}
+				block.LocalPosition = vec.Vec2I{coords.X, coords.Y}
 				hidden, err := block.CheckHidden(neighbours)
 				if err != nil {
 					c.World.Logger.Error(err)

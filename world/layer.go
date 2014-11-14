@@ -35,6 +35,7 @@ func (w *World) GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError) {
 func (l *Layer) GetLocalBlock(lx, ly int) *Block {
 	index := l.World.CoordsToIndex(vec.Vec3I{lx, ly, 0})
 	if index >= len(l.Blocks) || index < 0 {
+		l.World.Logger.Debug(lx, ly)
 		return nil
 	}
 	block := l.Blocks[index]

@@ -5,7 +5,7 @@ Fortia.Layer = function(pos, size){
 	this.blocks = [];
 	this.voxels = [];
 
-	this.size = size || Fortia.game.worldInfo.LayerSize || 1;
+	this.size = size || (Fortia.game !== undefined ? Fortia.game.worldInfo.LayerSize : 1);
 	this.dims = [this.size, this.size, 1];
 	
 	this.mesh;
@@ -61,10 +61,6 @@ Fortia.Layer.prototype.generateMesh = function(){
 	};
 	this.vMesh = new VoxelMesh()
 	this.vMesh.mesh(this, GreedyMesh, new THREE.Vector3(1,1,1));
-	// console.log(Fortia.game.blkMaterial)
-	// this.mesh.createSurfaceMesh(Fortia.game.blkMaterial);
-	// this.mesh.setPosition(this.pos.x*this.size, this.pos.y*this.size, this.pos.z);
-	// console.log(this)
 }
 
 Fortia.Layer.prototype.createGeometry = function(){

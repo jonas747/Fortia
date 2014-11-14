@@ -46,7 +46,7 @@ func (db *Database) CmdChain(cmd string, args ...interface{}) (*redis.Reply, *re
 	reply := client.Cmd(cmd, args)
 	if reply.Err != nil {
 		db.Pool.Put(client)
-		return nil, nil, ferr.Wrapa(reply.Err, "Redis cmd", map[string]interface{}{"cmd": cmd, "args": args})
+		return nil, nil, ferr.Wrapa(reply.Err, "", map[string]interface{}{"cmd": cmd, "args": args})
 	}
 	return reply, client, nil
 }

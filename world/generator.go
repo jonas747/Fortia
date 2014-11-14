@@ -286,7 +286,9 @@ func (g *Generator) basePlaceBlocks(chunk *Chunk) *Chunk {
 				l := chunk.Layers[z]
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				b := l.Blocks[index]
-				if b.Id > 50 {
+				if z == 0 {
+					b.Id = 1 // Switch this with bedrock later
+				} else if b.Id > 50 {
 					b.Id = 1 // rock
 					l.IsAir = false
 				} else if b.Id <= 50 && b.Id >= 0 {

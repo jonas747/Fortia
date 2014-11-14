@@ -28,10 +28,11 @@ Fortia.initGameView = function(){
 Fortia.game = {
 	chunks: [],
 	cameraHeight: 50,
-	sight: 5,
-	sightHeight: 25,
-	layerFetchQueue: {},
-	fetchingLayers: {},
+	sight: 3,
+	//sightHeight: 25,
+	chunkFetchQueue: {},
+	fetchingChunks: {},
+	cachedChunks: {},
 	init: function(view, world){
 		this.api = new Fortia.REST({urlRoot:"http://localhost:8081/"});
 		if (Fortia.Production) {
@@ -47,22 +48,18 @@ Fortia.game = {
 
 		var stats = new Stats();
 		stats.setMode(0);
-		document.body.appendChild(stats.domElement);
+		$("#main-container").append(stats.domElement);
 		this.stats = stats;
 
 		this.initScene();
-		console.log("init!!!!!")
 		$(window).resize(Fortia.game.resize)
 		Fortia.game.resize();
 
 		this.cpos = new THREE.Vector3(0,0,100)
 
-		this.blkMaterial = new THREE.MeshLambertMaterial({
-			 vertexColors: THREE.VertexColors,
-		});
 
 		var boundWheelCB = this.onWheel.bind(this);
-		window.addWheelListener($("#main-container")[0], boundWheelCB);
+		window.addWheelListener(window, boundWheelCB);
 
 		// Run the worker if it hasnt started yet
 		if (!this.workerRunning) {
@@ -70,6 +67,10 @@ Fortia.game = {
 		};
 	},
 	initScene: function(){
+		this.blkMaterial = new THREE.MeshLambertMaterial({
+			vertexColors: THREE.VertexColors,
+		});
+		
 		this.canvas = $("#game-canvas")[0];
 		var width = Fortia.gameView.canvasWidth;
 		var height = Fortia.gameView.canvasHeigh;
@@ -95,9 +96,10 @@ Fortia.game = {
 		scene.add( light );
 
 		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-		var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-		var cube = new THREE.Mesh( geometry, material );
+		var material = new THREE.MeshBasicMaterial( { color: 0x0ff0000, wireframe: true } );
+		var cube = new THREE.Mesh( geometry, this.blkMaterial );
 		scene.add( cube );
+		this.helperCube = cube;
 
 		this.scene = scene;
 		this.camera = camera;
@@ -115,8 +117,8 @@ Fortia.game = {
 					//var list = data.data;
 					console.log(JSON.stringify(data.data));
 					break;
-				case "finlayer":
-					that.addLayer(data);
+				case "finChunk":
+					that.addChunk(data);
 					break;
 			}
 		}
@@ -124,23 +126,24 @@ Fortia.game = {
 
 		this.worker = worker;
 	},
-	addLayer: function(data){
-		//console.log(data)
-		var pos = new THREE.Vector3(data.position.x, data.position.y, data.position.z)
-		var layer = new Fortia.Layer(pos);
-		//layer.blocks = data.blocks;
-		layer.vertices = data.vertices;
-		layer.colors = data.colors;
-		layer.uv = data.uv;
-		var surfaceMesh = layer.createSurfaceMesh(this.blkMaterial);
-		this.scene.add(surfaceMesh);
+	addChunk: function(data){
+		var pos = new THREE.Vector2(data.position.x, data.position.y)
+		var chunk = new Fortia.Chunk();
+		chunk.vertices = data.vertices;
+		chunk.colors = data.colors;
+		chunk.uv = data.uv;
 
-		//var wiremesh = layer.createWireMesh(0x00ff00);
-		//this.scene.add(wiremesh);
+		chunk.pos = pos;
+		chunk.size = new THREE.Vector2(this.worldInfo.LayerSize, this.worldInfo.Height);
+		
+		var index = pos.x + ":"  + pos.y;
+		delete this.fetchingChunks[index];
+		this.cachedChunks[index] = chunk;
 
-		var index = pos.x + ":"  + pos.y + ":" +pos.z;
-		delete this.fetchingLayers[index];
-		this.cachedLayers[index] = layer;
+		//chunk.createWireMesh(0x00ff00);
+		chunk.createSurfaceMesh(this.blkMaterial);
+		chunk.addToScene(this.scene)
+		this.updateVerticeCount();
 	},
 	start: function(){
 		console.log("Starting the game")
@@ -152,10 +155,11 @@ Fortia.game = {
 
 			that.worker.postMessage({
 				action: "init",
-				size: that.worldInfo.LayerSize,
+				layerSize: that.worldInfo.LayerSize,
+				height: that.worldInfo.Height,
 			});
-
-			that.loop();
+			that.moveCamera(new THREE.Vector3(0,0,0));
+			that.loop();	
 		});
 		
 		this.loop();
@@ -206,12 +210,17 @@ Fortia.game = {
 		};
 		Keyboard.events = [];
 
+		if (Mouse.isDirty()) {
+			Mouse.setDirty(false);
+			this.updateHelperHelperBlock();
+		};
+
 		if (move) {
 			this.moveCamera(moveBy);
 		};
 		// Update layers every 10th tick (140 ish millisecond)
 		if (this.tickLayersUpdate >= 10) {
-			this.fetchLayers();
+			this.fetchChunks();
 			this.tickLayersUpdate = 0
 		};
 		this.tickLayersUpdate++
@@ -245,6 +254,9 @@ Fortia.game = {
 		var cwidth = window.innerWidth;
 		var cheight = window.innerHeight - 50;
 
+		Fortia.game.canvasWidth = cwidth;
+		Fortia.game.canvasHeight = cheight;
+
 		Fortia.gameView.canvasWidth = cwidth;
 		Fortia.gameView.canvasHeight = cheight;
 		// $("#game-canvas")[0].width = cwidth;
@@ -256,10 +268,35 @@ Fortia.game = {
 		Fortia.game.camera.aspect = aspect;
 		Fortia.game.camera.updateProjectionMatrix();
 	},
-	setChunk: function(chunk){
-		console.log(chunk)
-	},
+	updateHelperHelperBlock: function(chunk){
+		var mv = new THREE.Vector3();
+		mv.x = 2 * (Mouse.getX() / this.canvasWidth) - 1;
+		mv.y = 1 - 2 * (Mouse.getY() / this.canvasHeight);
 
+		mv = mv.unproject(this.camera);
+		mv.sub(this.camera.position);
+		mv.normalize();
+		var raycaster = new THREE.Raycaster( this.camera.position, mv, 0, 100);
+		var intersects = raycaster.intersectObjects(this.scene.children);
+		// Change color if hit block
+		if ( intersects.length > 0 ) {
+			var inter = intersects[0]
+			if (inter.object === this.helperCube) {
+				if (intersects.length > 1) {
+					inter = intersects[1];
+				}else{
+					inter = null
+				}
+			}
+
+			if (inter) {
+				pos = inter.point.clone();
+				pos.floor();
+				pos.add(new THREE.Vector3(0.5, 0.5, 0));
+				this.helperCube.position.set(pos.x, pos.y, pos.z);
+			};
+		}
+	},
 	// index = size * x + y
 	coordsToIndex: function(pos) {
 		return this.worldInfo.LayerSize*pos.x + pos.y
@@ -285,9 +322,9 @@ Fortia.game = {
 		var oldLPos = this.worldToLayerPos(this.cpos)
 		var newLPos = this.worldToLayerPos(newPos)
 
-		if (!newLPos.equals(oldLPos)) {
-			console.log("New layer pos! ", oldLPos, newLPos);
-			this.updateLayers();
+		if (newLPos.x !== oldLPos.x || newLPos.y !== oldLPos.y) {
+			console.log("New chunk pos! ", oldLPos, newLPos);
+			this.updateChunks();
 		};
 		
 		this.camera.position.copy(newPos);
@@ -300,56 +337,48 @@ Fortia.game = {
 
 		$("#game-position").text(posString);
 	},
-	updateLayers: function(){
-		if (!this.layersDirty) {
+	updateChunks: function(){
+		if (!this.chunksDirty) {
 			//return;
 		};
 
-		this.cachedLayers = this.cachedLayers || {};
-		this.fetchingLayers = this.fetchingLayers || {};
-
 		var newLPos = this.worldToLayerPos(this.cpos)
-
 		for (var x = -1*this.sight; x < this.sight; x++) {
 			for (var y = -1*this.sight; y < this.sight; y++) {
-				for (var z = -1 * this.sightHeight; z < 0; z++) {
-					var pos = newLPos.clone().add(new THREE.Vector3(x, y, z))
-					var index = pos.x+":"+pos.y+":"+pos.z;
-					var l = this.cachedLayers[index];
-					if (l) {
-						if (!l.surfaceMesh.parent) {
-							this.scene.add(l.surfaceMesh);
-						};
-						continue;
-					}else if(this.fetchingLayers[index]){
-						continue;
-					}else if(this.layerFetchQueue[index]){
-						continue;
-					}
-					this.layerFetchQueue[index] = pos;
-				};
+				var pos = newLPos.clone().add(new THREE.Vector3(x, y, 0))
+				var index = pos.x+":"+pos.y
+				var chunk = this.cachedChunks[index];
+				if (chunk) {
+					if (!chunk.addedToScene) {
+						chunk.addToScene(this.scene);
+					};
+					continue;
+				}else if(this.fetchingChunks[index]){
+					continue;
+				}else if(this.chunkFetchQueue[index]){
+					continue;
+				}
+				this.chunkFetchQueue[index] = pos;
 			};
 		};
 		this.cleanScene();
-		this.layersDirty = false
+		this.chunksDirty = false
 	},
-	fetchLayers: function(){
+	fetchChunks: function(){
 		var num = 0;
 		
 		var xList = "";
 		var yList = "";
-		var zList = "";
 
-		for(var key in this.layerFetchQueue){
-			var pos = this.layerFetchQueue[key];
+		for(var key in this.chunkFetchQueue){
+			var pos = this.chunkFetchQueue[key];
 			var sep = "";
 			if (num != 0) {
 				sep = ",";
 			};
 			xList += sep + pos.x;
 			yList += sep + pos.y;
-			zList += sep + pos.z;
-			this.fetchingLayers[key] = true;			
+			this.fetchingChunks[key] = true;			
 
 			num++;
 		}
@@ -358,60 +387,60 @@ Fortia.game = {
 			return;
 		};
 
-		this.layerFetchQueue = {};
+		this.chunkFetchQueue = {};
 
 		var that = this;
-		this.api.dType = "text"; // Set the data type to text temporarily
-		this.api.get("layers?x="+xList+"&y="+yList+"&z="+zList, "",function(response){
-			that.processLayerReply(response)
+		this.api.dType = "text"; // Set the data type to text temporarily, since were decoding it in the background worker
+		this.api.get("chunks?x="+xList+"&y="+yList, "",function(response){
+			that.processChunkResponse(response)
 		}, function(e, r){
 			//that.fetchingLayers[indexStr] = false
-			console.log("Error fetching layer", e)
+			console.log("Error fetching chunk", e)
 		});
 
 		this.api.dType = "json"; // Set it back to json
 	},
-	processLayerReply: function(response){
+	processChunkResponse: function(response){
 		this.worker.postMessage({
 			action: "process",
 			json: response,
 		});
 	},
 	cleanCache: function(){
-		for( var key in this.cachedLayers ){
-			var l = this.cachedLayers[key];
-			var pos = l.pos.clone();
+		for( var key in this.cachedChunks ){
+			var chunk = this.cachedChunks[key];
+			var pos = chunk.pos.clone();
 
 			var lpos = this.worldToLayerPos(this.cpos);
 
 			var delta = lpos.sub(pos);
 
 			if (delta.x > this.sight+1 || delta.x < -1*this.sight-1 || 
-				delta.y > this.sight+1 || delta.y < -1*this.sight-1 ||
-				delta.z > this.sightHeight+1 || delta.z < -1) {
-				this.scene.remove(l.surfaceMesh);
-				l.geometry.dispose();
-				delete this.cachedLayers[key];
-				l = null;
-				console.log("a layer from the cache");
+				delta.y > this.sight+1 || delta.y < -1*this.sight-1){
+				chunk.removeFromScene(this.scene);
+				chunk.dispose();
+				delete this.cachedChunks[key];
+				chunk = null;
+				console.log("cleared a chunk from the cache");
 			};
 		}
+		this.updateVerticeCount();
 	},
 	cleanScene: function(){
-		for( var key in this.cachedLayers ){
-			var l = this.cachedLayers[key];
-			var pos = l.pos.clone();
+		for( var key in this.cachedChunks ){
+			var chunk = this.cachedChunks[key];
+			var pos = chunk.pos.clone();
 
 			var lpos = this.worldToLayerPos(this.cpos);
 
 			var delta = lpos.sub(pos);
 
 			if (delta.x > this.sight || delta.x < -1*this.sight || 
-				delta.y > this.sight || delta.y < -1*this.sight ||
-				delta.z > this.sightHeight || delta.z < 0) {
-				this.scene.remove(l.surfaceMesh);
+				delta.y > this.sight || delta.y < -1*this.sight){
+				chunk.removeFromScene(this.scene)
 			};
 		}
+		this.updateVerticeCount();
 	},
 	worldToLayerPos: function(pos){
 		var t = pos.clone();
@@ -425,9 +454,34 @@ Fortia.game = {
 		return t;
 	},
 	onWheel: function(details){
-		var deltaY = details.deltaY;
+		// This seems to be much higher on chrome than firefox
+		var deltaY = details.deltaY / (navigator.userAgent.toLowerCase().indexOf('chrome') > -1 ? 5 : 1);
 		this.cameraHeight += deltaY;
 		this.camera.position.z += deltaY
+	},
+	updateVerticeCount: function(){
+		function getVerticesCount(obj){
+			var vertices = 0
+			if (obj.children.length > 0) {
+				for (var i = 0; i < obj.children.length; i++) {
+					vertices += getVerticesCount(obj.children[i])
+				};
+			};
+			if (obj.geometry) {
+				var geom = obj.geometry;
+				if (geom.vertices) {
+					vertices += geom.vertices.length;
+				}else{
+					attrib = geom.getAttribute("position")
+					if (attrib) {
+						vertices += (attrib.length / 3);
+					};
+				}
+			};
+			return vertices;
+		}
+		var numVertices = getVerticesCount(this.scene);
+		$("#game-vertices").text("Vertex count: " + numVertices);
 	}
 }
 

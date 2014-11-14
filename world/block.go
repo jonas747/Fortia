@@ -43,19 +43,22 @@ func (b *Block) CheckHidden(neighbours []*Chunk) (bool, ferr.FortiaError) {
 	pos := b.LocalPosition
 	layerSize := b.Layer.World.GeneralInfo.LayerSize
 
-	// Set chunk edges to not covered for now
-	// if pos.X == 0 || pos.X >= b.Layer.World.GeneralInfo.LayerSize ||
-	// 	pos.Y == 0 || pos.Y >= b.Layer.World.GeneralInfo.LayerSize {
-	// 	return false, nil
-	// }
-
 	blocks := make([]*Block, 0)
 
 	// get surounding blocks on same layer
-	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X+1, pos.Y))
-	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X-1, pos.Y))
-	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y+1))
-	blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y-1))
+	if pos.X > 0 {
+		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X-1, pos.Y))
+	}
+	if pos.X < layerSize-1 {
+		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X+1, pos.Y))
+	}
+
+	if pos.Y > 0 {
+		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y-1))
+	}
+	if pos.Y < layerSize-1 {
+		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y+1))
+	}
 
 	// Below and above
 	if b.Layer.Position.Z > 0 {
@@ -85,34 +88,38 @@ func (b *Block) CheckHidden(neighbours []*Chunk) (bool, ferr.FortiaError) {
 
 			if diff.X == 1 && diff.Y == 0 {
 				x1c = v
+				continue
 			} else if diff.X == -1 && diff.Y == 0 {
 				x_1c = v
+				continue
 			} else if diff.X == 0 && diff.Y == 1 {
 				y1c = v
+				continue
 			} else if diff.X == 0 && diff.Y == -1 {
 				y_1c = v
+				continue
 			}
 		}
 
 		if pos.X == 0 {
-			if x1c != nil {
+			if x_1c != nil {
 				cl := x_1c.Layers[b.Layer.Position.Z]
 				blocks = append(blocks, cl.GetLocalBlock(layerSize-1, pos.Y))
 			}
 		} else if pos.X >= layerSize {
-			if x_1c != nil {
+			if x1c != nil {
 				cl := x1c.Layers[b.Layer.Position.Z]
 				blocks = append(blocks, cl.GetLocalBlock(0, pos.Y))
 			}
 		}
 
 		if pos.Y == 0 {
-			if y1c != nil {
+			if y_1c != nil {
 				cl := y_1c.Layers[b.Layer.Position.Z]
 				blocks = append(blocks, cl.GetLocalBlock(pos.X, layerSize-1))
 			}
 		} else if pos.Y >= layerSize {
-			if y_1c != nil {
+			if y1c != nil {
 				cl := y1c.Layers[b.Layer.Position.Z]
 				blocks = append(blocks, cl.GetLocalBlock(pos.X, 0))
 			}

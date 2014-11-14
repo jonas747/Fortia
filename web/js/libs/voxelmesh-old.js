@@ -1,53 +1,72 @@
-function VoxelMesh(data, mesher, scaleFactor, three) {
-  this.THREE = three || THREE
-  this.data = data
-  var geometry = this.geometry = new this.THREE.Geometry()
-  this.scale = scaleFactor || new this.THREE.Vector3(10, 10, 10)
-  
-  var result = mesher( data.voxels, data.dims )
-  this.meshed = result
+/*
+data is a voxel containing voxels and dims
 
-  geometry.vertices.length = 0
-  geometry.faces.length = 0
+data.voxels is an array containig colors for all the blocks, 0 being no block
+data.dims is an array of size 3, containing the x,y and z size of the voxel
+*/
 
-  for (var i = 0; i < result.vertices.length; ++i) {
-    var q = result.vertices[i]
-    geometry.vertices.push(new this.THREE.Vector3(q[0], q[1], q[2]))
-  } 
-  
-  for (var i = 0; i < result.faces.length; ++i) {
-    var q = result.faces[i]
-    if (q.length === 5) {
-      var uv = this.faceVertexUv(i)
-
-      var f = new this.THREE.Face3(q[0], q[1], q[3])
-      f.color = new this.THREE.Color(q[4])
-      geometry.faces.push(f)
-      geometry.faceVertexUvs[0].push([uv[0], uv[1], uv[3]])
-
-      var g = new this.THREE.Face3(q[1], q[2], q[3])
-      g.color = new this.THREE.Color(q[4])
-      geometry.faces.push(g)
-      geometry.faceVertexUvs[0].push([uv[1], uv[2], uv[3]])
-    } else if (q.length == 4) {
-      var f = new this.THREE.Face3(q[0], q[1], q[2])
-      f.color = new this.THREE.Color(q[3])
-      geometry.faces.push(f)
-      geometry.faceVertexUvs[0].push(this.faceVertexUv(i))
-    }
-  }
-  
-  geometry.computeFaceNormals()
-
-  geometry.verticesNeedUpdate = true
-  geometry.elementsNeedUpdate = true
-  geometry.normalsNeedUpdate = true
-
-  geometry.computeBoundingBox()
-  geometry.computeBoundingSphere()
-
+// Edit by jonas747:
+// Returns uv, position and color buffers
+function VoxelMesh() {
+  this.THREE = THREE || three;
 }
 
+VoxelMesh.prototype.mesh = function(data, mesher, scaleFactor, mesherExtraData){
+  this.data = data;
+  this.scale = scaleFactor || new this.THREE.Vector3(10, 10, 10)
+  var result = mesher( data.voxels, data.dims, mesherExtraData )
+  this.result = result;
+
+  var numFaces = result.vertices.length / 18
+  var uv = new Float32Array(numFaces * 12)
+
+  for (var i = 0; i < numFaces; i++) {
+    var fi = i * 18
+    var vs = [
+      [result.vertices[fi], result.vertices[fi+1], result.vertices[fi+2]],
+      [result.vertices[fi+3], result.vertices[fi+4], result.vertices[fi+5]],
+      [result.vertices[fi+6], result.vertices[fi+7], result.vertices[fi+8]],
+      // Skip to last vertex
+      [result.vertices[i+15], result.vertices[i+16], result.vertices[i+17]]
+    ];
+    
+    var rawUv = this.faceVertexUv(vs);
+    //var processedUv = new Float32Array(rawUv.length * 3) //maybe right or nto?>
+    var uva = rawUv[0]
+    var uvb = rawUv[1]
+    var uvc = rawUv[2]
+    var uvd = rawUv[3]
+
+    var ui = i * 12;
+    uv[ui]   = uva.x
+    uv[ui+1] = uva.y
+
+    uv[ui+2]   = uvb.x
+    uv[ui+3]   = uvb.y
+
+    uv[ui+4]   = uvd.x
+    uv[ui+5]   = uvd.y
+  
+    // second
+    uv[ui+6]   = uvb.x
+    uv[ui+7]   = uvb.y
+
+    uv[ui+8]   = uvc.x
+    uv[ui+9]   = uvc.y
+
+    uv[ui+10]   = uvd.x
+    uv[ui+11]   = uvd.y
+
+  };
+  this.result.uv = uv;
+}
+// Generates the buffergeomtry object with attributes and everything
+VoxelMesh.prototype.bufferGeometry = function(){
+  var geometry = this.geometry = new THREE.BufferGeometry();
+
+  geometry.addAttribute("position", new THREE.BufferAttribute(this.result.vertices, 3));
+  geometry.addAttribute("color", new THREE.BufferAttribute(this.result.colors, 3));
+}
 VoxelMesh.prototype.createWireMesh = function(hexColor) {    
   var wireMaterial = new this.THREE.MeshBasicMaterial({
     color : hexColor || 0xffffff,
@@ -79,13 +98,8 @@ VoxelMesh.prototype.setPosition = function(x, y, z) {
   if (this.surfaceMesh) this.surfaceMesh.position = new this.THREE.Vector3(x, y, z)
 }
 
-VoxelMesh.prototype.faceVertexUv = function(i) {
-  var vs = [
-    this.meshed.vertices[i*4+0],
-    this.meshed.vertices[i*4+1],
-    this.meshed.vertices[i*4+2],
-    this.meshed.vertices[i*4+3]
-  ]
+VoxelMesh.prototype.faceVertexUv = function(vs) {
+ 
   var spans = {
     x0: vs[0][0] - vs[1][0],
     x1: vs[1][0] - vs[2][0],
@@ -94,6 +108,7 @@ VoxelMesh.prototype.faceVertexUv = function(i) {
     z0: vs[0][2] - vs[1][2],
     z1: vs[1][2] - vs[2][2]
   }
+
   var size = {
     x: Math.max(Math.abs(spans.x0), Math.abs(spans.x1)),
     y: Math.max(Math.abs(spans.y0), Math.abs(spans.y1)),
@@ -144,5 +159,4 @@ VoxelMesh.prototype.faceVertexUv = function(i) {
       new this.THREE.Vector2(width, 0)
     ]
   }
-}
-;
+};

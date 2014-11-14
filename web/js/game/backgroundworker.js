@@ -1,7 +1,9 @@
-importScripts("/web/js/game/layer.js", "/web/js/libs/voxelmesh.js", "/web/js/libs/greedymesher.js", "/web/js/libs/three.js");
+importScripts("/web/js/game/layer.js", "/web/js/game/chunk.js", "/web/js/libs/voxelmesh.js", "/web/js/libs/greedymesher.js", "/web/js/libs/three.js");
 
 var settings;
-	
+
+var chunkSize;
+
 function log(){
 	self.postMessage({
 		"action": "log",
@@ -15,6 +17,7 @@ self.onmessage = function(evt){
 	switch (data.action){
 		case "init":
 			settings = data;
+			chunkSize = new THREE.Vector2(data.layerSize, data.height)
 			break;
 		case "process":
 			process(data);
@@ -23,33 +26,31 @@ self.onmessage = function(evt){
 }
 
 function process(data){
-	log("Processing response now!")
 	var jsonStr = data.json;
 	var decoded = JSON.parse(jsonStr);
+	for (var i = 0; i < decoded.length; i++) {
+		processChunk(decoded[i])
+	};	
+}
 
-	for(var i = 0; i < decoded.length; i++){
-		var rawLayer = decoded[i];
-		if (rawLayer == null) {
-			continue;
-		};
+function processChunk(rawChunk){
+	if (rawChunk == null) {
+		return;
+	};
 
-		if (rawLayer.IsAir) {
-			continue
-		}
-
-		var layer = new Fortia.Layer({x:0,y:0,z:0}, settings.size);
-	 	layer.fromJson(rawLayer);
-	 	layer.generateMesh();
-
-	 	var out = {
-	 		action: "finlayer",
-	 		vertices: layer.vMesh.result.vertices.buffer,
-	 		colors: layer.vMesh.result.colors.buffer,
-	 		uv: layer.vMesh.uv.buffer,
-	 		position: {x: layer.pos.x, y: layer.pos.y, z: layer.pos.z},
-	 		//blocks: layer.blocks
-	 	}
-	 	self.postMessage(out, [layer.vMesh.result.vertices.buffer, layer.vMesh.result.colors.buffer, layer.vMesh.uv.buffer]);
-	 	// todo
+	if (rawChunk.IsAir) {
+		return
 	}
+	var chunk = Fortia.chunkFromJson(rawChunk, chunkSize);
+ 	chunk.generateMesh();
+
+ 	var out = {
+ 		action: "finChunk",
+ 		vertices: chunk.vertices.buffer,
+ 		colors: chunk.colors.buffer,
+ 		uv: chunk.uv.buffer,
+ 		position: {x: chunk.pos.x, y: chunk.pos.y},
+ 	}
+ 	self.postMessage(out, [chunk.vertices.buffer, chunk.colors.buffer, chunk.uv.buffer]);
+ 	log("Done generating chunk")
 }

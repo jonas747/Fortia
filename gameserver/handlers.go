@@ -2,12 +2,48 @@ package gameserver
 
 import (
 	"encoding/json"
+	//ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
-	"github.com/jonas747/fortia/world"
+	//"github.com/jonas747/fortia/world"
+	"bytes"
+	"compress/gzip"
 	"net/http"
 	"strconv"
 	"strings"
 )
+
+func writeCompressed(w http.ResponseWriter, r *http.Request, body []byte) {
+	encodingsStr := r.Header.Get("Accept-Encoding")
+	split := strings.Split(encodingsStr, ",")
+	var buffer bytes.Buffer
+	encoding := ""
+	for _, v := range split {
+		if v == "gzip" {
+			writer := gzip.NewWriter(&buffer)
+			total := 0
+			for total < len(body) {
+				n, _ := writer.Write(body[total:])
+				total += n
+			}
+			writer.Close()
+			encoding = "gzip"
+			break
+		}
+	}
+	// Write uncompressed if no compression is supoprted
+	if encoding == " " {
+		w.Write(body)
+		return
+	}
+	w.Header().Set("Content-Encoding", encoding)
+	w.Header().Set("Content-Type", "application/json")
+	logger.Debug("Serialized length: ", buffer.Len()/1000, "k")
+	total := int64(0)
+	for total < int64(buffer.Len()) {
+		n, _ := buffer.WriteTo(w)
+		total += n
+	}
+}
 
 func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
 	w.Write([]byte("{\"ok\": true}"))
@@ -44,7 +80,15 @@ func handleLayers(w http.ResponseWriter, r *http.Request, body interface{}) {
 	if server.HandleError(w, r, nErr) {
 		return
 	}
-	w.Write(serialized)
+	writeCompressed(w, r, serialized)
+}
+
+func serialize(data interface{}, out chan []byte) {
+	serialized, err := json.Marshal(data)
+	if err != nil {
+		out <- []byte{}
+	}
+	out <- serialized
 }
 
 // /chunks
@@ -59,19 +103,48 @@ func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
 		y, _ := strconv.Atoi(yList[k])
 		positions[k] = vec.Vec2I{x, y}
 	}
-	chunks := make([]*world.Chunk, len(positions))
-	for k, v := range positions {
+	dataChan := make(chan []byte, 5)
+	numChunks := 0
+	for _, v := range positions {
 		chunk, err := gameWorld.GetChunk(v.X, v.Y, true, true)
+		if err != nil {
+			if err.GetMessage() == "404" {
+				continue
+			}
+		}
 		if server.HandleFortiaError(w, r, err) {
 			return
 		}
-		chunks[k] = chunk
+		dmap := map[string]interface{}{
+			"Layers":        chunk.Layers,
+			"Position":      chunk.Position,
+			"Biome":         chunk.Biome.Id,
+			"VisibleLayers": chunk.VisibleLayers,
+		}
+		numChunks++
+		go serialize(dmap, dataChan)
 	}
-	serialized, nErr := json.Marshal(chunks)
-	if server.HandleError(w, r, nErr) {
-		return
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+	firstElen := true
+	for i := 0; i < numChunks; i++ {
+		chunk := <-dataChan
+		if len(chunk) < 1 {
+			continue
+		}
+		if !firstElen {
+			buffer.WriteString(",")
+		}
+		firstElen = false
+		buffer.Write(chunk)
 	}
-	w.Write(serialized)
+	buffer.WriteString("]")
+	// serialized, nErr := json.Marshal(chunks)
+	// if server.HandleError(w, r, nErr) {
+	// 	return
+	// }
+	serialized := buffer.Bytes()
+	writeCompressed(w, r, serialized)
 }
 
 // /info
