@@ -1,8 +1,11 @@
 Fortia = Fortia || {};
 Fortia.Chunk = function(){
 	this.layers = [];
-	this.size = 0;
-	this.pos;
+	this.size = new THREE.Vector2();
+	this.pos = new THREE.Vector2();
+	if (Fortia.game) {
+		this.size = new THREE.Vector2(Fortia.game.worldInfo.LayerSize, Fortia.game.worldInfo.Height);
+	};
 
 	this.vertices;
 	this.colors;
@@ -38,6 +41,10 @@ Fortia.Chunk.prototype.createVoxelData = function(){
 		for (var x = 0; x <this.size.x; x++) {
 			for (var y = 0; y < this.size.x; y++, num++) {
 				var l = this.layers[z];
+				if (z === 0) {
+					voxels[num] = 0x010101;
+					continue
+				};
 				if (l == undefined) {
 					voxels[num] = 0xbbbbbb;
 					// Remove faces from edges
@@ -169,4 +176,35 @@ Fortia.Chunk.prototype.removeFromScene = function(scene){
 // Clear the buffers on the gpu
 Fortia.Chunk.prototype.dispose = function(){
 	this.geometry.dispose();
+}
+
+Fortia.Chunk.prototype.getBlock = function(pos){
+	var index = this.blockCoordsToIndex(pos);
+	if (this.layers.length > 0) {
+		var layer = this.layers[pos.z];
+		if (!layer) {
+			return
+		};
+		return layer.blocks[index];
+	}else{
+		var layer = this.bufferLayers[pos.z];
+		if (!layer) {
+			return
+		}
+		var layerView = new Int32Array(layer);
+		return layerView[index]
+	}
+}
+
+Fortia.Chunk.prototype.blockCoordsToIndex = function(pos) {
+	return this.size.x*pos.x + pos.y
+}
+
+// Return a blocks x and y from the index in the layer slice
+// x = index / size
+// y = index - (x * size)
+Fortia.Chunk.prototype.blockIndexToCoords = function(index) {
+	var x = index / this.size.x
+	var y = index - (x * this.size.x)
+	return new THREE.Vector2(x, y)
 }

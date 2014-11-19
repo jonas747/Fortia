@@ -44,13 +44,38 @@ function processChunk(rawChunk){
 	var chunk = Fortia.chunkFromJson(rawChunk, chunkSize);
  	chunk.generateMesh();
 
+ 	var transferOwnership = [];
+ 	transferOwnership.push(chunk.vertices.buffer);
+ 	transferOwnership.push(chunk.colors.buffer);
+ 	transferOwnership.push(chunk.uv.buffer);
+ 	transferOwnership.push(chunk.normals.buffer);
+
+ 	for (var i = 0; i < chunk.layers.length; i++) {
+ 		if (!chunk.bufferLayers) {chunk.bufferLayers = []};
+ 		var l = chunk.layers[i]; // Convert to a typed array instead of a object array
+ 		if (!l) {
+ 			continue
+ 		};
+
+ 		var voxelBuffer = new Int32Array(l.blocks.length);
+ 		chunk.bufferLayers[i] = voxelBuffer.buffer;
+ 		transferOwnership.push(voxelBuffer.buffer);
+
+ 		for (var j = 0; j < l.blocks.length; j++) {
+ 			if(l.blocks[j]){
+ 				voxelBuffer[j] = l.blocks[j].Id;
+ 			}
+ 		};
+ 	};
+
  	var out = {
  		action: "finChunk",
  		vertices: chunk.vertices.buffer,
  		colors: chunk.colors.buffer,
  		uv: chunk.uv.buffer,
  		position: {x: chunk.pos.x, y: chunk.pos.y},
- 		normals: chunk.normals.buffer
+ 		normals: chunk.normals.buffer,
+ 		layers: chunk.bufferLayers, 
  	}
- 	self.postMessage(out, [chunk.vertices.buffer, chunk.colors.buffer, chunk.uv.buffer, chunk.normals.buffer]);
+ 	self.postMessage(out, transferOwnership);
 }

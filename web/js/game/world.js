@@ -39,7 +39,7 @@ Fortia.World.prototype.workerCallback = function(evt){
 			chunk.colors = data.colors;
 			chunk.uv = data.uv;
 			chunk.normals = data.normals;
-			if (data.blocks) {chunk.blocks = data.blocks};
+			if (data.layers) {chunk.bufferLayers = data.layers};
 
 			chunk.pos = pos;
 			chunk.size = new THREE.Vector2(this.settings.LayerSize, this.settings.Height);
@@ -76,7 +76,15 @@ Fortia.World.prototype.removeChunk = function(x, y){
 }
 
 Fortia.World.prototype.getBlock = function(x, y, z){
+	var lPos = new THREE.Vector2(x, y);
+	lPos = this.worldToLayerPos(lPos);
 
+	var chunk = this.chunks[lPos.x + ":" + lPos.y];
+	if (chunk) {
+		var localPos = new THREE.Vector2(x, y);
+		localPos.sub(lPos.multiplyScalar(this.settings.LayerSize));
+		return chunk.getBlock(new THREE.Vector3(localPos.x, localPos.y, z));
+	};
 }
 
 Fortia.World.prototype.updateChunks = function(newPos){
@@ -128,7 +136,7 @@ Fortia.World.prototype.fetchChunks = function(){
 
 	this.chunkFetchQueue = {};
 	var that = this;
-	this.api.dType = "text"; // Set the data type to text temporarily, since were decoding it in the background worker, maybe use arraybuffer in future for that extra performance
+	this.api.responseType = "text"; // Set the data type to text temporarily, since were decoding it in the background worker, maybe use arraybuffer in future for that extra performance
 	this.api.get("chunks?x="+xList+"&y="+yList, "",function(response){
 		that.mesher.postMessage({
 			action: "process",
@@ -139,7 +147,7 @@ Fortia.World.prototype.fetchChunks = function(){
 		console.log("Error fetching chunk", e)
 	});
 
-	this.api.dType = "json"; // Set it back to json
+	this.api.responseType = "json"; // Set it back to json
 },
 
 Fortia.World.prototype.clean = function(){

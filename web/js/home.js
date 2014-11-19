@@ -22,13 +22,13 @@ Fortia.initHome = function(){
 			};
 			var that = this
 			
-			Fortia.authApi.post("login", fobj, function(response){
+			Fortia.authApi.post("login", JSON.stringify(fobj), function(response){
 				console.log(response);
 				// Navigate to lobby
 				localStorage.setItem("username", fobj.username);
 				Fortia.router.navigate("lobby", {trigger: true});			
 			}, function(req){
-				var response = req.responseJSON;
+				var response = req.response;
 				if (response === "") {
 					that.loginError = "Unknown error occured";
 				}else{
@@ -63,12 +63,12 @@ Fortia.initHome = function(){
 			}
 			var that = this
 			
-			Fortia.authApi.post("register", fobj, function(reponse){
+			Fortia.authApi.post("register", JSON.stringify(fobj), function(reponse){
 				that.render();
 				$("#register-success").modal();
 				$("#login-username").val(fobj.username);
 			}, function(req){
-		    	var response = req.responseJSON;
+		    	var response = req.response;
 				if (response === "") {
 					that.registerError = "Uknown error occured";
 				}else{

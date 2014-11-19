@@ -16,6 +16,9 @@ It can be a bit rough in the transition between biomes, this stages smoothes thi
 ### Block placement
 This stage actually places the blocks based on the block's life variable assigned in the first stage
 
+### Flagging
+Flag surface blocks for vegetation
+
 ### Vegetation
 Here trees, plants etc are placed.
 

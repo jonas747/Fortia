@@ -86,9 +86,9 @@ Fortia.game = {
 		light.position.set( 0, 0, 1000 );
 		scene.add( light );
 
-		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+		var geometry = new THREE.BoxGeometry( 1.1, 1.1, 1.1 );
 		var material = new THREE.MeshBasicMaterial( { color: 0x0ff0000, wireframe: true } );
-		var cube = new THREE.Mesh( geometry, this.blkMaterial );
+		var cube = new THREE.Mesh( geometry, material );
 		scene.add( cube );
 		this.helperCube = cube;
 
@@ -174,7 +174,7 @@ Fortia.game = {
 
 		if (Mouse.isDirty()) {
 			Mouse.setDirty(false);
-			//this.updateHelperHelperBlock();
+			this.updateHelperHelperBlock();
 		};
 
 		if (move) {
@@ -238,32 +238,25 @@ Fortia.game = {
 		mv = mv.unproject(this.camera);
 		mv.sub(this.camera.position);
 		mv.normalize();
-		var raycaster = new THREE.Raycaster( this.camera.position, mv, 0, 100);
-		var intersects = raycaster.intersectObjects(this.scene.children);
-		// Change color if hit block
-		if ( intersects.length > 0 ) {
-			var inter = intersects[0]
-			if (inter.object === this.helperCube) {
-				if (intersects.length > 1) {
-					inter = intersects[1];
-				}else{
-					inter = null
-				}
-			}
+		
+		var cpos = this.camera.position
+		var origin = [cpos.x, cpos.y, cpos.z];
+		var direction = [mv.x, mv.y, mv.z];
 
-			if (inter) {
-				pos = inter.point.clone();
-				pos.floor();
-				pos.add(new THREE.Vector3(0.5, 0.5, 0));
-				this.helperCube.position.set(pos.x, pos.y, pos.z);
-				this.onHelperMove(pos);
-			};
-		}
+		var hit_pos = [];
+		var hit_norm = [];
+		var hit = traceRay(this.world, origin, direction, 100, hit_pos, hit_norm);
+		if (hit) {
+			//console.log(hit_pos, hit_norm);
+			var pos = new THREE.Vector3(Math.floor(hit_pos[0])+0.5, Math.floor(hit_pos[1])+0.5, Math.floor(hit_pos[2])+0.5);
+	 		this.helperCube.position.set(pos.x, pos.y, pos.z);
+	 		this.onHelperMove(pos, hit);
+		};
 	},
-	onHelperMove: function(pos){
+	onHelperMove: function(pos, id){
 		var cloned = pos.clone();
 		var lPos = this.worldToLayerPos(pos);
-		$("#game-cursor").text("Cursor WPos: "+cloned.x + ", "+ cloned.y + ", " + cloned.z + " LPos: " + lPos.x + ", " + lPos.y);
+		$("#game-cursor").text("Cursor WPos: "+cloned.x + ", "+ cloned.y + ", " + cloned.z + " LPos: " + lPos.x + ", " + lPos.y + " TypeId: "+id);
 	},
 	moveCamera: function(by){
 
