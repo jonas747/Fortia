@@ -29,6 +29,7 @@ func Run(l *log.LogClient, gdb world.GameDB, adb authserver.AuthDB, addr string)
 	}
 	err := gameWorld.LoadSettingsFromDb()
 	if err != nil {
+		l.Error(err)
 		return err
 	}
 

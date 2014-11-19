@@ -35,7 +35,7 @@ Alpha 0.2:
     ☐ Rivers
     ☐ Oceans
     ☐ Trees
-    ☐ Caves
+    ✔ Basic Caves @done (14-11-16 02:46)
     Wgen options:
      ☐ Add more advaned world gen options
      ☐ Use blocks.json 
@@ -65,10 +65,15 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
+     ☐ Add voxel raycast that dosent lag the fuck out of everything...
      ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
      ✔ Change to buffer geometry from normal geometry @done (14-11-11 17:07)
        Makes it easier to move the chunk between workers, as i can just tranfser ownership of the typed arrays and fill the buffers on the main thread
-     ☐ Change from getting individual layers, to a whole chunk
+     ✔ Change from getting individual layers, to a whole chunk @done (14-11-15 01:00)
+     ✔ Add a simple indicator to where your mouse is @done (14-11-15 01:01)
+     ✔ Change the meshing @done (14-11-19 02:39)
+       ✔ Instead of mshiing only the surface, make a big square out of the chunk @done (14-11-19 02:39)
+       ✔ Dont mesh chunk sides unless they are not flagged hidden @done (14-11-19 02:39)
     Lobby:
      ☐ Password recovery in login
      ☐ Make it possible to change password and username in settings

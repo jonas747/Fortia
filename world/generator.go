@@ -29,7 +29,8 @@ type Generator struct {
 	Size            int
 }
 
-func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seeds map[string]int64) *Generator {
+// Returns a new generator
+func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed int64) *Generator {
 	// map the blocktypes to biomes for ease of access
 	biomeBTypes := make(map[int][]BlockType)
 	for _, v := range blockTypes {
@@ -56,10 +57,10 @@ func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed
 	}
 	// Init the noise generators
 	ngens := make(map[string]*simplex.Noise)
-	for k, v := range seeds {
-		noiseGen := simplex.NewNoise(v)
-		ngens[k] = noiseGen
-	}
+	rng := rand.New(rand.NewSource(seed))
+
+	ngens["landscape"] = simplex.NewNoise(rng)
+	ngens["caves"] = simplex.NewNoise(rng)
 
 	generator := &Generator{
 		W:               world,
@@ -75,11 +76,10 @@ func NewGenerator(world *World, biomes *BiomesInfo, blockTypes []BlockType, seed
 // Generates a world
 func (g *Generator) GenerateWorld() ferr.FortiaError {
 	// Start by generating the base chunks
-	g.W.Logger.Debug("Generating landscape")
+	g.W.Logger.Info("Generating landscape")
 	p := pb.StartNew(g.Size * g.Size)
-	defer p.Finish()
-	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
-		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
+	for x := 0; x < g.Size; x++ {
+		for y := 0; y < g.Size; y++ {
 			pos := vec.Vec2I{x, y}
 			chunk, err := g.generateBaseChunk(pos)
 			if err != nil {
@@ -94,47 +94,55 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 		}
 	}
 	p.Finish()
+
+	// Caves
+	g.W.Logger.Info("Generating caves")
+	g.GenStage(g.generateCaves)
+
 	// Smooth between chunks
-	g.W.Logger.Debug("Smoothing chunk borders")
-	p = pb.StartNew(g.Size * g.Size)
-	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
-		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
-			chunk, err := g.W.GetChunk(x, y, true, false)
-			if err != nil {
-				return err
-			}
-			err = g.smoothChunk(chunk)
-			if err != nil {
-				return err
-			}
-			err = g.W.SetChunk(chunk, true)
-			if err != nil {
-				return err
-			}
-			p.Increment()
-		}
-	}
-	p.Finish()
+	// g.W.Logger.Info("Smoothing chunk borders")
+	// g.GenStage(g.smoothChunk)
+
 	// Grow trees
 	// More advanced block placement
 	// Flag blocks
-	g.W.Logger.Debug("Flagging hidden blocks and layers")
-	p = pb.StartNew(g.Size * g.Size)
-	for x := -1 * g.Size / 2; x < g.Size/2; x++ {
-		for y := -1 * g.Size / 2; y < g.Size/2; y++ {
+	g.W.Logger.Info("Placing blocks")
+	g.GenStage(g.basePlaceBlocks)
+
+	g.W.Logger.Info("Flagging hidden blocks and layers")
+	g.GenStage(g.flagHidden)
+
+	return nil
+}
+
+func (g *Generator) GenStage(f func(*Chunk) ferr.FortiaError) {
+	p := pb.StartNew(g.Size * g.Size)
+	defer p.Finish()
+	for x := 0; x < g.Size; x++ {
+		for y := 0; y < g.Size; y++ {
 			chunk, err := g.W.GetChunk(x, y, true, false)
 			if err != nil {
-				return err
+				g.W.Logger.Error(err)
+				continue
 			}
-			chunk.FlagHidden([]*Chunk{})
+			err = f(chunk)
+			if err != nil {
+				g.W.Logger.Error(err)
+				continue
+			}
 			err = g.W.SetChunk(chunk, true)
 			if err != nil {
-				return err
+				g.W.Logger.Error(err)
+				continue
 			}
+
 			p.Increment()
 		}
 	}
+}
 
+func (g *Generator) flagHidden(chunk *Chunk) ferr.FortiaError {
+	chunk.FlagHidden(map[vec.Vec2I]*Chunk{})
 	return nil
 }
 
@@ -157,9 +165,6 @@ func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaEr
 	}
 
 	chunk.Potency = potency
-
-	chunk = g.basePlaceBlocks(chunk)
-
 	return chunk, err
 }
 
@@ -251,7 +256,6 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				noise := noiseGen.Noise3(float64(wx)/float64(50), float64(wy)/float64(50), float64(z)/float64(50))
 				life := ((float64(wHeight) / float64(z)) * 5) - 10 // should be adjusted by the roughness biome property
-				// g.W.Logger.Debug(life, z, wHeight, float64(wHeight)/float64(z))
 				life += noise
 				life *= 100
 
@@ -267,9 +271,34 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 	return c
 }
 
-// TODO
-func (g *Generator) caves(chunk *Chunk) *Chunk {
-	return chunk
+// Generates caves underground
+func (g *Generator) generateCaves(chunk *Chunk) ferr.FortiaError {
+	noiseGen := g.NoiseGenerators["caves"]
+
+	lSize := g.W.GeneralInfo.LayerSize
+	wHeight := g.W.GeneralInfo.Height
+
+	cWorldPos := chunk.Position.Clone()
+	cWorldPos.MultiplyScalar(float64(lSize))
+
+	for x := 0; x < lSize; x++ {
+		for y := 0; y < lSize; y++ {
+			// layer
+			for z := 0; z < wHeight; z++ {
+				wx := float64(cWorldPos.X + x)
+				wy := float64(cWorldPos.Y + y)
+				noise := noiseGen.Noise3(wx/float64(50), wy/float64(50), float64(z)/float64(50))
+				if noise > 0.7 {
+					l := chunk.Layers[z]
+					index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
+					//l.Blocks[index].Id -= int(noise * 5 * 100)
+					l.Blocks[index].Id = 0
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // Smooths the chunk edges
@@ -279,28 +308,45 @@ func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
 
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
-func (g *Generator) basePlaceBlocks(chunk *Chunk) *Chunk {
-	for x := 0; x < g.W.GeneralInfo.LayerSize; x++ {
-		for y := 0; y < g.W.GeneralInfo.LayerSize; y++ {
-			for z := 0; z < g.W.GeneralInfo.Height; z++ {
-				l := chunk.Layers[z]
-				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-				b := l.Blocks[index]
-				if z == 0 {
-					b.Id = 1 // Switch this with bedrock later
-				} else if b.Id > 50 {
-					b.Id = 1 // rock
-					l.IsAir = false
-				} else if b.Id <= 50 && b.Id >= 0 {
-					b.Id = 2 // grass
-					l.IsAir = false
-				} else {
-					b.Id = 0 // Air
-				}
+func (g *Generator) basePlaceBlocks(chunk *Chunk) ferr.FortiaError {
+	// g.W.Logger.Info(chunk.Position)
+	// for x := 0; x < g.W.GeneralInfo.LayerSize; x++ {
+	// 	for y := 0; y < g.W.GeneralInfo.LayerSize; y++ {
+	// 		for z := 0; z < g.W.GeneralInfo.Height; z++ {
+	// 			l := chunk.Layers[z]
+	// 			index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
+	// 			b := l.Blocks[index]
+	// 			if z == 0 {
+	// 				b.Id = 1 // Switch this with bedrock later
+	// 				l.IsAir = false
+	// 			} else if b.Id > 50 {
+	// 				b.Id = 1 // rock
+	// 				l.IsAir = false
+	// 			} else if b.Id <= 50 && b.Id > 0 {
+	// 				b.Id = 2 // grass
+	// 				l.IsAir = false
+	// 			} else {
+	// 				b.Id = 0 // Air
+	// 			}
+	// 			l.Blocks[index] = b
+	// 			chunk.Layers[z] = l
+	// 		}
+	// 	}
+	// }
+	for _, layer := range chunk.Layers {
+		for _, b := range layer.Blocks {
+			if b.Id > 50 {
+				b.Id = 1 // rock
+				//l.IsAir = false
+			} else if b.Id <= 50 && b.Id > 0 {
+				b.Id = 2 // grass
+				//l.IsAir = false
+			} else {
+				b.Id = 0 // Air
 			}
 		}
 	}
-	return chunk
+	return nil
 }
 
 // TODO

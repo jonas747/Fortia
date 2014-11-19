@@ -42,7 +42,7 @@ func (c *Chunk) GetLayer(layer int, fetch, store bool) (*Layer, ferr.FortiaError
 func (c *Chunk) GetNeighbour(x, y int, fetchLayers bool) (*Chunk, ferr.FortiaError) {
 	wPos := c.Position.Clone()
 	wPos.Add(vec.Vec2I{x, y})
-
+	//c.World.Logger.Info("cpos ", c.Position, "n ", x, ",", y, " wpos ", wPos)
 	chunk, err := c.World.GetChunk(wPos.X, wPos.Y, fetchLayers, false)
 	return chunk, err
 }
@@ -71,11 +71,33 @@ func (c *Chunk) GetAllNeighbours(fetchLayers bool) ([]*Chunk, ferr.FortiaError) 
 
 // Flags all hidden blocks as hidden
 // If provided neighbours' len is 0 then it will fetch from db
-func (c *Chunk) FlagHidden(neighbours []*Chunk) {
+func (c *Chunk) FlagHidden(neighbours map[vec.Vec2I]*Chunk) {
 	if len(neighbours) < 1 {
-		n, err := c.GetAllNeighbours(true)
-		if err != nil {
-			c.World.Logger.Error(err)
+		n := make(map[vec.Vec2I]*Chunk)
+		errs := make([]ferr.FortiaError, 0)
+		c1, e1 := c.GetNeighbour(1, 0, true)
+		c2, e2 := c.GetNeighbour(0, 1, true)
+		c3, e3 := c.GetNeighbour(-1, 0, true)
+		c4, e4 := c.GetNeighbour(0, -1, true)
+		if e1 == nil {
+			n[vec.Vec2I{1, 0}] = c1
+		}
+		if e2 == nil {
+			n[vec.Vec2I{0, 1}] = c2
+		}
+		if e3 == nil {
+			n[vec.Vec2I{-1, 0}] = c3
+		}
+		if e4 == nil {
+			n[vec.Vec2I{0, -1}] = c4
+		}
+		errs = append(errs, e1, e2, e3, e4)
+		for _, v := range errs {
+			if v != nil {
+				if v.GetMessage() != "404" {
+					c.World.Logger.Error(v)
+				}
+			}
 		}
 		neighbours = n
 	}
@@ -87,8 +109,8 @@ func (c *Chunk) FlagHidden(neighbours []*Chunk) {
 		n := k
 		go func() {
 			l.Hidden = true
-			for k, block := range l.Blocks {
-				coords := c.World.IndexToCoords(k)
+			for index, block := range l.Blocks {
+				coords := c.World.IndexToCoords(index)
 				if block.Layer == nil {
 					block.Layer = l
 				}
@@ -137,6 +159,10 @@ func (w *World) SetChunk(chunk *Chunk, setLayers bool) ferr.FortiaError {
 // Chunk is nil if not found
 // If getlayers is true it will also fetch layers depending on what onlyVisible is set to
 func (w *World) GetChunk(x, y int, getLayers, onlyVisible bool) (*Chunk, ferr.FortiaError) {
+	if x > w.GeneralInfo.Size-1 || y > w.GeneralInfo.Size-1 ||
+		x < 0 || y < 0 {
+		return nil, ferr.New("404")
+	}
 	chunk, err := w.Db.GetChunkInfo(vec.Vec2I{x, y})
 	if err != nil {
 		return nil, err

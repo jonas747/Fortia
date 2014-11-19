@@ -18,6 +18,7 @@ function VoxelMesh(data, mesher, scaleFactor, three) {
   for (var i = 0; i < result.faces.length; ++i) {
     var q = result.faces[i]
     if (q.length === 5) {
+      if (q[4] === 1) {continue}; // Ignore faces with 1 as color, dirty hack
       var uv = this.faceVertexUv(i)
 
       var f = new this.THREE.Face3(q[0], q[1], q[3])
@@ -30,6 +31,7 @@ function VoxelMesh(data, mesher, scaleFactor, three) {
       geometry.faces.push(g)
       geometry.faceVertexUvs[0].push([uv[1], uv[2], uv[3]])
     } else if (q.length == 4) {
+      if (q[3] === 1) {continue}; // Ignore faces with 1 as color, dirty hack
       var f = new this.THREE.Face3(q[0], q[1], q[2])
       f.color = new this.THREE.Color(q[3])
       geometry.faces.push(f)

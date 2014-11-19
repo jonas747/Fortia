@@ -21,7 +21,7 @@ type Database struct {
 }
 
 func NewDatabase(addr string) (*Database, error) {
-	p, err := pool.NewPool("tcp", addr, 10)
+	p, err := pool.NewPool("tcp", addr, 200)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (db *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, ferr.For
 func (db *Database) CmdChain(cmd string, args ...interface{}) (*redis.Reply, *redis.Client, ferr.FortiaError) {
 	client, err := db.Pool.Get()
 	if err != nil {
-		return nil, nil, ferr.Wrap(err, "Error Get db client")
+		return nil, nil, ferr.Wrap(err, "Error Get db client: "+err.Error())
 	}
 	reply := client.Cmd(cmd, args)
 	if reply.Err != nil {

@@ -86,6 +86,10 @@ func (g *GameDB) GetLayer(pos vec.Vec3I) (*world.Layer, ferr.FortiaError) {
 // Returns multiple layers
 // Uses goroutines to do it concurrently
 func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaError) {
+	if len(positions) < 1 {
+		return []*world.Layer{}, nil
+	}
+
 	out := make([]*world.Layer, len(positions))
 
 	args := make([]interface{}, len(positions))
@@ -130,14 +134,24 @@ func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaEr
 func (g *GameDB) SetLayers(layers []*world.Layer) ferr.FortiaError {
 	var wg sync.WaitGroup
 	wg.Add(len(layers))
-	for _, v := range layers {
+	errs := make([]ferr.FortiaError, len(layers))
+	for k, v := range layers {
 		l := v
+		n := k
 		go func() {
-			g.SetLayer(l)
+			err := g.SetLayer(l)
+			if err != nil {
+				errs[n] = err
+			}
 			wg.Done()
 		}()
 	}
 	wg.Wait()
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

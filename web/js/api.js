@@ -31,7 +31,10 @@ Fortia.REST.prototype = {
 			    data: d,
 			    dataType: this.dType,
 			    success: success,
-			    error: failed
+			    error: failed,
+			    xhrFields: {
+		      		withCredentials: true
+				}
 			});
 	},
 	get: function(path, data, success, failed){

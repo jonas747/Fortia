@@ -115,6 +115,9 @@ func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
 		if server.HandleFortiaError(w, r, err) {
 			return
 		}
+		if chunk == nil { // Probably out of bounds
+			continue
+		}
 		dmap := map[string]interface{}{
 			"Layers":        chunk.Layers,
 			"Position":      chunk.Position,
@@ -126,16 +129,16 @@ func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("[")
-	firstElen := true
+	firstElem := true
 	for i := 0; i < numChunks; i++ {
 		chunk := <-dataChan
 		if len(chunk) < 1 {
 			continue
 		}
-		if !firstElen {
+		if !firstElem {
 			buffer.WriteString(",")
 		}
-		firstElen = false
+		firstElem = false
 		buffer.Write(chunk)
 	}
 	buffer.WriteString("]")

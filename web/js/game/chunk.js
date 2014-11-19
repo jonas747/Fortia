@@ -37,9 +37,13 @@ Fortia.Chunk.prototype.createVoxelData = function(){
 	for (var z = 0; z < this.size.y; z++) {
 		for (var x = 0; x <this.size.x; x++) {
 			for (var y = 0; y < this.size.x; y++, num++) {
-				var l = this.layers[z]
+				var l = this.layers[z];
 				if (l == undefined) {
-					voxels[num] = 0;
+					voxels[num] = 0xbbbbbb;
+					// Remove faces from edges
+					if (x === 0 || y === 0 || x >= this.size.x-1 || y >= this.size.x-1) {
+						voxels[num] = 1; // 1 is special case for ignore
+					};
 					continue
 				};
 				var curBlock = l.blocks[l.coordsToIndex(new THREE.Vector2(y, x))];
@@ -48,7 +52,10 @@ Fortia.Chunk.prototype.createVoxelData = function(){
 					continue;
 				};
 				if (curBlock.Flags && curBlock.Flags & 8) { // fully covered
-					voxels[num] = 0;
+					voxels[num] = 0xbbbbbb;
+					if (x === 0 || y === 0 || x >= this.size.x -1 || y >= this.size.x -1) {
+						voxels[num] = 1; // 1 is special case for ignore
+					};
 					continue
 				};
 				if (curBlock.Id > 0) {
@@ -62,6 +69,8 @@ Fortia.Chunk.prototype.createVoxelData = function(){
 							var color1c = ((Math.random() * 0x08) + 0x70) << 8
 							color = 0x220022 | color1c
 							break;
+						default:
+							log("Unknown id", curBlock.Id)
 					}
 					voxels[num] = color;
 				}else{
@@ -100,15 +109,15 @@ Fortia.Chunk.prototype.generateMesh = function(){
 	this.vertices = bufferGeometry.getAttribute("position").array;
 	this.colors = bufferGeometry.getAttribute("color").array;
 	this.uv = bufferGeometry.getAttribute("uv").array;
+	this.normals = bufferGeometry.getAttribute("normal").array;
 }
 
 Fortia.Chunk.prototype.createGeometry = function(){
 	var geometry = new THREE.BufferGeometry();
 	geometry.addAttribute("position", new THREE.BufferAttribute(new Float32Array(this.vertices), 3));
 	geometry.addAttribute("color", new THREE.BufferAttribute(new Float32Array(this.colors), 3));
+	geometry.addAttribute("normal", new THREE.BufferAttribute(new Float32Array(this.normals), 3));
 	geometry.addAttribute("uv", new THREE.BufferAttribute(new Float32Array(this.uv), 2));
-	//geometry.computeFaceNormals();
-	geometry.computeVertexNormals();
 	this.geometry = geometry
 	return geometry;
 }
@@ -149,7 +158,6 @@ Fortia.Chunk.prototype.addToScene = function(scene){
 
 Fortia.Chunk.prototype.removeFromScene = function(scene){
 	this.addedToScene = false
-	console.log("removing from scene")
 	if (this.surfaceMesh) {
 		scene.remove(this.surfaceMesh);
 	};

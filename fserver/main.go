@@ -61,7 +61,7 @@ func main() {
 	}
 	// Gen world initialises a new world
 	if *fCreateWorld {
-		go createWorld(6)
+		createWorld()
 	}
 	if config.ServeGame {
 		go gameserver.Run(logger, gdb, adb, ":8081")
@@ -75,7 +75,7 @@ func main() {
 	select {}
 }
 
-func createWorld(size int) {
+func createWorld() {
 	// Load the world info json
 	var biomesInfo world.BiomesInfo
 	err := common.LoadJsonFile("biomes.json", &biomesInfo)

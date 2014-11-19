@@ -50,7 +50,7 @@ function processChunk(rawChunk){
  		colors: chunk.colors.buffer,
  		uv: chunk.uv.buffer,
  		position: {x: chunk.pos.x, y: chunk.pos.y},
+ 		normals: chunk.normals.buffer
  	}
- 	self.postMessage(out, [chunk.vertices.buffer, chunk.colors.buffer, chunk.uv.buffer]);
- 	log("Done generating chunk")
+ 	self.postMessage(out, [chunk.vertices.buffer, chunk.colors.buffer, chunk.uv.buffer, chunk.normals.buffer]);
 }

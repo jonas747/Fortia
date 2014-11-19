@@ -73,12 +73,11 @@ type Noise struct {
 	Perm [512]uint8
 }
 
-func NewNoise(source rand.Source) *Noise {
-	if source == nil {
-		source = rand.NewSource(rand.Int63())
+func NewNoise(rng *rand.Rand) *Noise {
+	if rng == nil {
+		rng = rand.New(rand.NewSource(rand.Int63()))
 	}
 
-	rng := rand.New(source)
 	perm := [512]uint8{}
 	for i := 0; i < 512; i++ {
 		perm[i] = uint8(rng.Intn(256))

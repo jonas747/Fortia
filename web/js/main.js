@@ -52,16 +52,6 @@ $(function(){
 		};
 	}
 
-	$.ajaxPrefilter(function( options, originalOptions, jqXHR ) {
-		if (!options.xhrFields) {
-			options.xhrFields = {
-		      withCredentials: true
-			}
-		}else{
-			options.xhrFields.withCredentials = true;
-		}
-	});
-
 	var templateList = [
 		"home",
 		"lobbymain",
