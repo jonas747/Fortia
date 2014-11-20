@@ -5,6 +5,12 @@ import (
 	"github.com/jonas747/fortia/vec"
 )
 
+const (
+	ErrCodeEmpty = iota
+	ErrCodeConversionErr
+	ErrCodeNotFound
+)
+
 // Info about the world
 type WorldInfo struct {
 	Size       int         // The size of the world in chunks
@@ -38,6 +44,8 @@ type GameDB interface {
 	GetChunkInfo(pos vec.Vec2I) (*Chunk, ferr.FortiaError)
 	SetChunkInfo(chunk *Chunk) ferr.FortiaError
 
+	PopAction(tick int) (*Action, ferr.FortiaError) // Returns a action, errcodeempty if none
+	IncrTick() (int, ferr.FortiaError)              // Increases the tick counter, and returns the new ticknumber
 	// Todo
 	//GetEntity()
 	//SetEntity()

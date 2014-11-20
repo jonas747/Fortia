@@ -3,6 +3,7 @@ package rdb
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fzzy/radix/redis"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
@@ -173,4 +174,42 @@ func (g *GameDB) GetEntity(id int) (map[string]string, ferr.FortiaError) {
 
 func (g *GameDB) SetEntity(id int, info map[string]interface{}) ferr.FortiaError {
 	return g.SetHash("e:"+strconv.Itoa(id), info)
+}
+
+func (g *GameDB) PopAction(tick int) (*world.Action, ferr.FortiaError) {
+	reply, err := g.Cmd("SPOP", fmt.Sprintf("actionQueue:%d", tick))
+	if err != nil {
+		return nil, err
+	}
+
+	if reply.Type == redis.NilReply {
+		// Not found
+		return nil, ferr.Newc("No Actions for that tick number", world.ErrCodeNotFound)
+	}
+
+	raw, nErr := reply.Bytes()
+	if nErr != nil {
+		return nil, ferr.Newc("Error converting", world.ErrCodeConversionErr)
+	}
+
+	var action *world.Action
+	nErr = json.Unmarshal(raw, action)
+	if nErr != nil {
+		return nil, ferr.Wrap(nErr, "")
+	}
+
+	return action, nil
+}
+
+func (g *GameDB) IncrTick() (int, ferr.FortiaError) {
+	reply, err := g.Cmd("INCR", "tick")
+	if err != nil {
+		return 0, err
+	}
+
+	n, nErr := reply.Int()
+	if nErr != nil {
+		return n, ferr.Wrapc(nErr, world.ErrCodeConversionErr)
+	}
+	return n, nil
 }
