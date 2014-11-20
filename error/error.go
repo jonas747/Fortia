@@ -35,6 +35,10 @@ type FortiaError interface {
 
 	// Sets some data
 	SetData(string, interface{})
+
+	// Returns the error code
+	GetCode() int
+	SetCode(int)
 }
 
 // Standard struct for general types of errors.
@@ -45,6 +49,7 @@ type FortiaBaseError struct {
 	Msg            string
 	Stack          string
 	Context        string
+	Code           int
 	inner          error
 	AdditionalData map[string]interface{}
 }
@@ -110,10 +115,23 @@ func (e *FortiaBaseError) GetInner() error {
 	return e.inner
 }
 
+func (e *FortiaBaseError) GetCode() int {
+	return e.Code
+}
+func (e *FortiaBaseError) SetCode(code int) {
+	e.Code = code
+}
+
 // This returns a new FortiaBaseError initialized with the given message and
 // the current stack trace.
 func New(msg string) FortiaError {
 	return Newa(msg, make(map[string]interface{}))
+}
+
+func Newc(msg string, code int) FortiaError {
+	e := New(msg)
+	e.SetCode(code)
+	return e
 }
 
 // This returns a new FortiaBaseError initialized with the given message and
@@ -136,6 +154,12 @@ func Newf(format string, args ...interface{}) FortiaError {
 		Stack:   stack,
 		Context: context,
 	}
+}
+
+func Wrapc(err error, code int) FortiaError {
+	e := Wrap(err, "")
+	e.SetCode(code)
+	return e
 }
 
 // Wraps another error in a new FortiaBaseError.
