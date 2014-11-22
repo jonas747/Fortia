@@ -124,8 +124,8 @@ func (e *FortiaBaseError) SetCode(code int) {
 
 // This returns a new FortiaBaseError initialized with the given message and
 // the current stack trace.
-func New(msg string) FortiaError {
-	return Newa(msg, make(map[string]interface{}))
+func New(msgs ...interface{}) FortiaError {
+	return Newa(fmt.Sprint(msgs...), make(map[string]interface{}))
 }
 
 func Newc(msg string, code int) FortiaError {
