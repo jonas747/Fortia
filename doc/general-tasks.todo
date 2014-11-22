@@ -31,5 +31,5 @@ General:
    ☐ Major cleanups
 
   Error:
-   ☐ Add some way to add a errorid
+   ✔ Add some way to add a errorid @done (14-11-20 23:56)
      can be used to for example return a code for property not found while stil having unique messages

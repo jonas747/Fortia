@@ -23,6 +23,7 @@ Alpha 0.2:
    ☐ Write tests and benchmarks
    ☐ Optimise and use more concurrency
    ☐ Do checking to see if the actual chunks/layers/user etc werer getting exists(return a predefined error then)
+   ☐ Go over everything and make sure everything returns proper error codes
   World:
    ☐ Organise the world package better
    ✔ Check nearby chunks when flagging blocks visible or not @done (14-11-11 17:44)
@@ -65,7 +66,10 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
-     ☐ Add voxel raycast that dosent lag the fuck out of everything...
+     ☐ Right click menu
+       Simple list menu for now, change to something like a circle later
+     ☐ Selection
+     ✔ Add voxel raycast that dosent lag the fuck out of everything... @done (14-11-19 23:57)
      ☐ Change mice.js and keyboard.js into a single input library
      ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
      ✔ Change to buffer geometry from normal geometry @done (14-11-11 17:07)

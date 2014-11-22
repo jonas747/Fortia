@@ -255,8 +255,9 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 				}
 				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				noise := noiseGen.Noise3(float64(wx)/float64(50), float64(wy)/float64(50), float64(z)/float64(50))
-				life := ((float64(wHeight) / float64(z)) * 5) - 10 // should be adjusted by the roughness biome property
-				life += noise
+				life := 7 - 10*(float64(z)/float64(wHeight)) // Conrolls the elevation
+				//g.W.Logger.Info(z, life, noise)
+				life += noise / 4 // This controlls the sensitivity
 				life *= 100
 
 				b := Block{
@@ -287,12 +288,13 @@ func (g *Generator) generateCaves(chunk *Chunk) ferr.FortiaError {
 			for z := 0; z < wHeight; z++ {
 				wx := float64(cWorldPos.X + x)
 				wy := float64(cWorldPos.Y + y)
-				noise := noiseGen.Noise3(wx/float64(50), wy/float64(50), float64(z)/float64(50))
-				if noise > 0.7 {
+				life := 6 - 10*(float64(z)/float64(wHeight))
+				life += (noiseGen.Noise3(wx/float64(40), wy/float64(40), float64(z)/float64(40))) * 2
+				if life > 0 {
 					l := chunk.Layers[z]
 					index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-					//l.Blocks[index].Id -= int(noise * 5 * 100)
-					l.Blocks[index].Id = 0
+					l.Blocks[index].Id -= int(life * 100)
+					//l.Blocks[index].Id = 0
 				}
 			}
 		}
@@ -309,32 +311,11 @@ func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
 func (g *Generator) basePlaceBlocks(chunk *Chunk) ferr.FortiaError {
-	// g.W.Logger.Info(chunk.Position)
-	// for x := 0; x < g.W.GeneralInfo.LayerSize; x++ {
-	// 	for y := 0; y < g.W.GeneralInfo.LayerSize; y++ {
-	// 		for z := 0; z < g.W.GeneralInfo.Height; z++ {
-	// 			l := chunk.Layers[z]
-	// 			index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-	// 			b := l.Blocks[index]
-	// 			if z == 0 {
-	// 				b.Id = 1 // Switch this with bedrock later
-	// 				l.IsAir = false
-	// 			} else if b.Id > 50 {
-	// 				b.Id = 1 // rock
-	// 				l.IsAir = false
-	// 			} else if b.Id <= 50 && b.Id > 0 {
-	// 				b.Id = 2 // grass
-	// 				l.IsAir = false
-	// 			} else {
-	// 				b.Id = 0 // Air
-	// 			}
-	// 			l.Blocks[index] = b
-	// 			chunk.Layers[z] = l
-	// 		}
-	// 	}
-	// }
 	for _, layer := range chunk.Layers {
 		for _, b := range layer.Blocks {
+			if layer.Position.Z == 0 {
+				b.Id = 1 // change to bedrock later perhaps
+			}
 			if b.Id > 50 {
 				b.Id = 1 // rock
 				//l.IsAir = false

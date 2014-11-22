@@ -27,7 +27,7 @@ Fortia.initGameView = function(){
 
 Fortia.game = {
 	chunks: [],
-	sight: 3,
+	sight: 4,
 	//sightHeight: 25,
 	chunkFetchQueue: {},
 	fetchingChunks: {},
