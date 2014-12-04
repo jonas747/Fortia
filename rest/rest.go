@@ -7,6 +7,7 @@
 package rest
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"encoding/json"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
@@ -14,18 +15,24 @@ import (
 	nativeLog "log"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 )
 
+const (
+	ContentTypeJson = iota
+	ContentTypeProtoBuf
+)
+
 type Server struct {
-	hServer  http.Server             // The http server
-	handlers map[string]*RestHandler // Map of handlers
+	hServer  http.Server         // The http server
+	handlers map[string]*Handler // Map of handlers
 	logger   *log.LogClient
 }
 
 func NewServer(addr string, logger *log.LogClient) *Server {
 	server := &Server{
-		handlers: make(map[string]*RestHandler),
+		handlers: make(map[string]*Handler),
 		logger:   logger,
 	}
 	hServer := http.Server{
@@ -63,82 +70,201 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		taken := time.Since(started)
 		s.logger.Debug("Handled ", r.Method, " request. Path: \"", r.URL.Path, "\", From \"", r.RemoteAddr, "\" Took: ", taken.String())
 	}()
+
 	handler, found := s.handlers[path]
+	fRequest := NewRequest(w, r, s, handler)
 	if !found {
 		// 404
-		HandleNotFound(w)
+		HandleNotFound(fRequest)
 		return
 	}
 
-	// TODO: Maybe use method not allowed status instead?
+	// Maybe use method not allowed status instead?
 	if r.Method != handler.Method {
-		HandleNotFound(w)
+		HandleNotFound(fRequest)
 		return
 	}
 
-	// Check if required params and cookies are there
-	// Start with cookies
-	for _, cookieName := range handler.RequiredCookies {
-		_, err := r.Cookie(cookieName)
-		if err != nil {
-			// Maybe unathorized instead?
-			HandleBadRequest(w, "Cookie \""+cookieName+"\" not found")
-			return
-		}
-	}
-	// Check url params
-	params := r.URL.Query()
-	for _, reqParam := range handler.RequiredParams {
-		param := params.Get(reqParam)
-		if param == "" {
-			HandleBadRequest(w, "Param \""+reqParam+"\" Not found")
-			return
-		}
-	}
 	var bodyDecoded interface{}
 	if handler.BodyType != nil {
 		bodyStruct := reflect.New(handler.BodyType)
 		bodyDecoded = bodyStruct.Interface()
 		body := r.Body
-		whole, err := ioutil.ReadAll(body)
+		bodyRaw, err := ioutil.ReadAll(body)
 		// Decode the body json then...
 		if err != nil {
 			s.logger.Error(ferr.Wrapa(err, "", map[string]interface{}{"user-agent": r.UserAgent(), "remote": r.RemoteAddr}))
-			HandleInternalServerError(w, "Internal server error")
+			HandleInternalServerError(fRequest, "Error decoding request body json")
 			return
 		}
-		if len(whole) < 1 {
+		if len(bodyRaw) < 1 {
 			if handler.BodyRequired {
-				HandleBadRequest(w, "Request body missing")
+				HandleBadRequest(fRequest, "Request body missing")
 				return
 			}
 		} else {
-			err = json.Unmarshal(whole, bodyDecoded)
+			err = json.Unmarshal(bodyRaw, bodyDecoded)
 			if err != nil {
-				s.logger.Error(ferr.Wrapa(err, "", map[string]interface{}{"user-agent": r.UserAgent(), "remote": r.RemoteAddr, "body": whole}))
-				HandleInternalServerError(w, "Error decoding request json body")
+				s.logger.Error(ferr.Wrapa(err, "", map[string]interface{}{"user-agent": r.UserAgent(), "remote": r.RemoteAddr, "body": bodyRaw}))
+				HandleInternalServerError(fRequest, "Error decoding request json body")
 				return
 			}
 		}
 	}
+	// Call the middlewares
+	for _, v := range handler.MiddleWare {
+		cont := v(fRequest, bodyDecoded)
+		if !cont {
+			return
+		}
+	}
+
 	// Finally call the handler
-	handler.Handler(w, r, bodyDecoded)
+	handler.Handler(fRequest, bodyDecoded)
 }
 
 // Registers a Handler
-func (s *Server) RegisterHandler(r *RestHandler) {
+func (s *Server) RegisterHandler(r *Handler) {
 	s.handlers[r.Path] = r
 }
 
-type RestHandlerFunc func(http.ResponseWriter, *http.Request, interface{})
+type HandlerFunc func(*Request, interface{})
+type Middleware func(*Request, interface{}) bool
 
-type RestHandler struct {
-	Handler         RestHandlerFunc
-	Method          string       // The metho ex: GET, PUT, PATCH etc..
-	RequiredParams  []string     // Required url parameters
-	OptionalParams  []string     // Optional Url parameters
-	RequiredCookies []string     // Required cookies
-	Path            string       // The path this handler takes action upon
-	BodyType        reflect.Type // The type of the body
-	BodyRequired    bool         // Wther a body is required or not
+type Container map[string]interface{}
+
+func (c Container) GetInt(key string) (int, bool) {
+	inter, ok := c[key]
+	if !ok {
+		return 0, false
+	}
+
+	val, okConv := inter.(int)
+	return val, okConv
+}
+
+func (c Container) GetString(key string) (string, bool) {
+	inter, ok := c[key]
+	if !ok {
+		return "", false
+	}
+
+	val, okConv := inter.(string)
+	return val, okConv
+}
+
+func (c Container) GetSliceInt(key string) ([]int, bool) {
+	inter, ok := c[key]
+	if !ok {
+		return []int{}, false
+	}
+
+	val, okConv := inter.([]int)
+	return val, okConv
+}
+
+func (c Container) GetSliceString(key string) ([]string, bool) {
+	inter, ok := c[key]
+	if !ok {
+		return []string{}, false
+	}
+
+	val, okConv := inter.([]string)
+	return val, okConv
+}
+
+type Handler struct {
+	Handler        HandlerFunc
+	Method         string       // The metho ex: GET, PUT, PATCH etc..
+	Path           string       // The path this handler takes action upon
+	BodyType       reflect.Type // The type of the body
+	BodyRequired   bool         // Wther a body is required or not
+	AdditionalData Container
+	MiddleWare     []Middleware
+}
+
+type Request struct {
+	Server            *Server
+	Handler           *Handler
+	Request           *http.Request
+	RW                http.ResponseWriter
+	ResponseType      int
+	Compressed        bool
+	AcceptedEncodings map[string]bool
+}
+
+func NewRequest(w http.ResponseWriter, r *http.Request, server *Server, handler *Handler) *Request {
+	acceptedEncodings := FindAcceptedEncodings(r)
+	query := r.URL.Query()
+	responseType := 0
+	rtString := query.Get("api")
+	switch rtString {
+	case "protobuf":
+		responseType = ContentTypeProtoBuf
+	default:
+		responseType = ContentTypeJson
+	}
+
+	rrw := &Request{
+		Server:            server,
+		Request:           r,
+		RW:                w,
+		ResponseType:      responseType,
+		Compressed:        true,
+		AcceptedEncodings: acceptedEncodings,
+		Handler:           handler,
+	}
+	return rrw
+}
+
+func (r *Request) WriteResponse(msg proto.Message, statusCode int) {
+	if statusCode == 0 {
+		statusCode = http.StatusOK
+	}
+	r.RW.WriteHeader(statusCode)
+	header := r.RW.Header()
+	var out []byte
+	switch r.ResponseType {
+	case ContentTypeProtoBuf:
+		header.Set("Content-Type", "application/protobuf")
+		encoded, err := proto.Marshal(msg)
+		if r.Server.HandleError(r, err) {
+			return
+		}
+		out = encoded
+	default:
+		header.Set("Content-Type", "application/json")
+		encoded, err := json.Marshal(msg)
+		if r.Server.HandleError(r, err) {
+			return
+		}
+		out = encoded
+	}
+
+	if r.Compressed {
+		compressed, err := Compress(out, r.AcceptedEncodings)
+		if err == nil {
+			out = compressed
+		} else {
+			r.Server.logger.Error(err)
+		}
+	}
+
+	r.RW.Write(out)
+}
+
+func FindAcceptedEncodings(r *http.Request) map[string]bool {
+	encodings := make(map[string]bool)
+
+	encodingsStr := r.Header.Get("Accept-Encoding")
+	if encodingsStr == "" {
+		return encodings
+	}
+
+	split := strings.Split(encodingsStr, ",")
+	for _, v := range split {
+		encodings[v] = true
+	}
+
+	return encodings
 }

@@ -7,6 +7,7 @@ General:
  
   ☐ Add challenges(like "what is five plus eight") to places that should be ratelimited severely 
     places such as /register and /pwrecovery
+  ☐ Use a CI build tool 
   Ticker:
     ☐ Add a scheduler maybe
 
@@ -16,6 +17,7 @@ General:
   Vec:
    ☐ Change to interfaces so funcitons that require vec2 can be passed vec3 but only use x and y.
    ☐ Use templates to generate code for all types perhaps
+     types being float64/32 int/uint8/16/32/64 
 
   Tests:
     Add tests to a lot of stuff
@@ -29,6 +31,9 @@ General:
 
   Client:
    ☐ Major cleanups
+   ☐ Try out geometry shader
+     Just send the point cloud and let the graphics card do the meshing and stuff
+     Might be fatser depending on graphics card
 
   Error:
    ✔ Add some way to add a errorid @done (14-11-20 23:56)

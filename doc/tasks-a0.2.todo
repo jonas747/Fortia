@@ -1,7 +1,7 @@
 Alpha 0.2:
   Tasks to do before alpha 0.2 release
   General:
-   ☐ Figure out an action system for unit and building actions and such
+   ✔ Figure out an action system for unit and building actions and such @done (14-12-03 02:15)
    Change from login usernames to emails and prompt users when joining worlds for a name to use in that world:
      Requires some changes to the database layer and api layer
     ☐ db
@@ -15,28 +15,36 @@ Alpha 0.2:
  
   Ticker:
     The ticker makes the world go around
-    ☐ Figure out the action system and document it
+    ✔ Figure out the action system and document it @done (14-12-03 02:33)
     ☐ Implement said action system
 
   DB:
     General improvements and such to the redis implementation
    ☐ Write tests and benchmarks
    ☐ Optimise and use more concurrency
-   ☐ Do checking to see if the actual chunks/layers/user etc werer getting exists(return a predefined error then)
+   ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then)
    ☐ Go over everything and make sure everything returns proper error codes
+   ☐ Change from storing the world in layers to chunks
+      Also store it in a binary format, as opposed to json for improved speed and memory usage
+   ☐ Add chunk locks
   World:
    ☐ Organise the world package better
    ✔ Check nearby chunks when flagging blocks visible or not @done (14-11-11 17:44)
-   ☐ write tests and benchmarks
+   ☐ write tests and benchmarks 
+   ☐ Rename world package to game
 
    Worldgen:
-    ☐ Implement world extending
+    ✘ Implement world extending @cancelled (14-12-03 02:32)
       Delay this for later versions perhaps?
       Extends a allready generated world, making it bigger
-    ☐ Rivers
+      Not needed with procedural generator
+    ✘ Rivers @cancelled (14-12-03 02:18)
     ☐ Oceans
     ☐ Trees
     ✔ Basic Caves @done (14-11-16 02:46)
+      Broken, will be disabled in 0.2 release
+    ☐ Make the world generator procedural
+      staged, generate a new chunk, and flag that chunk + recheck flags on surounding chunks
     Wgen options:
      ☐ Add more advaned world gen options
      ☐ Use blocks.json 
@@ -68,7 +76,6 @@ Alpha 0.2:
      ☐ Try out isometric 
      ☐ Right click menu
        Simple list menu for now, change to something like a circle later
-     ☐ Selection
      ✔ Add voxel raycast that dosent lag the fuck out of everything... @done (14-11-19 23:57)
      ☐ Change mice.js and keyboard.js into a single input library
      ✔ Move chunk decoding and meshing to a backrgound worker @done (14-11-11 17:07)
@@ -79,6 +86,12 @@ Alpha 0.2:
      ✔ Change the meshing @done (14-11-19 02:39)
        ✔ Instead of mshiing only the surface, make a big square out of the chunk @done (14-11-19 02:39)
        ✔ Dont mesh chunk sides unless they are not flagged hidden @done (14-11-19 02:39)
+     ☐ Use index buffers to reduce the size of the vertex coords buffer 
+       Postpone this to later perhaps
+     Selection:
+      ☐ Create basic selection
+      ☐ Box selection
+      ☐ Filter in box selection
     Lobby:
      ☐ Password recovery in login
      ☐ Make it possible to change password and username in settings
@@ -93,6 +106,13 @@ Alpha 0.2:
      in /chunk request
    ✔ Add some form of compression @done (14-11-14 21:49)
      built in browser gzip maybe, unless that decompresses in the main thread
+
+  REST Server:
+   ☐ Redo the REST server, to make it easier to return appropiate status codes, add middle handles and such
+     Maybe chose a third party one instead of coding one yourself, coding one myself however lets me add some fortia specific things
+   ☐ Allow the selection of content type from both requests and responses from response header, and reuest parameters
+     ☐ JSON
+     ☐ protobuf
 
   Bugs:
    ☐ The bottom layer is always air, shoudl be bedrock(to be implemented) 

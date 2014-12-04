@@ -78,3 +78,15 @@ func (db *DBSuite) TestGetSetHash(c *C) {
 		c.Assert(v, Equals, hash[k])
 	}
 }
+
+func (db *DBSuite) TestGetJson(c *C) {
+
+}
+
+func (db *DBSuite) TestSetJson(c *C) {
+
+}
+
+func (db *DBSuite) TestEditSet(c *C) {
+
+}
