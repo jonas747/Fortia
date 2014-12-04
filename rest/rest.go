@@ -178,19 +178,20 @@ type Handler struct {
 	Method         string       // The metho ex: GET, PUT, PATCH etc..
 	Path           string       // The path this handler takes action upon
 	BodyType       reflect.Type // The type of the body
-	BodyRequired   bool         // Wther a body is required or not
+	BodyRequired   bool         // Wether a body is required or not
 	AdditionalData Container
 	MiddleWare     []Middleware
 }
 
 type Request struct {
-	Server            *Server
-	Handler           *Handler
-	Request           *http.Request
-	RW                http.ResponseWriter
-	ResponseType      int
-	Compressed        bool
-	AcceptedEncodings map[string]bool
+	Server            *Server             // The rest server processing this request
+	Handler           *Handler            // The handler
+	Request           *http.Request       // The underlaying http.Request
+	RW                http.ResponseWriter // The unerlaying http.ResponseWriter
+	ResponseType      int                 // The content type of the response
+	Compressed        bool                // Wether the response should be compressed or not
+	AcceptedEncodings map[string]bool     // Accepted reponse encodings
+	AdditionalData    Container           // Additional data, middleware can set data here
 }
 
 func NewRequest(w http.ResponseWriter, r *http.Request, server *Server, handler *Handler) *Request {
@@ -205,7 +206,7 @@ func NewRequest(w http.ResponseWriter, r *http.Request, server *Server, handler 
 		responseType = ContentTypeJson
 	}
 
-	rrw := &Request{
+	req := &Request{
 		Server:            server,
 		Request:           r,
 		RW:                w,
@@ -213,8 +214,9 @@ func NewRequest(w http.ResponseWriter, r *http.Request, server *Server, handler 
 		Compressed:        true,
 		AcceptedEncodings: acceptedEncodings,
 		Handler:           handler,
+		AdditionalData:    Container(make(map[string]interface{})),
 	}
-	return rrw
+	return req
 }
 
 func (r *Request) WriteResponse(msg proto.Message, statusCode int) {

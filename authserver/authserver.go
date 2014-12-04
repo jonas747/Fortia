@@ -36,42 +36,42 @@ func Run(l *log.LogClient, adb AuthDB, addr string) {
 }
 
 /*
-	Handler         RestHandlerFunc
-	Method          string       // The metho ex: GET, POST, PUT, PATCH etc..
-	RequiredParams  []string     // Required url parameters
-	OptionalParams  []string     // Optional Url parameters
-	RequiredCookies []string     // Required cookies
-	Path            string       // The path this handler takes action upon
-	BodyType        reflect.Type // The type of the body
-	BodyRequired    bool         // Wther a body is required or not
+type Handler struct {
+	Handler        HandlerFunc
+	Method         string       // The metho ex: GET, PUT, PATCH etc..
+	Path           string       // The path this handler takes action upon
+	BodyType       reflect.Type // The type of the body
+	BodyRequired   bool         // Wther a body is required or not
+	AdditionalData Container
+	MiddleWare     []Middleware
+}
 */
 func initApi(s *rest.Server) {
 
-	s.RegisterHandler(&rest.RestHandler{
-		Handler:      rest.RestHandlerFunc(handleRegister),
+	s.RegisterHandler(&rest.Handler{
+		Handler:      rest.HandlerFunc(handleRegister),
 		Method:       "POST",
 		Path:         "/register",
 		BodyRequired: true,
 		BodyType:     reflect.TypeOf(BodyRegister{}),
 	})
 
-	s.RegisterHandler(&rest.RestHandler{
-		Handler:      rest.RestHandlerFunc(handleLogin),
+	s.RegisterHandler(&rest.Handler{
+		Handler:      rest.HandlerFunc(handleLogin),
 		Method:       "POST",
 		Path:         "/login",
 		BodyRequired: true,
 		BodyType:     reflect.TypeOf(BodyLogin{}),
 	})
 
-	s.RegisterHandler(&rest.RestHandler{
-		Handler:         rest.RestHandlerFunc(handleMe),
-		Method:          "GET",
-		Path:            "/me",
-		RequiredCookies: []string{"fortia-session"},
+	s.RegisterHandler(&rest.Handler{
+		Handler: rest.HandlerFunc(handleMe),
+		Method:  "GET",
+		Path:    "/me",
 	})
 
-	s.RegisterHandler(&rest.RestHandler{
-		Handler: rest.RestHandlerFunc(handleWorlds),
+	s.RegisterHandler(&rest.Handler{
+		Handler: rest.HandlerFunc(handleWorlds),
 		Method:  "GET",
 		Path:    "/worlds",
 	})

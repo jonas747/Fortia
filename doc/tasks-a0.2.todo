@@ -2,9 +2,14 @@ Alpha 0.2:
   Tasks to do before alpha 0.2 release
   General:
    ✔ Figure out an action system for unit and building actions and such @done (14-12-03 02:15)
-   Change from login usernames to emails and prompt users when joining worlds for a name to use in that world:
+   ☐ Update everything to work with the new REST api package @critical
+     ✔ auth @critical @done (14-12-04 07:59)
+     ☐ game @critical
+     ☐ client @critical
+
+   ☐ Change from login usernames to emails and prompt users when joining worlds for a name to use in that world @low
      Requires some changes to the database layer and api layer
-    ☐ db
+    ☐ db 
     ☐ api
   
   Scheduler:
@@ -20,9 +25,9 @@ Alpha 0.2:
 
   DB:
     General improvements and such to the redis implementation
-   ☐ Write tests and benchmarks
+   ☐ Write tests and benchmarks @high
    ☐ Optimise and use more concurrency
-   ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then)
+   ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then) @high
    ☐ Go over everything and make sure everything returns proper error codes
    ☐ Change from storing the world in layers to chunks
       Also store it in a binary format, as opposed to json for improved speed and memory usage
@@ -31,7 +36,8 @@ Alpha 0.2:
    ☐ Organise the world package better
    ✔ Check nearby chunks when flagging blocks visible or not @done (14-11-11 17:44)
    ☐ write tests and benchmarks 
-   ☐ Rename world package to game
+   ☐ Rename world package to game @high
+     ☐ Make everything work with the the new package name @critical
 
    Worldgen:
     ✘ Implement world extending @cancelled (14-12-03 02:32)
@@ -50,15 +56,22 @@ Alpha 0.2:
      ☐ Use blocks.json 
      ☐ USe biomes.json
 
-  Auth:
-   ☐ Password recovery api
+  Authserver:
+   ☐ Password recovery
      Through email or something
-   ☐ Change password api
-   ☐ Change username api
+   ☐ Change password
+   ☐ Change email
+   ✘ Change username @cancelled (14-12-04 03:32)
+     Later you will sign in with email instead.
 
   Master Server:
     ☐ Create a simple package for interacting with the master server
     ☐ Create the master server itself
+      ☐ Logserver
+        Stores logs in a database, be it mongodb couchdb or something else, will have to figure that out
+      ☐ Server manager
+        Manages server instances
+        Just a basic one, that takes in information from servers
 
   Frontend: 
    ☐ Maybe change from backbone.js to knockout.js
@@ -93,8 +106,8 @@ Alpha 0.2:
       ☐ Box selection
       ☐ Filter in box selection
     Lobby:
-     ☐ Password recovery in login
-     ☐ Make it possible to change password and username in settings
+     ☐ Password recovery in login @low
+     ☐ Make it possible to change password and email in settings @low
        
     Admin:
      ☐ Simple overview
@@ -108,11 +121,14 @@ Alpha 0.2:
      built in browser gzip maybe, unless that decompresses in the main thread
 
   REST Server:
-   ☐ Redo the REST server, to make it easier to return appropiate status codes, add middle handles and such
+   ✔ Redo the REST server, to make it easier to return appropiate status codes, add middle handles and such @done (14-12-04 03:39)
      Maybe chose a third party one instead of coding one yourself, coding one myself however lets me add some fortia specific things
-   ☐ Allow the selection of content type from both requests and responses from response header, and reuest parameters
-     ☐ JSON
-     ☐ protobuf
+   ✔ Allow the selection of content type from both requests and responses from response header, and reuest parameters @done (14-12-04 03:39)
+     ✔ JSON @done (14-12-04 03:39)
+     ✔ protobuf @done (14-12-04 03:39)
+   ☐ Make it easier to log requests
+     which includes information such as remot address, request path and body
+     on body, fields tagged sensitive are ignored
 
   Bugs:
-   ☐ The bottom layer is always air, shoudl be bedrock(to be implemented) 
+   ☐ The bottom layer is always air, shoudl be bedrock(to be implemented) @low

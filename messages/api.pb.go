@@ -53,5 +53,141 @@ func (m *PlainResponse) GetError() *Error {
 	return nil
 }
 
+type UserInfo struct {
+	Name             *string  `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Email            *string  `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
+	Worlds           []string `protobuf:"bytes,3,rep,name=worlds" json:"worlds,omitempty"`
+	Role             *int32   `protobuf:"varint,4,opt,name=role" json:"role,omitempty"`
+	DonorLvl         *int32   `protobuf:"varint,5,opt,name=donorLvl" json:"donorLvl,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *UserInfo) Reset()         { *m = UserInfo{} }
+func (m *UserInfo) String() string { return proto.CompactTextString(m) }
+func (*UserInfo) ProtoMessage()    {}
+
+func (m *UserInfo) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *UserInfo) GetEmail() string {
+	if m != nil && m.Email != nil {
+		return *m.Email
+	}
+	return ""
+}
+
+func (m *UserInfo) GetWorlds() []string {
+	if m != nil {
+		return m.Worlds
+	}
+	return nil
+}
+
+func (m *UserInfo) GetRole() int32 {
+	if m != nil && m.Role != nil {
+		return *m.Role
+	}
+	return 0
+}
+
+func (m *UserInfo) GetDonorLvl() int32 {
+	if m != nil && m.DonorLvl != nil {
+		return *m.DonorLvl
+	}
+	return 0
+}
+
+type MeResponse struct {
+	Error            *Error    `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Info             *UserInfo `protobuf:"bytes,2,opt,name=info" json:"info,omitempty"`
+	XXX_unrecognized []byte    `json:"-"`
+}
+
+func (m *MeResponse) Reset()         { *m = MeResponse{} }
+func (m *MeResponse) String() string { return proto.CompactTextString(m) }
+func (*MeResponse) ProtoMessage()    {}
+
+func (m *MeResponse) GetError() *Error {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+func (m *MeResponse) GetInfo() *UserInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+type WorldInfo struct {
+	Name             *string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Started          *int32  `protobuf:"varint,2,opt,name=started" json:"started,omitempty"`
+	Players          *int32  `protobuf:"varint,3,opt,name=players" json:"players,omitempty"`
+	Size             *int32  `protobuf:"varint,4,opt,name=size" json:"size,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *WorldInfo) Reset()         { *m = WorldInfo{} }
+func (m *WorldInfo) String() string { return proto.CompactTextString(m) }
+func (*WorldInfo) ProtoMessage()    {}
+
+func (m *WorldInfo) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *WorldInfo) GetStarted() int32 {
+	if m != nil && m.Started != nil {
+		return *m.Started
+	}
+	return 0
+}
+
+func (m *WorldInfo) GetPlayers() int32 {
+	if m != nil && m.Players != nil {
+		return *m.Players
+	}
+	return 0
+}
+
+func (m *WorldInfo) GetSize() int32 {
+	if m != nil && m.Size != nil {
+		return *m.Size
+	}
+	return 0
+}
+
+type WorldsResponse struct {
+	Error            *Error       `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Info             []*WorldInfo `protobuf:"bytes,2,rep,name=info" json:"info,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
+}
+
+func (m *WorldsResponse) Reset()         { *m = WorldsResponse{} }
+func (m *WorldsResponse) String() string { return proto.CompactTextString(m) }
+func (*WorldsResponse) ProtoMessage()    {}
+
+func (m *WorldsResponse) GetError() *Error {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+func (m *WorldsResponse) GetInfo() []*WorldInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
 func init() {
 }
