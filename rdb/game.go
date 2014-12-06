@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fzzy/radix/redis"
 	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
 	"strconv"
@@ -68,103 +69,15 @@ func (g *GameDB) EditUserEntities(user string, add, del []int) ferr.FortiaError 
 	return g.EditSetI("ue:"+user, add, del)
 }
 
-/*
- - l:{xpos}:{ypos}:{zpos}
-	json with info
- }
-*/
-func (g *GameDB) SetLayer(layer *world.Layer) ferr.FortiaError {
-	return g.SetJson(fmt.Sprintf("l:%d:%d:%d", layer.Position.X, layer.Position.Y, layer.Position.Z), layer)
-}
-
-// Returns the specified layer
-func (g *GameDB) GetLayer(pos vec.Vec3I) (*world.Layer, ferr.FortiaError) {
-	var layer world.Layer
-	err := g.GetJson(fmt.Sprintf("l:%d:%d:%d", pos.X, pos.Y, pos.Z), &layer)
-	return &layer, err
-}
-
-// Returns multiple layers
-// Uses goroutines to do it concurrently
-func (g *GameDB) GetLayers(positions []vec.Vec3I) ([]*world.Layer, ferr.FortiaError) {
-	if len(positions) < 1 {
-		return []*world.Layer{}, nil
-	}
-
-	out := make([]*world.Layer, len(positions))
-
-	args := make([]interface{}, len(positions))
-	for k, v := range positions {
-		args[k] = fmt.Sprintf("l:%d:%d:%d", v.X, v.Y, v.Z)
-	}
-
-	reply, err := g.Cmd("MGET", args...)
-	if err != nil {
-		return out, err
-	}
-
-	list, nErr := reply.List()
-	if nErr != nil {
-		return out, ferr.Wrap(nErr, "")
-	}
-
-	var wg sync.WaitGroup
-
-	decodeLayer := func(raw []byte, index int) {
-		defer wg.Done()
-		var layer world.Layer
-		nErr = json.Unmarshal(raw, &layer)
-		if nErr != nil {
-			return
-		}
-		out[index] = &layer
-	}
-
-	for k, v := range list {
-		raw := []byte(v)
-		wg.Add(1)
-		go decodeLayer(raw, k)
-	}
-
-	wg.Wait()
-
-	return out, nil
-}
-
-// Saves multiple layers
-func (g *GameDB) SetLayers(layers []*world.Layer) ferr.FortiaError {
-	var wg sync.WaitGroup
-	wg.Add(len(layers))
-	errs := make([]ferr.FortiaError, len(layers))
-	for k, v := range layers {
-		l := v
-		n := k
-		go func() {
-			err := g.SetLayer(l)
-			if err != nil {
-				errs[n] = err
-			}
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Returns the chunkinfo
-func (g *GameDB) GetChunkInfo(pos vec.Vec2I) (*world.Chunk, ferr.FortiaError) {
-	var chunk world.Chunk
-	err := g.GetJson(fmt.Sprintf("c:%d:%d", pos.X, pos.Y), &chunk)
+func (g *GameDB) GetChunk(pos vec.Vec2I) (*messages.Chunk, ferr.FortiaError) {
+	var chunk messages.Chunk
+	err := g.GetProto(fmt.Sprintf("c:%d:%d", pos.X, pos.Y), &chunk)
 	return &chunk, err
 }
 
-func (g *GameDB) SetChunkInfo(chunk *world.Chunk) ferr.FortiaError {
-	return g.SetJson(fmt.Sprintf("c:%d:%d", chunk.Position.X, chunk.Position.Y), chunk)
+func (g *GameDB) SetChunk(chunk *messages.Chunk) ferr.FortiaError {
+	return g.SetProto(fmt.Sprintf("c:%d:%d", chunk.X, chunk.Y), chunk)
 }
 
 // Get and set entities

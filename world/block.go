@@ -1,11 +1,11 @@
 package world
 
 import (
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 )
 
-type BlockFlag byte
+type BlockFlag int32
 
 const (
 	BlockConnectedGround BlockFlag = 1 << iota // Wether this block is connected to the grond or not
@@ -15,71 +15,54 @@ const (
 )
 
 type Block struct {
-	LocalPosition vec.Vec2I              `json:"-"` // Position relative to layer
-	Layer         *Layer                 `json:"-"`
-	Kind          *BlockType             `json:"-"`
-	Entities      []int                  `json:",omitempty"`
-	Flags         BlockFlag              `json:",omitempty"`
-	Data          map[string]interface{} `json:",omitempty"`
-
-	Id int
+	Chunk         *Chunk
+	LocalPosition vec.Vec3I
+	RawBlock      *messages.Block
 }
 
 // TODO check chunks nearby
 // Should we still check even if this block is air?
-func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) (bool, ferr.FortiaError) {
+func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) bool {
 
-	if b.Layer == nil {
-		return false, ferr.New("Layer nil")
+	if b.Chunk == nil {
+		return false
 	}
-	if b.Layer.Chunk == nil {
-		return false, ferr.New("Chunk nil")
-	}
-	if b.Id <= 0 { // Air so this is visible
-		return false, nil
+	if *b.RawBlock.Kind <= 0 { // Air so this is visible
+		return false
 	}
 
 	//chunk := b.Layer.Chunk
 	pos := b.LocalPosition
-	layerSize := b.Layer.World.GeneralInfo.LayerSize
+	chunkWidth := b.Chunk.World.GeneralInfo.ChunkWidth
+	chunkHeight := b.Chunk.World.GeneralInfo.ChunkHeight
 
 	blocks := make([]*Block, 0)
 
 	// get surounding blocks on same layer
 	if pos.X > 0 {
-		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X-1, pos.Y))
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X - 1, pos.Y, pos.Z}))
 	}
-	if pos.X < layerSize-1 {
-		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X+1, pos.Y))
+	if pos.X < chunkWidth-1 {
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X + 1, pos.Y, pos.Z}))
 	}
 
 	if pos.Y > 0 {
-		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y-1))
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X, pos.Y - 1, pos.Z}))
 	}
-	if pos.Y < layerSize-1 {
-		blocks = append(blocks, b.Layer.GetLocalBlock(pos.X, pos.Y+1))
-	}
-
-	// Below and above
-	if b.Layer.Position.Z > 0 {
-		// Check block below
-		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z-1]
-		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
+	if pos.Y < chunkWidth-1 {
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X, pos.Y + 1, pos.Z}))
 	}
 
-	if b.Layer.Position.Z < b.Layer.World.GeneralInfo.Height-1 {
-		// Check block above
-		layer := b.Layer.Chunk.Layers[b.Layer.Position.Z+1]
-		blocks = append(blocks, layer.GetLocalBlock(pos.X, pos.Y))
-		bl := layer.GetLocalBlock(pos.X, pos.Y)
-		if bl == nil {
-			b.Layer.World.Logger.Info("shouldnt be nil")
-		}
+	if pos.Z > 0 {
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X, pos.Y, pos.Z - 1}))
+	}
+	if pos.Z < chunkHeight-1 {
+		blocks = append(blocks, b.Chunk.GetBlock(vec.Vec3I{pos.X, pos.Y, pos.Z + 1}))
 	}
 
 	// Check chunk neighbours
-	if pos.X == 0 || pos.X >= layerSize-1 ||
-		pos.Y == 0 || pos.Y >= layerSize-1 {
+	if pos.X == 0 || pos.X >= chunkWidth-1 ||
+		pos.Y == 0 || pos.Y >= chunkWidth-1 {
 		// map out the chunks to make it easier
 		x1c := neighbours[vec.Vec2I{1, 0}]
 		x_1c := neighbours[vec.Vec2I{-1, 0}]
@@ -88,25 +71,21 @@ func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) (bool, ferr.FortiaE
 
 		if pos.X == 0 {
 			if x_1c != nil {
-				cl := x_1c.Layers[b.Layer.Position.Z]
-				blocks = append(blocks, cl.GetLocalBlock(layerSize-1, pos.Y))
+				blocks = append(blocks, x_1c.GetBlock(vec.Vec3I{chunkWidth - 1, pos.Y, pos.Z}))
 			}
-		} else if pos.X >= layerSize-1 {
+		} else if pos.X >= chunkWidth-1 {
 			if x1c != nil {
-				cl := x1c.Layers[b.Layer.Position.Z]
-				blocks = append(blocks, cl.GetLocalBlock(0, pos.Y))
+				blocks = append(blocks, x1c.GetBlock(vec.Vec3I{0, pos.Y, pos.Z}))
 			}
 		}
 
 		if pos.Y == 0 {
 			if y_1c != nil {
-				cl := y_1c.Layers[b.Layer.Position.Z]
-				blocks = append(blocks, cl.GetLocalBlock(pos.X, layerSize-1))
+				blocks = append(blocks, y_1c.GetBlock(vec.Vec3I{pos.X, chunkWidth - 1, pos.Z}))
 			}
-		} else if pos.Y >= layerSize-1 {
+		} else if pos.Y >= chunkWidth-1 {
 			if y1c != nil {
-				cl := y1c.Layers[b.Layer.Position.Z]
-				blocks = append(blocks, cl.GetLocalBlock(pos.X, 0))
+				blocks = append(blocks, y1c.GetBlock(vec.Vec3I{pos.X, 0, pos.Z}))
 			}
 		}
 
@@ -114,14 +93,13 @@ func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) (bool, ferr.FortiaE
 
 	for _, v := range blocks {
 		if v == nil {
-			b.Layer.World.Logger.Debug("pop")
 			continue
 		}
-		if v.Id <= 0 {
+		if *v.RawBlock.Kind <= 0 {
 			// air
-			return false, nil
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }

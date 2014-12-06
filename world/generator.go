@@ -1,8 +1,10 @@
 package world
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"github.com/cheggaaa/pb"
 	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/simplex"
 	"github.com/jonas747/fortia/vec"
 	"math/rand"
@@ -86,7 +88,7 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 				return err
 			}
 			// Save the chunk
-			err = g.W.SetChunk(chunk, true)
+			err = g.W.SetChunk(chunk)
 			if err != nil {
 				return err
 			}
@@ -120,7 +122,7 @@ func (g *Generator) GenStage(f func(*Chunk) ferr.FortiaError) {
 	defer p.Finish()
 	for x := 0; x < g.Size; x++ {
 		for y := 0; y < g.Size; y++ {
-			chunk, err := g.W.GetChunk(x, y, true, false)
+			chunk, err := g.W.GetChunk(vec.Vec2I{x, y})
 			if err != nil {
 				g.W.Logger.Error(err)
 				continue
@@ -130,7 +132,7 @@ func (g *Generator) GenStage(f func(*Chunk) ferr.FortiaError) {
 				g.W.Logger.Error(err)
 				continue
 			}
-			err = g.W.SetChunk(chunk, true)
+			err = g.W.SetChunk(chunk)
 			if err != nil {
 				g.W.Logger.Error(err)
 				continue
@@ -164,7 +166,7 @@ func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaEr
 		return nil, err
 	}
 
-	chunk.Potency = potency
+	chunk.RawChunk.Potency = proto.Int(potency)
 	return chunk, err
 }
 
@@ -177,9 +179,9 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 	// Get souroding chunks
 	for x := -1; x < 1; x++ {
 		for y := -1; y < 1; y++ {
-			chunk, err := g.W.GetChunk(x+position.X, y+position.Y, false, false)
+			chunk, err := g.W.GetChunk(vec.Vec2I{x + position.X, y + position.Y})
 			if err != nil {
-				if err.GetMessage() != "404" {
+				if err.GetCode() != 404 {
 					return Biome{}, 0, err
 				}
 			}
@@ -188,9 +190,9 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 			if chunk == nil {
 				continue
 			}
-			if chunk.Potency > highestPotency {
-				highestPotency = chunk.Potency
-				highestBiome = chunk.Biome
+			if int(chunk.RawChunk.GetPotency()) > highestPotency {
+				highestPotency = int(chunk.RawChunk.GetPotency())
+				highestBiome = g.Biomes.GetBiomeFromId(int(chunk.RawChunk.GetBiome()))
 			}
 		}
 	}
@@ -214,58 +216,45 @@ func (g *Generator) getBiome(position vec.Vec2I) (Biome, int, ferr.FortiaError) 
 // Second stage: Returns a chunk, at this stage it only sets the block id to one of 2, 0 for air and 1 for land
 // Needs to be tweaked
 func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
-	wHeight := g.W.GeneralInfo.Height
-	lSize := g.W.GeneralInfo.LayerSize
+	chunkHeight := g.W.GeneralInfo.ChunkHeight
+	chunkWidth := g.W.GeneralInfo.ChunkWidth
 	noiseGen := g.NoiseGenerators["landscape"]
 
 	//rough := biome.Properties.Roughness
 	cWorldPos := position.Clone()
-	cWorldPos.MultiplyScalar(float64(lSize))
+	cWorldPos.MultiplyScalar(float64(chunkWidth))
 
-	layers := make([]*Layer, wHeight)
+	blocks := make([]*messages.Block, chunkWidth*chunkWidth*chunkHeight)
 
 	c := &Chunk{
-		Position: position,
-		Layers:   layers,
-		Biome:    biome,
-		World:    g.W,
+		World: g.W,
+		RawChunk: &messages.Chunk{
+			Blocks: blocks,
+			Biome:  proto.Int(biome.Id),
+			X:      proto.Int(position.X),
+			Y:      proto.Int(position.Y),
+		},
 	}
 
 	// The actual generation
-	for x := 0; x < lSize; x++ {
-		for y := 0; y < lSize; y++ {
-			// layer
-			for z := 0; z < wHeight; z++ {
-				// world positions
+	for x := 0; x < chunkWidth; x++ {
+		for y := 0; y < chunkWidth; y++ {
+			for z := 0; z < chunkHeight; z++ {
+				// world position
 				wx := cWorldPos.X + x
 				wy := cWorldPos.Y + y
 
-				l := layers[z]
-				if l == nil {
-					l = &Layer{
-						World:    g.W,
-						Position: vec.Vec3I{position.X, position.Y, z},
-						Chunk:    c,
-						IsAir:    true,
-					}
-					layers[z] = l
-				}
-				if len(l.Blocks) == 0 {
-					l.Blocks = make([]*Block, lSize*lSize)
-				}
-				index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
 				noise := noiseGen.Noise3(float64(wx)/float64(50), float64(wy)/float64(50), float64(z)/float64(50))
-				life := 7 - 10*(float64(z)/float64(wHeight)) // Conrolls the elevation
+				life := 7 - 10*(float64(z)/float64(chunkHeight)) // Conrolls the elevation
 				//g.W.Logger.Info(z, life, noise)
 				life += noise / 4 // This controlls the sensitivity
 				life *= 100
 
-				b := Block{
-					LocalPosition: vec.Vec2I{x, y},
-					Layer:         l,
-					Id:            int(life), // Actual id's are assigned later
+				raw := &messages.Block{
+					Kind: proto.Int32(int32(life)),
 				}
-				l.Blocks[index] = &b
+				index := g.W.CoordsToIndex(vec.Vec3I{x, y, z})
+				blocks[index] = raw
 			}
 		}
 	}
@@ -276,24 +265,24 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome Biome) *Chunk {
 func (g *Generator) generateCaves(chunk *Chunk) ferr.FortiaError {
 	noiseGen := g.NoiseGenerators["caves"]
 
-	lSize := g.W.GeneralInfo.LayerSize
-	wHeight := g.W.GeneralInfo.Height
+	chunkWidth := g.W.GeneralInfo.ChunkWidth
+	chunkHeight := g.W.GeneralInfo.ChunkHeight
 
-	cWorldPos := chunk.Position.Clone()
-	cWorldPos.MultiplyScalar(float64(lSize))
+	cWorldPos := vec.Vec2I{int(chunk.RawChunk.GetX()), int(chunk.RawChunk.GetY())}
+	cWorldPos.MultiplyScalar(float64(chunkWidth))
 
-	for x := 0; x < lSize; x++ {
-		for y := 0; y < lSize; y++ {
-			// layer
-			for z := 0; z < wHeight; z++ {
+	for x := 0; x < chunkWidth; x++ {
+		for y := 0; y < chunkWidth; y++ {
+			for z := 0; z < chunkHeight; z++ {
 				wx := float64(cWorldPos.X + x)
 				wy := float64(cWorldPos.Y + y)
-				life := 6 - 10*(float64(z)/float64(wHeight))
+				life := 6 - 10*(float64(z)/float64(chunkHeight))
 				life += (noiseGen.Noise3(wx/float64(40), wy/float64(40), float64(z)/float64(40))) * 2
 				if life > 0 {
-					l := chunk.Layers[z]
-					index := g.W.CoordsToIndex(vec.Vec3I{x, y, 0})
-					l.Blocks[index].Id -= int(life * 100)
+					index := g.W.CoordsToIndex(vec.Vec3I{x, y, z})
+					currentLife := chunk.RawChunk.Blocks[index].GetKind()
+					currentLife -= int32(life * 100)
+					chunk.RawChunk.Blocks[index].Kind = proto.Int32(currentLife)
 					//l.Blocks[index].Id = 0
 				}
 			}
@@ -311,20 +300,14 @@ func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
 func (g *Generator) basePlaceBlocks(chunk *Chunk) ferr.FortiaError {
-	for _, layer := range chunk.Layers {
-		for _, b := range layer.Blocks {
-			if layer.Position.Z == 0 {
-				b.Id = 1 // change to bedrock later perhaps
-			}
-			if b.Id > 50 {
-				b.Id = 1 // rock
-				//l.IsAir = false
-			} else if b.Id <= 50 && b.Id > 0 {
-				b.Id = 2 // grass
-				//l.IsAir = false
-			} else {
-				b.Id = 0 // Air
-			}
+	for _, block := range chunk.RawChunk.Blocks {
+		life := block.GetKind()
+		if life > 50 {
+			block.Kind = proto.Int32(1) // rock
+		} else if life <= 50 && life > 0 {
+			block.Kind = proto.Int32(2) // grass
+		} else {
+			block.Kind = proto.Int32(0) // Air
 		}
 	}
 	return nil

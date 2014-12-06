@@ -2,6 +2,7 @@ package world
 
 import (
 	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 )
 
@@ -13,11 +14,11 @@ const (
 
 // Info about the world
 type WorldInfo struct {
-	Size       int         // The size of the world in chunks
-	Height     int         // The height of thw world in blocks
-	LayerSize  int         // Size of a layer in blocks
-	BlockTypes []BlockType // ..
-	Biomes     BiomesInfo  // ..
+	Size        int         // The size of the world in chunks
+	ChunkHeight int         // The height of thw world in blocks
+	ChunkWidth  int         // Size of a layer in blocks
+	BlockTypes  []BlockType // ..
+	Biomes      BiomesInfo  // ..
 }
 
 // Represents a user
@@ -36,13 +37,8 @@ type GameDB interface {
 	GetUserEntities(user string) ([]int, ferr.FortiaError)         // Returns the users owned entities
 	EditUserEntities(user string, add, del []int) ferr.FortiaError // Adds and removes entities from the users owned list
 
-	GetLayer(pos vec.Vec3I) (*Layer, ferr.FortiaError)
-	SetLayer(layer *Layer) ferr.FortiaError
-	GetLayers(positions []vec.Vec3I) ([]*Layer, ferr.FortiaError)
-	SetLayers(layers []*Layer) ferr.FortiaError
-
-	GetChunkInfo(pos vec.Vec2I) (*Chunk, ferr.FortiaError)
-	SetChunkInfo(chunk *Chunk) ferr.FortiaError
+	GetChunk(pos vec.Vec2I) (*messages.Chunk, ferr.FortiaError)
+	SetChunk(chunk *messages.Chunk) ferr.FortiaError
 
 	PopAction(tick int) (*Action, ferr.FortiaError) // Returns a action, errcodeempty if none
 	IncrTick() (int, ferr.FortiaError)              // Increases the tick counter, and returns the new ticknumber

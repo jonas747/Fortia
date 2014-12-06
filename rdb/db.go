@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"github.com/fzzy/radix/extra/pool"
 	"github.com/fzzy/radix/redis"
+	"github.com/golang/protobuf/proto"
 	ferr "github.com/jonas747/fortia/error"
 )
 
 var (
 	emptyStrStrMap = make(map[string]string)
-	errNotFound    = "404"
+	errNotFound    = 404
 )
 
 // Base database
@@ -128,6 +129,34 @@ func (db *Database) SetJson(key string, val interface{}) ferr.FortiaError {
 		return ferr.Wrap(nErr, "")
 	}
 
+	_, err := db.Cmd("SET", key, serialized)
+	return err
+}
+
+func (db *Database) GetProto(key string, out proto.Message) ferr.FortiaError {
+	reply, err := db.Cmd("GET", key)
+	if err != nil {
+		return err
+	}
+	raw, nErr := reply.Bytes()
+	if nErr != nil {
+		if reply.Type == redis.NilReply {
+			return ferr.Newc(errNotFound)
+		}
+		return ferr.Wrap(nErr, "")
+	}
+	nErr = proto.Unmarshal(raw, out)
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+	return nil
+}
+
+func (db *Database) SetProto(key string, pb proto.Message) ferr.FortiaError {
+	serialized, nErr := proto.Marshal(pb)
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
 	_, err := db.Cmd("SET", key, serialized)
 	return err
 }

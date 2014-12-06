@@ -12,7 +12,6 @@ import (
 type World struct {
 	Logger      *log.LogClient
 	Db          GameDB
-	WorldGen    WorldGenerator
 	GeneralInfo *WorldInfo
 }
 
@@ -35,31 +34,23 @@ func (w *World) SaveSettingsToDb() ferr.FortiaError {
 	return err
 }
 
-func (w *World) LayerToWorldPos(layePos vec.Vec3I) vec.Vec3I {
-	lw := layePos.Clone()
-	lw.Multiply(vec.Vec3I{X: w.GeneralInfo.LayerSize, Y: w.GeneralInfo.LayerSize})
-	return lw
+func (w *World) ChunkToWorldPos(chunkPos vec.Vec2I) vec.Vec2I {
+	chunkPos.Multiply(vec.Vec2I{X: w.GeneralInfo.ChunkWidth, Y: w.GeneralInfo.ChunkWidth})
+	return chunkPos
 }
 
-// index = size * x + y
 func (w *World) CoordsToIndex(pos vec.Vec3I) int {
-	return w.GeneralInfo.LayerSize*pos.X + pos.Y
+	return pos.X + w.GeneralInfo.ChunkWidth*(pos.Y+w.GeneralInfo.ChunkWidth*pos.Z)
 }
 
-// Return a blocks x and y from the index in the layer slice
-// x = index / size
-// y = index - (x * size)
 func (w *World) IndexToCoords(index int) vec.Vec3I {
-	x := index / w.GeneralInfo.LayerSize
-	y := index - (x * w.GeneralInfo.LayerSize)
-	return vec.Vec3I{x, y, 0}
+	x := index % w.GeneralInfo.ChunkWidth
+	y := (index / w.GeneralInfo.ChunkWidth) % w.GeneralInfo.ChunkWidth
+	z := index / (w.GeneralInfo.ChunkWidth * w.GeneralInfo.ChunkWidth)
+	return vec.Vec3I{x, y, z}
 }
 
 type Entity interface {
 	GetPosition()
 	GetId() int
-}
-
-type WorldGenerator interface {
-	GenerateBLock(x, y, z int) int
 }
