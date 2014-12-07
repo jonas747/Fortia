@@ -34,33 +34,26 @@ Login
 Client post /login -> load balancer -> auth server -> redis auth server
 
 
-Ticking:
+##Ticking:
 
-Tasks are in a unordered set
-the key of that set is the tick they are executed at
+Ticking the world is done by many ticker servers, distributing the ticking 
 
-Tasks are distributed among the available tickservers so that they are as little idle as possible during each tick waiting for locks.
+Ticking is done in stages:
 
-example:
+1. non-world editing, stuff that does not change the world
+2. world editing stage, here all the actions that are changing the world processed, (mined blocks, buildings placed etc)
+3. entity moving stage, all the entities are moved, calculated paths for etc...
 
-Tick:100
-actionread
-actionread
-actionwrite
-actionwrite
-actionread
-actionwrite
 
-aviable servers 2
-The scheduler gives the following actions to the tickservers
+intruduces some problems:
 
-s1:
-actionwrite
-actionread
-actionwrite
-s2:
-actionread
-actionwrite
-actionread
+###Problems with distributed tickers:
+Because chunks are stored in the protobuf format, updating just one field to say add a entity to a block, requires updating the whole chunk. Which has to be done in 3 steps, 1 - retrieve and decode chunk. 2 - apply changes to chunk. 3 - Store the chunk
+Because of this a chunk can only be edited by 1 worker at the same time.
 
-Although not perfect its the way the sceduler works
+Solutions: 
+    
+    - Instead of directly applying changes to the world, queue the changes up and apply them all at the end
+    - Use some sort of locking
+
+Either one will be testes to see which works out the best on large and small scale when time comes
