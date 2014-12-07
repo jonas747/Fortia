@@ -110,7 +110,7 @@ func (db *Database) GetJson(key string, val interface{}) ferr.FortiaError {
 	raw, nErr := reply.Bytes()
 	if nErr != nil {
 		if reply.Type == redis.NilReply {
-			return ferr.New(errNotFound)
+			return ferr.Newc("", errNotFound)
 		}
 		return ferr.Wrap(nErr, "")
 	}
@@ -141,7 +141,7 @@ func (db *Database) GetProto(key string, out proto.Message) ferr.FortiaError {
 	raw, nErr := reply.Bytes()
 	if nErr != nil {
 		if reply.Type == redis.NilReply {
-			return ferr.Newc(errNotFound)
+			return ferr.Newc("Not found", errNotFound)
 		}
 		return ferr.Wrap(nErr, "")
 	}

@@ -4,11 +4,11 @@ Alpha 0.2:
    ✔ Figure out an action system for unit and building actions and such @done (14-12-03 02:15)
    ☐ Update everything to work with the new REST api package @critical
      ✔ auth @critical @done (14-12-04 07:59)
-     ☐ game @critical
+     ☐ game @critical @today
      ☐ client @critical
 
    ☐ Change from login usernames to emails and prompt users when joining worlds for a name to use in that world @low
-     Requires some changes to the database layer and api layer
+     Requires some changes to the database layer and api layer, as well as the client
     ☐ db 
     ☐ api
   
@@ -29,10 +29,11 @@ Alpha 0.2:
    ☐ Optimise and use more concurrency
    ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then) @high
    ☐ Go over everything and make sure everything returns proper error codes
-   ☐ Change from storing the world in layers to chunks
+   ☐ Change from storing the world in layers to chunks @today
       Also store it in a binary format, as opposed to json for improved speed and memory usage
    ☐ Add chunk locks
   World:
+   ✔ Move away from layers to chunks @today @done (14-12-07 15:57)
    ☐ Organise the world package better
    ✔ Check nearby chunks when flagging blocks visible or not @done (14-11-11 17:44)
    ☐ write tests and benchmarks 
@@ -40,6 +41,7 @@ Alpha 0.2:
      ☐ Make everything work with the the new package name @critical
 
    Worldgen:
+     Gonne keep the world gen relatively simple for now
     ✘ Implement world extending @cancelled (14-12-03 02:32)
       Delay this for later versions perhaps?
       Extends a allready generated world, making it bigger
@@ -80,7 +82,8 @@ Alpha 0.2:
    ☐ Add accounts info settings page
      email, password and username change are all located there
     Client:
-     ☐ Complete rewrite of the client 
+     ☐ Move away from layers to chunks @today
+     ✘ Complete rewrite of the client  @cancelled (14-12-07 15:59)
      ☐ Simple ui
      ☐ Simple selection(units, tiles, buildings)
      ☐ Model loading and handling
@@ -126,7 +129,7 @@ Alpha 0.2:
    ✔ Allow the selection of content type from both requests and responses from response header, and reuest parameters @done (14-12-04 03:39)
      ✔ JSON @done (14-12-04 03:39)
      ✔ protobuf @done (14-12-04 03:39)
-   ☐ Make it easier to log requests
+   ☐ Standardize logging of requests and errors on requests 
      which includes information such as remot address, request path and body
      on body, fields tagged sensitive are ignored
 

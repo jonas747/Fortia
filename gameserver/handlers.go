@@ -2,86 +2,21 @@ package gameserver
 
 import (
 	"encoding/json"
+	"github.com/golang/protobuf/proto"
+	"github.com/jonas747/fortia/messages"
 	//ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/rest"
 	"github.com/jonas747/fortia/vec"
-	//"github.com/jonas747/fortia/world"
-	"bytes"
-	"compress/gzip"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func writeCompressed(w http.ResponseWriter, r *http.Request, body []byte) {
-	encodingsStr := r.Header.Get("Accept-Encoding")
-	split := strings.Split(encodingsStr, ",")
-	var buffer bytes.Buffer
-	encoding := ""
-	for _, v := range split {
-		if v == "gzip" {
-			writer := gzip.NewWriter(&buffer)
-			total := 0
-			for total < len(body) {
-				n, _ := writer.Write(body[total:])
-				total += n
-			}
-			writer.Close()
-			encoding = "gzip"
-			break
-		}
-	}
-	// Write uncompressed if no compression is supoprted
-	if encoding == " " {
-		w.Write(body)
-		return
-	}
-	w.Header().Set("Content-Encoding", encoding)
-	w.Header().Set("Content-Type", "application/json")
-	logger.Debug("Serialized length: ", buffer.Len()/1000, "k")
-	total := int64(0)
-	for total < int64(buffer.Len()) {
-		n, _ := buffer.WriteTo(w)
-		total += n
-	}
-}
+func handleRegister(r *rest.Request, body interface{}) {}
 
-func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {
-	w.Write([]byte("{\"ok\": true}"))
-}
+func handleLogin(r *rest.Request, body interface{}) {}
 
-func handleLogin(w http.ResponseWriter, r *http.Request, body interface{}) {
-	w.Write([]byte("{\"ok\": true}"))
-}
-
-func handleUpdate(w http.ResponseWriter, r *http.Request, body interface{}) {}
-
-// /layers
-// TODO add a world.getRawLayers function so i dont decode and then encode the json
-func handleLayers(w http.ResponseWriter, r *http.Request, body interface{}) {
-	params := r.URL.Query()
-	xList := strings.Split(params.Get("x"), ",")
-	yList := strings.Split(params.Get("y"), ",")
-	zList := strings.Split(params.Get("z"), ",")
-
-	positions := make([]vec.Vec3I, len(xList))
-	for k, _ := range xList {
-		x, _ := strconv.Atoi(xList[k])
-		y, _ := strconv.Atoi(yList[k])
-		z, _ := strconv.Atoi(zList[k])
-		positions[k] = vec.Vec3I{x, y, z}
-	}
-
-	layers, err := gameDb.GetLayers(positions)
-	if server.HandleFortiaError(w, r, err) {
-		return
-	}
-
-	serialized, nErr := json.Marshal(layers)
-	if server.HandleError(w, r, nErr) {
-		return
-	}
-	writeCompressed(w, r, serialized)
-}
+func handleUpdate(r *rest.Request, body interface{}) {}
 
 func serialize(data interface{}, out chan []byte) {
 	serialized, err := json.Marshal(data)
@@ -92,8 +27,8 @@ func serialize(data interface{}, out chan []byte) {
 }
 
 // /chunks
-func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
-	params := r.URL.Query()
+func handleChunks(r *rest.Request, body interface{}) {
+	params := r.Request.URL.Query()
 	xList := strings.Split(params.Get("x"), ",")
 	yList := strings.Split(params.Get("y"), ",")
 
@@ -103,62 +38,42 @@ func handleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {
 		y, _ := strconv.Atoi(yList[k])
 		positions[k] = vec.Vec2I{x, y}
 	}
-	dataChan := make(chan []byte, 5)
-	numChunks := 0
-	for _, v := range positions {
-		chunk, err := gameWorld.GetChunk(v.X, v.Y, true, true)
+	chunks := make([]*messages.Chunk, len(positions))
+	for i, v := range positions {
+		chunk, err := gameWorld.GetChunk(v)
 		if err != nil {
-			if err.GetMessage() == "404" {
+			if err.GetCode() == 404 {
 				continue
 			}
 		}
-		if server.HandleFortiaError(w, r, err) {
+		if server.HandleFortiaError(r, err) {
 			return
 		}
-		if chunk == nil { // Probably out of bounds
+		if chunk == nil { // should not happend, but still make sure
 			continue
 		}
-		dmap := map[string]interface{}{
-			"Layers":        chunk.Layers,
-			"Position":      chunk.Position,
-			"Biome":         chunk.Biome.Id,
-			"VisibleLayers": chunk.VisibleLayers,
-		}
-		numChunks++
-		go serialize(dmap, dataChan)
+		chunks[i] = chunk.RawChunk
 	}
-	var buffer bytes.Buffer
-	buffer.WriteString("[")
-	firstElem := true
-	for i := 0; i < numChunks; i++ {
-		chunk := <-dataChan
-		if len(chunk) < 1 {
-			continue
-		}
-		if !firstElem {
-			buffer.WriteString(",")
-		}
-		firstElem = false
-		buffer.Write(chunk)
+	wireResp := &messages.ChunksResponse{
+		Chunks: chunks,
 	}
-	buffer.WriteString("]")
-	// serialized, nErr := json.Marshal(chunks)
-	// if server.HandleError(w, r, nErr) {
-	// 	return
-	// }
-	serialized := buffer.Bytes()
-	writeCompressed(w, r, serialized)
+	r.WriteResponse(wireResp, http.StatusOK)
 }
 
 // /info
-func handleInfo(w http.ResponseWriter, r *http.Request, body interface{}) {
-	infoHash, err := gameDb.GetWorldInfo()
-	if server.HandleFortiaError(w, r, err) {
+func handleInfo(r *rest.Request, body interface{}) {
+	info, err := gameDb.GetWorldInfo()
+	if server.HandleFortiaError(r, err) {
 		return
 	}
-	serialized, nErr := json.Marshal(&infoHash)
-	if server.HandleError(w, r, nErr) {
-		return
+
+	wireInfo := &messages.WorldSettings{
+		Size:        proto.Int(info.Size),
+		ChunkWidth:  proto.Int(info.ChunkWidth),
+		ChunkHeight: proto.Int(info.ChunkHeight),
 	}
-	w.Write(serialized)
+	wireResp := &messages.WorldSettingsResponse{
+		Settings: wireInfo,
+	}
+	r.WriteResponse(wireResp, http.StatusOK)
 }

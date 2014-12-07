@@ -9,7 +9,6 @@ import (
 	"github.com/jonas747/fortia/vec"
 	"github.com/jonas747/fortia/world"
 	"strconv"
-	"sync"
 )
 
 // Basic implementation of world.GameDB
@@ -77,7 +76,7 @@ func (g *GameDB) GetChunk(pos vec.Vec2I) (*messages.Chunk, ferr.FortiaError) {
 }
 
 func (g *GameDB) SetChunk(chunk *messages.Chunk) ferr.FortiaError {
-	return g.SetProto(fmt.Sprintf("c:%d:%d", chunk.X, chunk.Y), chunk)
+	return g.SetProto(fmt.Sprintf("c:%d:%d", chunk.GetX(), chunk.GetY()), chunk)
 }
 
 // Get and set entities

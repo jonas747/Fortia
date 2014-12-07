@@ -1,5 +1,5 @@
 {
-	"Size":       20,
-	"Height":     200,
-	"LayerSize":  25
+	"Size": 5,
+	"ChunkHeight": 200,
+	"ChunkWidth":  25
 }

@@ -53,7 +53,7 @@ Because of this a chunk can only be edited by 1 worker at the same time.
 
 Solutions: 
     
-    - Instead of directly applying changes to the world, queue the changes up and apply them all at the end
-    - Use some sort of locking
+- Instead of directly applying changes to the world, queue the changes up and apply them all at the end
+- Use some sort of locking
 
 Either one will be testes to see which works out the best on large and small scale when time comes

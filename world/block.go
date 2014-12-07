@@ -20,14 +20,13 @@ type Block struct {
 	RawBlock      *messages.Block
 }
 
-// TODO check chunks nearby
-// Should we still check even if this block is air?
+// Checks surouding blocks and returns wether this block is hidden or not
 func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) bool {
 
 	if b.Chunk == nil {
 		return false
 	}
-	if *b.RawBlock.Kind <= 0 { // Air so this is visible
+	if *b.RawBlock.Kind <= 0 { // Air, obviously visible
 		return false
 	}
 

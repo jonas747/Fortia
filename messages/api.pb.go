@@ -16,6 +16,9 @@ It has these top-level messages:
 	MeResponse
 	WorldInfo
 	WorldsResponse
+	WorldSettings
+	WorldSettingsResponse
+	ChunksResponse
 */
 package messages
 
@@ -198,6 +201,86 @@ func (m *WorldsResponse) GetError() *Error {
 func (m *WorldsResponse) GetInfo() []*WorldInfo {
 	if m != nil {
 		return m.Info
+	}
+	return nil
+}
+
+type WorldSettings struct {
+	Size             *int32 `protobuf:"varint,1,opt" json:"Size,omitempty"`
+	ChunkWidth       *int32 `protobuf:"varint,2,opt" json:"ChunkWidth,omitempty"`
+	ChunkHeight      *int32 `protobuf:"varint,3,opt" json:"ChunkHeight,omitempty"`
+	XXX_unrecognized []byte `json:"-"`
+}
+
+func (m *WorldSettings) Reset()         { *m = WorldSettings{} }
+func (m *WorldSettings) String() string { return proto.CompactTextString(m) }
+func (*WorldSettings) ProtoMessage()    {}
+
+func (m *WorldSettings) GetSize() int32 {
+	if m != nil && m.Size != nil {
+		return *m.Size
+	}
+	return 0
+}
+
+func (m *WorldSettings) GetChunkWidth() int32 {
+	if m != nil && m.ChunkWidth != nil {
+		return *m.ChunkWidth
+	}
+	return 0
+}
+
+func (m *WorldSettings) GetChunkHeight() int32 {
+	if m != nil && m.ChunkHeight != nil {
+		return *m.ChunkHeight
+	}
+	return 0
+}
+
+type WorldSettingsResponse struct {
+	Error            *Error         `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Settings         *WorldSettings `protobuf:"bytes,2,opt,name=settings" json:"settings,omitempty"`
+	XXX_unrecognized []byte         `json:"-"`
+}
+
+func (m *WorldSettingsResponse) Reset()         { *m = WorldSettingsResponse{} }
+func (m *WorldSettingsResponse) String() string { return proto.CompactTextString(m) }
+func (*WorldSettingsResponse) ProtoMessage()    {}
+
+func (m *WorldSettingsResponse) GetError() *Error {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+func (m *WorldSettingsResponse) GetSettings() *WorldSettings {
+	if m != nil {
+		return m.Settings
+	}
+	return nil
+}
+
+type ChunksResponse struct {
+	Error            *Error   `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Chunks           []*Chunk `protobuf:"bytes,2,rep,name=chunks" json:"chunks,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *ChunksResponse) Reset()         { *m = ChunksResponse{} }
+func (m *ChunksResponse) String() string { return proto.CompactTextString(m) }
+func (*ChunksResponse) ProtoMessage()    {}
+
+func (m *ChunksResponse) GetError() *Error {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+func (m *ChunksResponse) GetChunks() []*Chunk {
+	if m != nil {
+		return m.Chunks
 	}
 	return nil
 }

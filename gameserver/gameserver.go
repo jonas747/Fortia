@@ -58,35 +58,29 @@ func handleVisibleChunks(w http.ResponseWriter, r *http.Request, body interface{
 */
 
 func initApi(s *rest.Server) {
-	s.RegisterHandler(&rest.RestHandler{
-		Path:            "/register",
-		Method:          "POST",
-		Handler:         handleRegister,
-		RequiredCookies: []string{"fortia-session"},
-		BodyType:        reflect.TypeOf(BodyRegister{}),
-		BodyRequired:    true,
+	s.RegisterHandler(&rest.Handler{
+		Path:         "/register",
+		Method:       "POST",
+		Handler:      handleRegister,
+		BodyType:     reflect.TypeOf(BodyRegister{}),
+		BodyRequired: true,
 	})
-	s.RegisterHandler(&rest.RestHandler{
-		Path:            "/login",
-		Method:          "POST",
-		Handler:         handleLogin,
-		RequiredCookies: []string{"fortia-session"},
+	s.RegisterHandler(&rest.Handler{
+		Path:    "/login",
+		Method:  "POST",
+		Handler: handleLogin,
 	})
-	s.RegisterHandler(&rest.RestHandler{
-		Path:    "/layers",
-		Method:  "GET",
-		Handler: handleLayers,
-		//RequiredCookies: []string{"fortia-session"},
-		RequiredParams: []string{"x", "y", "z"},
-	})
-	s.RegisterHandler(&rest.RestHandler{
+
+	s.RegisterHandler(&rest.Handler{
 		Path:    "/chunks",
 		Method:  "GET",
 		Handler: handleChunks,
-		//RequiredCookies: []string{"fortia-session"},
-		RequiredParams: []string{"x", "y"},
+		AdditionalData: map[string]interface{}{
+			"requiredParams": []string{"x", "y"},
+		},
+		MiddleWare: []rest.Middleware{rest.RequiredParamsMiddleWare},
 	})
-	s.RegisterHandler(&rest.RestHandler{
+	s.RegisterHandler(&rest.Handler{
 		Path:    "/info",
 		Method:  "GET",
 		Handler: handleInfo,
