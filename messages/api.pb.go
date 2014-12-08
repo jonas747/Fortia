@@ -206,9 +206,9 @@ func (m *WorldsResponse) GetInfo() []*WorldInfo {
 }
 
 type WorldSettings struct {
-	Size             *int32 `protobuf:"varint,1,opt" json:"Size,omitempty"`
-	ChunkWidth       *int32 `protobuf:"varint,2,opt" json:"ChunkWidth,omitempty"`
-	ChunkHeight      *int32 `protobuf:"varint,3,opt" json:"ChunkHeight,omitempty"`
+	Size             *int32 `protobuf:"varint,1,opt,name=size" json:"size,omitempty"`
+	ChunkWidth       *int32 `protobuf:"varint,2,opt,name=chunkWidth" json:"chunkWidth,omitempty"`
+	ChunkHeight      *int32 `protobuf:"varint,3,opt,name=chunkHeight" json:"chunkHeight,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
 }
 

@@ -22,6 +22,7 @@ import (
 
 	- Wildlife gets spawned by the ticker(also dependign on the wildlife property of this biome)
 */
+
 type Generator struct {
 	W               *World              // The world
 	Biomes          *BiomesInfo         // The biomes this generator uses

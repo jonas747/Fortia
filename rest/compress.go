@@ -18,11 +18,11 @@ var (
 	}
 )
 
-func Compress(in []byte, acceptedEncodings map[string]bool) ([]byte, ferr.FortiaError) {
+func Compress(in []byte, r *Request) ([]byte, ferr.FortiaError) {
 	selectedCompression := ""
 	for i := 0; i < len(CompressionAlgos); i++ {
 		algo := CompressionAlgos[i]
-		if _, ok := acceptedEncodings[algo]; ok {
+		if _, ok := r.AcceptedEncodings[algo]; ok {
 			selectedCompression = algo
 		}
 	}
@@ -35,6 +35,7 @@ func Compress(in []byte, acceptedEncodings map[string]bool) ([]byte, ferr.Fortia
 	}
 
 	out := handler(in)
+	r.RW.Header().Set("Content-Encoding", selectedCompression)
 
 	return out, nil
 }

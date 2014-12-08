@@ -1,5 +1,8 @@
 package vec
 
+type Vec2 interface {
+}
+
 type Vec2I struct {
 	X, Y int
 }

@@ -3,6 +3,7 @@
 
 	If a body is provided and is needed for the specific handler the muxer will decode
 	the body for you
+
 */
 package rest
 
@@ -129,8 +130,11 @@ func (s *Server) RegisterHandler(r *Handler) {
 }
 
 type HandlerFunc func(*Request, interface{})
+
+// Middleware should return false if the rest server should not call the handler
 type Middleware func(*Request, interface{}) bool
 
+// Simple container
 type Container map[string]interface{}
 
 func (c Container) GetInt(key string) (int, bool) {
@@ -173,14 +177,15 @@ func (c Container) GetSliceString(key string) ([]string, bool) {
 	return val, okConv
 }
 
+// A rest handler
 type Handler struct {
 	Handler        HandlerFunc
 	Method         string       // The metho ex: GET, PUT, PATCH etc..
 	Path           string       // The path this handler takes action upon
 	BodyType       reflect.Type // The type of the body
 	BodyRequired   bool         // Wether a body is required or not
-	AdditionalData Container
-	MiddleWare     []Middleware
+	AdditionalData Container    // Additional data used by middleware(required params for the reqparams middleware for example)
+	MiddleWare     []Middleware // A slice of middleware to be executed before the handler itself
 }
 
 type Request struct {
@@ -223,7 +228,6 @@ func (r *Request) WriteResponse(msg proto.Message, statusCode int) {
 	if statusCode == 0 {
 		statusCode = http.StatusOK
 	}
-	r.RW.WriteHeader(statusCode)
 	header := r.RW.Header()
 	var out []byte
 	switch r.ResponseType {
@@ -244,7 +248,7 @@ func (r *Request) WriteResponse(msg proto.Message, statusCode int) {
 	}
 
 	if r.Compressed {
-		compressed, err := Compress(out, r.AcceptedEncodings)
+		compressed, err := Compress(out, r)
 		if err == nil {
 			out = compressed
 		} else {
@@ -252,6 +256,7 @@ func (r *Request) WriteResponse(msg proto.Message, statusCode int) {
 		}
 	}
 
+	r.RW.WriteHeader(statusCode)
 	r.RW.Write(out)
 }
 

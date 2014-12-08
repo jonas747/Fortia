@@ -2,15 +2,17 @@ Alpha 0.2:
   Tasks to do before alpha 0.2 release
   General:
    ✔ Figure out an action system for unit and building actions and such @done (14-12-03 02:15)
-   ☐ Update everything to work with the new REST api package @critical
+   ✔ Update everything to work with the new REST api package @critical @done (14-12-08 08:51)
      ✔ auth @critical @done (14-12-04 07:59)
-     ☐ game @critical @today
-     ☐ client @critical
+     ✔ game @critical @today @done (14-12-07 23:41)
+     ✔ client @critical @today @done (14-12-08 08:51)
 
    ☐ Change from login usernames to emails and prompt users when joining worlds for a name to use in that world @low
      Requires some changes to the database layer and api layer, as well as the client
     ☐ db 
     ☐ api
+
+   ☐ Redo all the logging
   
   Scheduler:
     (Main point create the scheduler)
@@ -83,6 +85,7 @@ Alpha 0.2:
      email, password and username change are all located there
     Client:
      ☐ Move away from layers to chunks @today
+       still traces of it left
      ✘ Complete rewrite of the client  @cancelled (14-12-07 15:59)
      ☐ Simple ui
      ☐ Simple selection(units, tiles, buildings)
@@ -104,6 +107,8 @@ Alpha 0.2:
        ✔ Dont mesh chunk sides unless they are not flagged hidden @done (14-11-19 02:39)
      ☐ Use index buffers to reduce the size of the vertex coords buffer 
        Postpone this to later perhaps
+     ☐ Use protocol buffers
+       Much more efficent
      Selection:
       ☐ Create basic selection
       ☐ Box selection
