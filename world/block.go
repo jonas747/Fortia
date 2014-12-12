@@ -32,8 +32,8 @@ func (b *Block) CheckHidden(neighbours map[vec.Vec2I]*Chunk) bool {
 
 	//chunk := b.Layer.Chunk
 	pos := b.LocalPosition
-	chunkWidth := b.Chunk.World.GeneralInfo.ChunkWidth
-	chunkHeight := b.Chunk.World.GeneralInfo.ChunkHeight
+	chunkWidth := int(b.Chunk.World.Settings.GetChunkWidth())
+	chunkHeight := int(b.Chunk.World.Settings.GetChunkHeight())
 
 	blocks := make([]*Block, 0)
 

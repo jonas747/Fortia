@@ -17,14 +17,14 @@ type GameDB struct {
 }
 
 // Information about the world. Blocktypes, biomes, layer size  and such
-func (g *GameDB) GetWorldInfo() (*world.WorldInfo, ferr.FortiaError) {
-	var info world.WorldInfo
-	err := g.GetJson("worldinfo", &info)
-	return &info, err
+func (g *GameDB) GetWorldSettings() (*messages.WorldSettings, ferr.FortiaError) {
+	var info *messages.WorldSettings
+	err := g.GetProto("worldinfo", info)
+	return info, err
 }
 
-func (g *GameDB) SetWorldInfo(info *world.WorldInfo) ferr.FortiaError {
-	return g.SetJson("worldinfo", info)
+func (g *GameDB) SetWorldSettings(info *messages.WorldSettings) ferr.FortiaError {
+	return g.SetProto("worldinfo", info)
 }
 
 // Returns the specified user's info

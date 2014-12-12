@@ -2,7 +2,7 @@ package gameserver
 
 import (
 	"encoding/json"
-	"github.com/golang/protobuf/proto"
+	//"github.com/golang/protobuf/proto"
 	"github.com/jonas747/fortia/messages"
 	//ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/rest"
@@ -62,18 +62,13 @@ func handleChunks(r *rest.Request, body interface{}) {
 
 // /info
 func handleInfo(r *rest.Request, body interface{}) {
-	info, err := gameDb.GetWorldInfo()
+	info, err := gameDb.GetWorldSettings()
 	if server.HandleFortiaError(r, err) {
 		return
 	}
 
-	wireInfo := &messages.WorldSettings{
-		Size:        proto.Int(info.Size),
-		ChunkWidth:  proto.Int(info.ChunkWidth),
-		ChunkHeight: proto.Int(info.ChunkHeight),
-	}
 	wireResp := &messages.WorldSettingsResponse{
-		Settings: wireInfo,
+		Settings: info,
 	}
 	r.WriteResponse(wireResp, http.StatusOK)
 }

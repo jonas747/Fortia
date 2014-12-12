@@ -6,6 +6,7 @@ import (
 	"github.com/jonas747/fortia/common"
 	"github.com/jonas747/fortia/gameserver"
 	"github.com/jonas747/fortia/log"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/rdb"
 	//"github.com/jonas747/fortia/ticker"
 	"github.com/jonas747/fortia/world"
@@ -77,15 +78,15 @@ func main() {
 
 func createWorld() {
 	// Load the world info json
-	var biomesInfo world.BiomesInfo
-	err := common.LoadJsonFile("biomes.json", &biomesInfo)
+	var biomesInfo *messages.WorldBiomes
+	err := common.LoadJsonFile("biomes.json", biomesInfo)
 	panicErr(err)
 
-	var btypes []world.BlockType
+	var btypes []*messages.BlockType
 	err = common.LoadJsonFile("blocks.json", &btypes)
 	panicErr(err)
 
-	winfo := &world.WorldInfo{
+	winfo := &messages.WorldSettings{
 		BlockTypes: btypes,
 		Biomes:     biomesInfo,
 	}
@@ -93,15 +94,15 @@ func createWorld() {
 	err = common.LoadJsonFile("world.json", winfo)
 
 	world := &world.World{
-		Logger:      logger,
-		Db:          gdb,
-		GeneralInfo: winfo,
+		Logger:   logger,
+		Db:       gdb,
+		Settings: winfo,
 	}
 	err = world.SaveSettingsToDb()
 	panicErr(err)
 
 	generator := world.NewGenerator()
-	generator.Size = winfo.Size
+	generator.Size = int(winfo.GetSize())
 
 	err = generator.GenerateWorld()
 	panicErr(err)

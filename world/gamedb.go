@@ -12,15 +12,6 @@ const (
 	ErrCodeNotFound
 )
 
-// Info about the world
-type WorldInfo struct {
-	Size        int         // The size of the world in chunks
-	ChunkHeight int         // The height of thw world in blocks
-	ChunkWidth  int         // Size of a layer in blocks
-	BlockTypes  []BlockType // ..
-	Biomes      BiomesInfo  // ..
-}
-
 // Represents a user
 type UserInfo struct {
 	Name string // Name of the user
@@ -28,8 +19,8 @@ type UserInfo struct {
 
 // The way world information is stored may be changed in the future
 type GameDB interface {
-	GetWorldInfo() (*WorldInfo, ferr.FortiaError)  // Returns info about the world
-	SetWorldInfo(info *WorldInfo) ferr.FortiaError // Saves world information to the database
+	GetWorldSettings() (*messages.WorldSettings, ferr.FortiaError)  // Returns info about the world
+	SetWorldSettings(info *messages.WorldSettings) ferr.FortiaError // Saves world information to the database
 
 	GetUserInfo(user string) (*UserInfo, ferr.FortiaError)
 	SetUserInfo(info *UserInfo) ferr.FortiaError

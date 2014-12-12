@@ -31,9 +31,9 @@ Alpha 0.2:
    ☐ Optimise and use more concurrency
    ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then) @high
    ☐ Go over everything and make sure everything returns proper error codes
-   ☐ Change from storing the world in layers to chunks @today
+   ✔ Change from storing the world in layers to chunks @today @done (14-12-12 06:53)
       Also store it in a binary format, as opposed to json for improved speed and memory usage
-   ☐ Add chunk locks
+   ☐ Add chunk locks`
   World:
    ✔ Move away from layers to chunks @today @done (14-12-07 15:57)
    ☐ Organise the world package better
@@ -84,7 +84,7 @@ Alpha 0.2:
    ☐ Add accounts info settings page
      email, password and username change are all located there
     Client:
-     ☐ Move away from layers to chunks @today
+     ✔ Move away from layers to chunks @today @done (14-12-08 21:52)
        still traces of it left
      ✘ Complete rewrite of the client  @cancelled (14-12-07 15:59)
      ☐ Simple ui

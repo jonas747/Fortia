@@ -11,6 +11,178 @@ import math "math"
 var _ = proto.Marshal
 var _ = math.Inf
 
+type ActionType int32
+
+const (
+	ActionType_NonWorldEditing ActionType = 1
+	ActionType_WorldEditing    ActionType = 2
+	ActionType_EntityMoving    ActionType = 3
+)
+
+var ActionType_name = map[int32]string{
+	1: "NonWorldEditing",
+	2: "WorldEditing",
+	3: "EntityMoving",
+}
+var ActionType_value = map[string]int32{
+	"NonWorldEditing": 1,
+	"WorldEditing":    2,
+	"EntityMoving":    3,
+}
+
+func (x ActionType) Enum() *ActionType {
+	p := new(ActionType)
+	*p = x
+	return p
+}
+func (x ActionType) String() string {
+	return proto.EnumName(ActionType_name, int32(x))
+}
+func (x *ActionType) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(ActionType_value, data, "ActionType")
+	if err != nil {
+		return err
+	}
+	*x = ActionType(value)
+	return nil
+}
+
+type UserInfo struct {
+	Name             *string  `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Email            *string  `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
+	Worlds           []string `protobuf:"bytes,3,rep,name=worlds" json:"worlds,omitempty"`
+	Role             *int32   `protobuf:"varint,4,opt,name=role" json:"role,omitempty"`
+	DonorLvl         *int32   `protobuf:"varint,5,opt,name=donorLvl" json:"donorLvl,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *UserInfo) Reset()         { *m = UserInfo{} }
+func (m *UserInfo) String() string { return proto.CompactTextString(m) }
+func (*UserInfo) ProtoMessage()    {}
+
+func (m *UserInfo) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *UserInfo) GetEmail() string {
+	if m != nil && m.Email != nil {
+		return *m.Email
+	}
+	return ""
+}
+
+func (m *UserInfo) GetWorlds() []string {
+	if m != nil {
+		return m.Worlds
+	}
+	return nil
+}
+
+func (m *UserInfo) GetRole() int32 {
+	if m != nil && m.Role != nil {
+		return *m.Role
+	}
+	return 0
+}
+
+func (m *UserInfo) GetDonorLvl() int32 {
+	if m != nil && m.DonorLvl != nil {
+		return *m.DonorLvl
+	}
+	return 0
+}
+
+type WorldInfo struct {
+	Name             *string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Started          *int32  `protobuf:"varint,2,opt,name=started" json:"started,omitempty"`
+	Players          *int32  `protobuf:"varint,3,opt,name=players" json:"players,omitempty"`
+	Size             *int32  `protobuf:"varint,4,opt,name=size" json:"size,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *WorldInfo) Reset()         { *m = WorldInfo{} }
+func (m *WorldInfo) String() string { return proto.CompactTextString(m) }
+func (*WorldInfo) ProtoMessage()    {}
+
+func (m *WorldInfo) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *WorldInfo) GetStarted() int32 {
+	if m != nil && m.Started != nil {
+		return *m.Started
+	}
+	return 0
+}
+
+func (m *WorldInfo) GetPlayers() int32 {
+	if m != nil && m.Players != nil {
+		return *m.Players
+	}
+	return 0
+}
+
+func (m *WorldInfo) GetSize() int32 {
+	if m != nil && m.Size != nil {
+		return *m.Size
+	}
+	return 0
+}
+
+type WorldSettings struct {
+	Size             *int32       `protobuf:"varint,1,opt,name=size" json:"size,omitempty"`
+	ChunkWidth       *int32       `protobuf:"varint,2,opt,name=chunkWidth" json:"chunkWidth,omitempty"`
+	ChunkHeight      *int32       `protobuf:"varint,3,opt,name=chunkHeight" json:"chunkHeight,omitempty"`
+	Biomes           *WorldBiomes `protobuf:"bytes,4,opt,name=biomes" json:"biomes,omitempty"`
+	BlockTypes       []*BlockType `protobuf:"bytes,5,rep,name=blockTypes" json:"blockTypes,omitempty"`
+	XXX_unrecognized []byte       `json:"-"`
+}
+
+func (m *WorldSettings) Reset()         { *m = WorldSettings{} }
+func (m *WorldSettings) String() string { return proto.CompactTextString(m) }
+func (*WorldSettings) ProtoMessage()    {}
+
+func (m *WorldSettings) GetSize() int32 {
+	if m != nil && m.Size != nil {
+		return *m.Size
+	}
+	return 0
+}
+
+func (m *WorldSettings) GetChunkWidth() int32 {
+	if m != nil && m.ChunkWidth != nil {
+		return *m.ChunkWidth
+	}
+	return 0
+}
+
+func (m *WorldSettings) GetChunkHeight() int32 {
+	if m != nil && m.ChunkHeight != nil {
+		return *m.ChunkHeight
+	}
+	return 0
+}
+
+func (m *WorldSettings) GetBiomes() *WorldBiomes {
+	if m != nil {
+		return m.Biomes
+	}
+	return nil
+}
+
+func (m *WorldSettings) GetBlockTypes() []*BlockType {
+	if m != nil {
+		return m.BlockTypes
+	}
+	return nil
+}
+
 type Block struct {
 	Kind             *int32 `protobuf:"varint,1,opt,name=kind" json:"kind,omitempty"`
 	Flags            *int32 `protobuf:"varint,2,opt,name=flags" json:"flags,omitempty"`
@@ -99,5 +271,392 @@ func (m *Chunk) GetY() int32 {
 	return 0
 }
 
+type BiomeProperties struct {
+	Trees                     *int32 `protobuf:"varint,1,opt,name=trees" json:"trees,omitempty"`
+	Roughness                 *int32 `protobuf:"varint,2,opt,name=roughness" json:"roughness,omitempty"`
+	Soil                      *int32 `protobuf:"varint,3,opt,name=soil" json:"soil,omitempty"`
+	Metals                    *int32 `protobuf:"varint,4,opt,name=metals" json:"metals,omitempty"`
+	Wildlife                  *int32 `protobuf:"varint,5,opt,name=wildlife" json:"wildlife,omitempty"`
+	TemperatureSeasonVariance *int32 `protobuf:"varint,6,opt,name=temperatureSeasonVariance" json:"temperatureSeasonVariance,omitempty"`
+	Temperature               *int32 `protobuf:"varint,7,opt,name=temperature" json:"temperature,omitempty"`
+	Rivers                    *int32 `protobuf:"varint,8,opt,name=rivers" json:"rivers,omitempty"`
+	Water                     *int32 `protobuf:"varint,9,opt,name=water" json:"water,omitempty"`
+	Caves                     *int32 `protobuf:"varint,10,opt,name=caves" json:"caves,omitempty"`
+	XXX_unrecognized          []byte `json:"-"`
+}
+
+func (m *BiomeProperties) Reset()         { *m = BiomeProperties{} }
+func (m *BiomeProperties) String() string { return proto.CompactTextString(m) }
+func (*BiomeProperties) ProtoMessage()    {}
+
+func (m *BiomeProperties) GetTrees() int32 {
+	if m != nil && m.Trees != nil {
+		return *m.Trees
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetRoughness() int32 {
+	if m != nil && m.Roughness != nil {
+		return *m.Roughness
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetSoil() int32 {
+	if m != nil && m.Soil != nil {
+		return *m.Soil
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetMetals() int32 {
+	if m != nil && m.Metals != nil {
+		return *m.Metals
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetWildlife() int32 {
+	if m != nil && m.Wildlife != nil {
+		return *m.Wildlife
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetTemperatureSeasonVariance() int32 {
+	if m != nil && m.TemperatureSeasonVariance != nil {
+		return *m.TemperatureSeasonVariance
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetTemperature() int32 {
+	if m != nil && m.Temperature != nil {
+		return *m.Temperature
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetRivers() int32 {
+	if m != nil && m.Rivers != nil {
+		return *m.Rivers
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetWater() int32 {
+	if m != nil && m.Water != nil {
+		return *m.Water
+	}
+	return 0
+}
+
+func (m *BiomeProperties) GetCaves() int32 {
+	if m != nil && m.Caves != nil {
+		return *m.Caves
+	}
+	return 0
+}
+
+type Biome struct {
+	Id               *int32           `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	Name             *string          `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Flags            []string         `protobuf:"bytes,3,rep,name=flags" json:"flags,omitempty"`
+	Probability      *int32           `protobuf:"varint,4,opt,name=probability" json:"probability,omitempty"`
+	Properties       *BiomeProperties `protobuf:"bytes,5,opt,name=properties" json:"properties,omitempty"`
+	XXX_unrecognized []byte           `json:"-"`
+}
+
+func (m *Biome) Reset()         { *m = Biome{} }
+func (m *Biome) String() string { return proto.CompactTextString(m) }
+func (*Biome) ProtoMessage()    {}
+
+func (m *Biome) GetId() int32 {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return 0
+}
+
+func (m *Biome) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *Biome) GetFlags() []string {
+	if m != nil {
+		return m.Flags
+	}
+	return nil
+}
+
+func (m *Biome) GetProbability() int32 {
+	if m != nil && m.Probability != nil {
+		return *m.Probability
+	}
+	return 0
+}
+
+func (m *Biome) GetProperties() *BiomeProperties {
+	if m != nil {
+		return m.Properties
+	}
+	return nil
+}
+
+type WorldBiomes struct {
+	BiomeFlags        []string         `protobuf:"bytes,1,rep,name=biomeFlags" json:"biomeFlags,omitempty"`
+	DefaultProperties *BiomeProperties `protobuf:"bytes,2,opt,name=defaultProperties" json:"defaultProperties,omitempty"`
+	Biomes            []*Biome         `protobuf:"bytes,3,rep,name=biomes" json:"biomes,omitempty"`
+	XXX_unrecognized  []byte           `json:"-"`
+}
+
+func (m *WorldBiomes) Reset()         { *m = WorldBiomes{} }
+func (m *WorldBiomes) String() string { return proto.CompactTextString(m) }
+func (*WorldBiomes) ProtoMessage()    {}
+
+func (m *WorldBiomes) GetBiomeFlags() []string {
+	if m != nil {
+		return m.BiomeFlags
+	}
+	return nil
+}
+
+func (m *WorldBiomes) GetDefaultProperties() *BiomeProperties {
+	if m != nil {
+		return m.DefaultProperties
+	}
+	return nil
+}
+
+func (m *WorldBiomes) GetBiomes() []*Biome {
+	if m != nil {
+		return m.Biomes
+	}
+	return nil
+}
+
+type Property struct {
+	Key              *string  `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
+	ValStr           *string  `protobuf:"bytes,2,opt,name=valStr" json:"valStr,omitempty"`
+	ValInt           *int32   `protobuf:"varint,3,opt,name=valInt" json:"valInt,omitempty"`
+	ValDouble        *float64 `protobuf:"fixed64,4,opt,name=valDouble" json:"valDouble,omitempty"`
+	ValStrArray      []string `protobuf:"bytes,5,rep,name=valStrArray" json:"valStrArray,omitempty"`
+	ValIntArray      []int32  `protobuf:"varint,6,rep,name=valIntArray" json:"valIntArray,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
+}
+
+func (m *Property) Reset()         { *m = Property{} }
+func (m *Property) String() string { return proto.CompactTextString(m) }
+func (*Property) ProtoMessage()    {}
+
+func (m *Property) GetKey() string {
+	if m != nil && m.Key != nil {
+		return *m.Key
+	}
+	return ""
+}
+
+func (m *Property) GetValStr() string {
+	if m != nil && m.ValStr != nil {
+		return *m.ValStr
+	}
+	return ""
+}
+
+func (m *Property) GetValInt() int32 {
+	if m != nil && m.ValInt != nil {
+		return *m.ValInt
+	}
+	return 0
+}
+
+func (m *Property) GetValDouble() float64 {
+	if m != nil && m.ValDouble != nil {
+		return *m.ValDouble
+	}
+	return 0
+}
+
+func (m *Property) GetValStrArray() []string {
+	if m != nil {
+		return m.ValStrArray
+	}
+	return nil
+}
+
+func (m *Property) GetValIntArray() []int32 {
+	if m != nil {
+		return m.ValIntArray
+	}
+	return nil
+}
+
+type Colors struct {
+	Color            *string `protobuf:"bytes,1,opt,name=color" json:"color,omitempty"`
+	ColorRange       *string `protobuf:"bytes,2,opt,name=colorRange" json:"colorRange,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Colors) Reset()         { *m = Colors{} }
+func (m *Colors) String() string { return proto.CompactTextString(m) }
+func (*Colors) ProtoMessage()    {}
+
+func (m *Colors) GetColor() string {
+	if m != nil && m.Color != nil {
+		return *m.Color
+	}
+	return ""
+}
+
+func (m *Colors) GetColorRange() string {
+	if m != nil && m.ColorRange != nil {
+		return *m.ColorRange
+	}
+	return ""
+}
+
+type BlockType struct {
+	Id               *int32      `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
+	Name             *string     `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Flags            []string    `protobuf:"bytes,3,rep,name=flags" json:"flags,omitempty"`
+	Biomes           []string    `protobuf:"bytes,4,rep,name=biomes" json:"biomes,omitempty"`
+	AllBiomes        *bool       `protobuf:"varint,5,opt,name=allBiomes" json:"allBiomes,omitempty"`
+	Type             *string     `protobuf:"bytes,6,opt,name=type" json:"type,omitempty"`
+	Layer            *string     `protobuf:"bytes,7,opt,name=layer" json:"layer,omitempty"`
+	Probability      *int32      `protobuf:"varint,8,opt,name=probability" json:"probability,omitempty"`
+	GenType          *string     `protobuf:"bytes,9,opt,name=genType" json:"genType,omitempty"`
+	Colors           *Colors     `protobuf:"bytes,10,opt,name=colors" json:"colors,omitempty"`
+	Properties       []*Property `protobuf:"bytes,11,rep,name=properties" json:"properties,omitempty"`
+	XXX_unrecognized []byte      `json:"-"`
+}
+
+func (m *BlockType) Reset()         { *m = BlockType{} }
+func (m *BlockType) String() string { return proto.CompactTextString(m) }
+func (*BlockType) ProtoMessage()    {}
+
+func (m *BlockType) GetId() int32 {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return 0
+}
+
+func (m *BlockType) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *BlockType) GetFlags() []string {
+	if m != nil {
+		return m.Flags
+	}
+	return nil
+}
+
+func (m *BlockType) GetBiomes() []string {
+	if m != nil {
+		return m.Biomes
+	}
+	return nil
+}
+
+func (m *BlockType) GetAllBiomes() bool {
+	if m != nil && m.AllBiomes != nil {
+		return *m.AllBiomes
+	}
+	return false
+}
+
+func (m *BlockType) GetType() string {
+	if m != nil && m.Type != nil {
+		return *m.Type
+	}
+	return ""
+}
+
+func (m *BlockType) GetLayer() string {
+	if m != nil && m.Layer != nil {
+		return *m.Layer
+	}
+	return ""
+}
+
+func (m *BlockType) GetProbability() int32 {
+	if m != nil && m.Probability != nil {
+		return *m.Probability
+	}
+	return 0
+}
+
+func (m *BlockType) GetGenType() string {
+	if m != nil && m.GenType != nil {
+		return *m.GenType
+	}
+	return ""
+}
+
+func (m *BlockType) GetColors() *Colors {
+	if m != nil {
+		return m.Colors
+	}
+	return nil
+}
+
+func (m *BlockType) GetProperties() []*Property {
+	if m != nil {
+		return m.Properties
+	}
+	return nil
+}
+
+type Action struct {
+	Kind             *ActionType `protobuf:"varint,1,opt,name=kind,enum=messages.ActionType,def=1" json:"kind,omitempty"`
+	Name             *string     `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Handler          *string     `protobuf:"bytes,3,opt,name=handler" json:"handler,omitempty"`
+	ExtraData        []*Property `protobuf:"bytes,5,rep" json:"ExtraData,omitempty"`
+	XXX_unrecognized []byte      `json:"-"`
+}
+
+func (m *Action) Reset()         { *m = Action{} }
+func (m *Action) String() string { return proto.CompactTextString(m) }
+func (*Action) ProtoMessage()    {}
+
+const Default_Action_Kind ActionType = ActionType_NonWorldEditing
+
+func (m *Action) GetKind() ActionType {
+	if m != nil && m.Kind != nil {
+		return *m.Kind
+	}
+	return Default_Action_Kind
+}
+
+func (m *Action) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *Action) GetHandler() string {
+	if m != nil && m.Handler != nil {
+		return *m.Handler
+	}
+	return ""
+}
+
+func (m *Action) GetExtraData() []*Property {
+	if m != nil {
+		return m.ExtraData
+	}
+	return nil
+}
+
 func init() {
+	proto.RegisterEnum("messages.ActionType", ActionType_name, ActionType_value)
 }

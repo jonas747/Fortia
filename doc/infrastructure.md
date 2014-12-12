@@ -40,7 +40,7 @@ Ticking the world is done by many ticker servers, distributing the ticking
 
 Ticking is done in stages:
 
-1. non-world editing, stuff that does not change the world
+1. non-world editing, stuff that does not change the world(individual entities may change though)
 2. world editing stage, here all the actions that are changing the world processed, (mined blocks, buildings placed etc)
 3. entity moving stage, all the entities are moved, calculated paths for etc...
 

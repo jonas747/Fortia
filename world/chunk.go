@@ -89,7 +89,8 @@ func (c *Chunk) FlagHidden(neighbours map[vec.Vec2I]*Chunk) {
 		}
 		neighbours = n
 	}
-	visibleLayers := make([]bool, c.World.GeneralInfo.ChunkHeight)
+
+	visibleLayers := make([]bool, c.World.Settings.GetChunkHeight())
 	for k, v := range c.RawChunk.Blocks {
 		b := &Block{
 			RawBlock:      v,

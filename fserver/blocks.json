@@ -4,36 +4,36 @@
 },
 {
 	"id": 1,
-	"name": "bedrock"
+	"name": "bedrock",
+	"colors": {
+		"color": "#999999",
+		"colorRange": "#bbbbbb"
+	}
 },
 {
 	"id": 2,
 	"name": "rock",
-	"type": "rock",
-	"layers": ["*"],
-	"biomes": ["*"],
-	"probability": {
-		"everywhere": 100
+	"type": "stone",
+	"colors": {
+		"color": "#202020",
+		"colorRange": "#303030"
 	}
 },
 {
 	"id": 3,
 	"name": "grass",
 	"type": "soil",
-	"layers": ["surface"],
-	"biomes": ["*"],
-	"probability": {
-		"everywhere": 100
+	"colors": {
+		"color": "#227022",
+		"colorRange": "#229022"
 	}
 },
 {
 	"id": 4,
 	"name": "dirt",
 	"type": "soil",
-	"layers": ["dirt"],
-	"biomes": ["*"],
-	"probability": {
-		"everywhere": 100
+	"colors": {
+		"color": "#203990"
 	}
 },
 {

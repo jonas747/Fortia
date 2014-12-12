@@ -3,6 +3,7 @@
 package world
 
 import (
+	"github.com/jonas747/fortia/messages"
 	//"github.com/jonas747/fortia/rdb"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
@@ -10,44 +11,53 @@ import (
 )
 
 type World struct {
-	Logger      *log.LogClient
-	Db          GameDB
-	GeneralInfo *WorldInfo
+	Logger   *log.LogClient
+	Db       GameDB
+	Settings *messages.WorldSettings
 }
 
 func (w *World) NewGenerator() *Generator {
-	return NewGenerator(w, &w.GeneralInfo.Biomes, w.GeneralInfo.BlockTypes, 1)
+	return NewGenerator(w, 1)
 }
 
 func (w *World) LoadSettingsFromDb() ferr.FortiaError {
-	info, err := w.Db.GetWorldInfo()
+	info, err := w.Db.GetWorldSettings()
 	if err != nil {
 		return err
 	}
-	w.GeneralInfo = info
+	w.Settings = info
 
 	return nil
 }
 
 func (w *World) SaveSettingsToDb() ferr.FortiaError {
-	err := w.Db.SetWorldInfo(w.GeneralInfo)
+	err := w.Db.SetWorldSettings(w.Settings)
 	return err
 }
 
 func (w *World) ChunkToWorldPos(chunkPos vec.Vec2I) vec.Vec2I {
-	chunkPos.Multiply(vec.Vec2I{X: w.GeneralInfo.ChunkWidth, Y: w.GeneralInfo.ChunkWidth})
+	chunkPos.Multiply(vec.Vec2I{X: int(w.Settings.GetChunkWidth()), Y: int(w.Settings.GetChunkWidth())})
 	return chunkPos
 }
 
 func (w *World) CoordsToIndex(pos vec.Vec3I) int {
-	return pos.X + w.GeneralInfo.ChunkWidth*(pos.Y+w.GeneralInfo.ChunkWidth*pos.Z)
+	return pos.X + int(w.Settings.GetChunkWidth())*(pos.Y+int(w.Settings.GetChunkWidth())*pos.Z)
 }
 
 func (w *World) IndexToCoords(index int) vec.Vec3I {
-	x := index % w.GeneralInfo.ChunkWidth
-	y := (index / w.GeneralInfo.ChunkWidth) % w.GeneralInfo.ChunkWidth
-	z := index / (w.GeneralInfo.ChunkWidth * w.GeneralInfo.ChunkWidth)
+	x := index % int(w.Settings.GetChunkWidth())
+	y := (index / int(w.Settings.GetChunkWidth())) % int(w.Settings.GetChunkWidth())
+	z := index / (int(w.Settings.GetChunkWidth()) * int(w.Settings.GetChunkWidth()))
 	return vec.Vec3I{x, y, z}
+}
+
+func (w *World) GetBiomeFromId(id int) *messages.Biome {
+	for _, v := range w.Settings.Biomes.GetBiomes() {
+		if int(v.GetId()) == id {
+			return v
+		}
+	}
+	return &messages.Biome{}
 }
 
 type Entity interface {
