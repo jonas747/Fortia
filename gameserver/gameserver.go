@@ -4,6 +4,7 @@ import (
 	"github.com/jonas747/fortia/authserver"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/log"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/rest"
 	"github.com/jonas747/fortia/world"
 	"reflect"
@@ -62,9 +63,10 @@ func initApi(s *rest.Server) {
 		Path:         "/register",
 		Method:       "POST",
 		Handler:      handleRegister,
-		BodyType:     reflect.TypeOf(BodyRegister{}),
+		BodyType:     reflect.TypeOf(messages.BodyGameRegister{}),
 		BodyRequired: true,
 	})
+
 	s.RegisterHandler(&rest.Handler{
 		Path:    "/login",
 		Method:  "POST",
@@ -80,9 +82,18 @@ func initApi(s *rest.Server) {
 		},
 		MiddleWare: []rest.Middleware{rest.RequiredParamsMiddleWare},
 	})
+
 	s.RegisterHandler(&rest.Handler{
 		Path:    "/info",
 		Method:  "GET",
 		Handler: handleInfo,
+	})
+
+	s.RegisterHandler(&rest.Handler{
+		Path:         "/placeunit",
+		Method:       "POST",
+		Handler:      handlePlaceUnit,
+		BodyRequired: true,
+		BodyType:     reflect.TypeOf(messages.BodyPlaceUnit{}),
 	})
 }

@@ -1,9 +1,9 @@
 package rdb
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/fzzy/radix/redis"
+	"github.com/golang/protobuf/proto"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
@@ -88,15 +88,24 @@ func (g *GameDB) SetEntity(id int, info map[string]interface{}) ferr.FortiaError
 	return g.SetHash("e:"+strconv.Itoa(id), info)
 }
 
-func (g *GameDB) PopAction(tick int) (*world.Action, ferr.FortiaError) {
-	reply, err := g.Cmd("SPOP", fmt.Sprintf("actionQueue:%d", tick))
+func (g *GameDB) PushAction(action *messages.Action, tick int) ferr.FortiaError {
+	serialized, nErr := proto.Marshal(action)
+	if nErr != nil {
+		return ferr.Wrap(nErr, "")
+	}
+	_, err := g.Cmd("SADD", fmt.Sprintf("actionQueue:%d:%d", tick, action.GetKind()), serialized)
+	return err
+}
+
+func (g *GameDB) PopAction(tick, kind int) (*messages.Action, ferr.FortiaError) {
+	reply, err := g.Cmd("SPOP", fmt.Sprintf("actionQueue:%d:%d", tick, kind))
 	if err != nil {
 		return nil, err
 	}
 
 	if reply.Type == redis.NilReply {
 		// Not found
-		return nil, ferr.Newc("No Actions for that tick number", world.ErrCodeNotFound)
+		return nil, ferr.Newc("No Actions for that tick number or kind", world.ErrCodeNotFound)
 	}
 
 	raw, nErr := reply.Bytes()
@@ -104,8 +113,8 @@ func (g *GameDB) PopAction(tick int) (*world.Action, ferr.FortiaError) {
 		return nil, ferr.Newc("Error converting", world.ErrCodeConversionErr)
 	}
 
-	var action *world.Action
-	nErr = json.Unmarshal(raw, action)
+	var action *messages.Action
+	nErr = proto.Unmarshal(raw, action)
 	if nErr != nil {
 		return nil, ferr.Wrap(nErr, "")
 	}
@@ -122,6 +131,19 @@ func (g *GameDB) IncrTick() (int, ferr.FortiaError) {
 	n, nErr := reply.Int()
 	if nErr != nil {
 		return n, ferr.Wrapc(nErr, world.ErrCodeConversionErr)
+	}
+	return n, nil
+}
+
+func (g *GameDB) GetCurrentTick() (int, ferr.FortiaError) {
+	reply, err := g.Cmd("GET", "tick")
+	if err != nil {
+		return 0, err
+	}
+
+	n, nErr := reply.Int()
+	if nErr != nil {
+		return 0, ferr.Wrap(nErr, "")
 	}
 	return n, nil
 }

@@ -72,3 +72,7 @@ func handleInfo(r *rest.Request, body interface{}) {
 	}
 	r.WriteResponse(wireResp, http.StatusOK)
 }
+
+func handlePlaceUnit(r *rest.Request, body interface{}) {
+
+}

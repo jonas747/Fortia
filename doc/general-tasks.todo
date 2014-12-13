@@ -13,7 +13,9 @@ General:
 
   World/db:
    ☐ Add being able to fetch multiple layers at the same time instead of doing each sperately
-
+  DB: 
+   ☐ Change everything to use sharding
+     Prehaps look into redis cluster
   Vec:
    ☐ Change to interfaces so funcitons that require vec2 can be passed vec3 but only use x and y.
    ☐ Use templates to generate code for all types perhaps

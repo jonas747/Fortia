@@ -31,8 +31,10 @@ type GameDB interface {
 	GetChunk(pos vec.Vec2I) (*messages.Chunk, ferr.FortiaError)
 	SetChunk(chunk *messages.Chunk) ferr.FortiaError
 
-	PopAction(tick int) (*Action, ferr.FortiaError) // Returns a action, errcodeempty if none
-	IncrTick() (int, ferr.FortiaError)              // Increases the tick counter, and returns the new ticknumber
+	PushAction(action *messages.Action, tick int) ferr.FortiaError // Pushes a new action to the db to be processed at tick
+	PopAction(tick, kind int) (*messages.Action, ferr.FortiaError) // Returns a action with the given type, errcodeempty if none
+	IncrTick() (int, ferr.FortiaError)                             // Increases the tick counter, and returns the new ticknumber
+	CurrentTick() (int, ferr.FortiaError)                          // Returns the current tick
 	// Todo
 	//GetEntity()
 	//SetEntity()

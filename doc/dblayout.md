@@ -1,13 +1,13 @@
 #DB layout
 
 ##Auth
-Auth database is in redis
+Auth database is in redis, for the time being
 General stuff, online servers, configurations, user accounts etc...
 ####Keys
  - u:{name}
     + Hash
     + Represents a user
-        * name   - Nameof the user
+        * name   - Name of the user
         * mail   - Email of the user
         * pw     - Bcrypt password hash
         * ---Optional:
@@ -39,9 +39,7 @@ Game database is entirely in redis
         * players
         * 
  - c:{xpos}:{ypos}
-     + json with chunk info (no actual blocks, just information), see package world for more info
-- l:{xpos}:{ypos}:{layer(or zpos if you want)}
-     + json layer info, see package world for more info
+     + protobuf with chunk data
  - e:{eid}
      + hash
      + An entity(live entity, building, item, etc..)
