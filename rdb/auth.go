@@ -2,14 +2,17 @@ package rdb
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
-	"github.com/jonas747/fortia/authserver"
-	ferr "github.com/jonas747/fortia/error"
+	//"fmt"
+	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/messages"
+	//"github.com/jonas747/fortia/authserver"
+	"github.com/jonas747/fortia/errors"
 	"math/rand"
 	"strconv"
 	"time"
 )
 
-// Implements authserver.AuthDB
+// Implements db.AuthDB
 type AuthDB struct {
 	*Database
 }
@@ -31,7 +34,7 @@ func createSessionToken(length int) string {
 }
 
 // Logs the specified user in returning a session token
-func (a *AuthDB) LoginUser(user string, duration int) (string, ferr.FortiaError) {
+func (a *AuthDB) LoginUser(user string, duration int) (string, errors.FortiaError) {
 	token := createSessionToken(64)
 	token = user + ";" + token
 	_, err := a.Cmd("SETEX", "t:"+token, duration, user)
@@ -42,46 +45,40 @@ func (a *AuthDB) LoginUser(user string, duration int) (string, ferr.FortiaError)
 }
 
 // Returns true if the users password is correct
-func (a *AuthDB) CheckUserPw(user, pw string) (bool, ferr.FortiaError) {
-	pwReply, err := a.Cmd("HGET", "u:"+user, "pwHash")
+func (a *AuthDB) CheckUserPw(user, pw string) (bool, errors.FortiaError) {
+	dbPw, err := a.GetBytes("HGET", "u:"+user, "pwHash")
 	if err != nil {
 		return false, err
 	}
-	correctPwHash := pwReply.String()
-	if correctPwHash == "" {
-		return false, nil
-	}
-
-	berr := bcrypt.CompareHashAndPassword([]byte(correctPwHash), []byte(pw))
+	berr := bcrypt.CompareHashAndPassword(dbPw, []byte(pw))
 	if berr != nil {
-		return false, nil
+		if berr == bcrypt.ErrMismatchedHashAndPassword {
+			// incorrect password
+			return false, nil
+		}
+		return false, errors.Wrap(berr, messages.ErrorCode_BCryptErr, "", nil)
 	}
 	return true, nil
 }
 
 // Returns the specified user's info
-func (a *AuthDB) GetUserInfo(user string) (*authserver.UserInfo, ferr.FortiaError) {
+func (a *AuthDB) GetUserInfo(user string) (*db.AuthUserInfo, errors.FortiaError) {
 	infoHash, err := a.GetHash("u:" + user)
 	if err != nil {
 		return nil, err
 	}
 
-	// Retrieve the servers this user is on
-	reply, err := a.Cmd("SMEMBERS", "uw:"+user)
+	// Retrieve the worlds this user is on
+	list, err := a.GetList("SMEMBERS", "uw:"+user)
 	if err != nil {
 		return nil, err
-	}
-
-	list, nErr := reply.List()
-	if nErr != nil {
-		return nil, ferr.Wrap(nErr, "")
 	}
 
 	donorLvl, _ := strconv.Atoi(infoHash["donorLvl"])
 	role, _ := strconv.Atoi(infoHash["role"])
 	pwhash := []byte(infoHash["pwHash"])
 
-	userInfo := &authserver.UserInfo{
+	userInfo := &db.AuthUserInfo{
 		Name:   user,
 		Email:  infoHash["email"],
 		PwHash: pwhash,
@@ -95,7 +92,7 @@ func (a *AuthDB) GetUserInfo(user string) (*authserver.UserInfo, ferr.FortiaErro
 }
 
 // Sets the specified users info fields from info map to whatever is in the info map
-func (a *AuthDB) SetUserInfo(info *authserver.UserInfo) ferr.FortiaError {
+func (a *AuthDB) SetUserInfo(info *db.AuthUserInfo) errors.FortiaError {
 	infoHash := map[string]interface{}{
 		"name":     info.Name,
 		"email":    info.Email,
@@ -104,95 +101,61 @@ func (a *AuthDB) SetUserInfo(info *authserver.UserInfo) ferr.FortiaError {
 		"donorLvl": info.DonorLvl,
 	}
 
-	conn, nErr := a.Database.Pool.Get()
-	if nErr != nil {
-		return ferr.Wrap(nErr, "")
-	}
-	defer a.Database.Pool.Put(conn)
-
 	// Set the info hash
-	reply := conn.Cmd("HMSET", "u:"+info.Name, infoHash)
-	if reply.Err != nil {
-		return ferr.Wrap(reply.Err, "")
+	_, err := a.Cmd("HMSET", "u:"+info.Name, infoHash)
+	if err != nil {
+		return err
 	}
 
 	// Set the worlds to a set if there are any worlds this player is in
 	if len(info.Worlds) > 0 {
-		argList := []interface{}{"uw:" + info.Name}
-		for _, v := range info.Worlds {
-			argList = append(argList, v)
+		argList := make([]interface{}, len(info.Worlds))
+		for k, v := range info.Worlds {
+			argList[k] = v
 		}
-
-		reply = conn.Cmd("SADD", argList...)
-		if reply.Err != nil {
-			return ferr.Wrap(reply.Err, "")
+		err := a.SetSet("uw:"+info.Name, argList)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// implements authserver.AuthDB.EditUserInfoFields
-func (a *AuthDB) EditUserInfoFields(user string, fields map[string]interface{}) ferr.FortiaError {
+// implements db.AuthDB.EditUserInfoFields
+func (a *AuthDB) EditUserInfoFields(user string, fields map[string]interface{}) errors.FortiaError {
 	return a.SetHash("u:"+user, fields)
 }
 
-func (a *AuthDB) EditUserWorlds(user string, add []string, del []string) ferr.FortiaError {
-	conn, nErr := a.Database.Pool.Get()
-	if nErr != nil {
-		return ferr.Wrap(nErr, "")
-	}
-	defer a.Pool.Put(conn)
-
-	if len(add) > 0 {
-		argList := []interface{}{"uw:" + user}
-		for _, v := range add {
-			argList = append(argList, v)
-		}
-		conn.Cmd("SADD", argList...)
-	}
-
-	if len(del) > 0 {
-		argList := []interface{}{"uw:" + user}
-		for _, v := range del {
-			argList = append(argList, v)
-		}
-		conn.Cmd("SREM", argList...)
-	}
-
-	return nil
+func (a *AuthDB) EditUserWorlds(user string, add []string, del []string) errors.FortiaError {
+	return a.EditSetS("uw", add, del)
 }
 
 // Checks if the session token is existing, returning the user it belong to if found or "" if not
-func (a *AuthDB) CheckSessionToken(token string) (string, ferr.FortiaError) {
-	reply, err := a.Cmd("GET", "t:"+token)
+func (a *AuthDB) CheckSessionToken(token string) (string, errors.FortiaError) {
+	owner, err := a.GetString("GET", "t:"+token)
 	if err != nil {
 		return "", err
 	}
-	owner := reply.String()
 	return owner, nil
 }
 
 // Extends the session token for n seconds
-func (a *AuthDB) ExtendSessionToken(token string, duration int) ferr.FortiaError {
+func (a *AuthDB) ExtendSessionToken(token string, duration int) errors.FortiaError {
 	_, err := a.Cmd("EXPIRE", "t:"+token, duration)
 	return err
 }
 
-func (a *AuthDB) GetWorldListing() ([]*authserver.WorldInfo, ferr.FortiaError) {
-	reply, err := a.Cmd("SMEMBERS", "worlds")
+func (a *AuthDB) GetWorldListing() ([]*db.WorldInfo, errors.FortiaError) {
+	listing, err := a.GetList("SMEMBERS", "worlds")
 	if err != nil {
-		return []*authserver.WorldInfo{}, err
-	}
-	listing, nErr := reply.List()
-	if nErr != nil {
-		return []*authserver.WorldInfo{}, ferr.Wrap(nErr, "")
+		return []*db.WorldInfo{}, err
 	}
 
-	worlds := make([]*authserver.WorldInfo, len(listing))
+	worlds := make([]*db.WorldInfo, len(listing))
 	for i, wname := range listing {
 		info, err := a.GetWorldInfo(wname)
 		if err != nil {
-			return []*authserver.WorldInfo{}, err
+			return []*db.WorldInfo{}, err
 		}
 		worlds[i] = info
 	}
@@ -200,7 +163,7 @@ func (a *AuthDB) GetWorldListing() ([]*authserver.WorldInfo, ferr.FortiaError) {
 	return worlds, nil
 }
 
-func (a *AuthDB) GetWorldInfo(world string) (*authserver.WorldInfo, ferr.FortiaError) {
+func (a *AuthDB) GetWorldInfo(world string) (*db.WorldInfo, errors.FortiaError) {
 	infoHash, err := a.GetHash("world:" + world)
 	if err != nil {
 		return nil, err
@@ -210,7 +173,7 @@ func (a *AuthDB) GetWorldInfo(world string) (*authserver.WorldInfo, ferr.FortiaE
 	size, _ := strconv.Atoi(infoHash["size"])
 	started, _ := strconv.Atoi(infoHash["started"])
 
-	info := &authserver.WorldInfo{
+	info := &db.WorldInfo{
 		Name:    world,
 		Started: started,
 		Players: players,
@@ -220,7 +183,7 @@ func (a *AuthDB) GetWorldInfo(world string) (*authserver.WorldInfo, ferr.FortiaE
 	return info, nil
 }
 
-func (a *AuthDB) SetWorldInfo(info *authserver.WorldInfo) ferr.FortiaError {
+func (a *AuthDB) SetWorldInfo(info *db.WorldInfo) errors.FortiaError {
 	infoHash := map[string]interface{}{
 		"name":    info.Name,
 		"players": info.Players,
@@ -228,20 +191,14 @@ func (a *AuthDB) SetWorldInfo(info *authserver.WorldInfo) ferr.FortiaError {
 		"started": info.Started,
 	}
 
-	client, err := a.Pool.Get()
+	_, err := a.Cmd("SADD", "worlds", info.Name)
 	if err != nil {
-		return ferr.Wrap(err, "")
-	}
-	defer a.Pool.Put(client)
-
-	reply := client.Cmd("SADD", "worlds", info.Name)
-	if reply.Err != nil {
-		return ferr.Wrap(reply.Err, "")
+		return err
 	}
 	return a.SetHash("world:"+info.Name, infoHash)
 }
 
 // Overwrites the stored fields with fields provided
-func (a *AuthDB) EditWorldInfo(world string, fields map[string]interface{}) ferr.FortiaError {
+func (a *AuthDB) EditWorldInfo(world string, fields map[string]interface{}) errors.FortiaError {
 	return a.SetHash("world:"+world, fields)
 }

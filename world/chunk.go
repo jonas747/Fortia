@@ -1,7 +1,7 @@
 package world
 
 import (
-	"code.google.com/p/goprotobuf/proto"
+	"github.com/golang/protobuf/proto"
 	ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"

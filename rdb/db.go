@@ -5,15 +5,17 @@ package rdb
 */
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fzzy/radix/extra/pool"
 	"github.com/fzzy/radix/redis"
 	"github.com/golang/protobuf/proto"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errors"
+	"github.com/jonas747/fortia/messages"
 )
 
 var (
 	emptyStrStrMap = make(map[string]string)
-	errNotFound    = 404
 )
 
 // Base database
@@ -29,27 +31,35 @@ func NewDatabase(addr string) (*Database, error) {
 	return &Database{p}, nil
 }
 
-// Same as redis.Client.Cmd but uses a connection from a pool
-func (db *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, ferr.FortiaError) {
-	reply, client, err := db.CmdChain(cmd, args)
-	if client != nil {
-		db.Pool.Put(client)
+func (rdb *Database) CheckReplyErrors(query string, reply *redis.Reply) errors.FortiaError {
+	switch reply.Type {
+	case redis.ErrorReply:
+		// Error writing req or reading response
+		return db.NewDBError(query, messages.ErrorCode_RedisWriteReadErr, "Error writing or reading request", nil)
+	case redis.NilReply:
+		// Key not found
+		return db.NewDBError(query, messages.ErrorCode_RedisKeyNotFound, "Key not found", nil)
+	default:
+		return nil
 	}
-	return reply, err
 }
 
-// Same as cmd but returns the connection after the command for more use
-func (db *Database) CmdChain(cmd string, args ...interface{}) (*redis.Reply, *redis.Client, ferr.FortiaError) {
-	client, err := db.Pool.Get()
-	if err != nil {
-		return nil, nil, ferr.Wrap(err, "Error Get db client: "+err.Error())
+// Same as redis.Client.Cmd but uses a connection from a pool
+func (rdb *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, errors.FortiaError) {
+	query := fmt.Sprint(cmd, args)
+	client, nErr := rdb.Pool.Get()
+	if nErr != nil {
+		err := db.NewDBError(query, messages.ErrorCode_RedisDialError, nErr.Error(), nil)
+		return nil, err
 	}
+	defer rdb.Pool.Put(client)
+
 	reply := client.Cmd(cmd, args)
-	if reply.Err != nil {
-		db.Pool.Put(client)
-		return nil, nil, ferr.Wrapa(reply.Err, "", map[string]interface{}{"cmd": cmd, "args": args})
+	if err := rdb.CheckReplyErrors(query, reply); err != nil {
+		return reply, err
 	}
-	return reply, client, nil
+
+	return reply, nil
 }
 
 // Represents a redis command
@@ -58,137 +68,193 @@ type RedisCmd struct {
 	Args []interface{}
 }
 
-// Uses pipeline
-func (db *Database) PipelinedCmds(cmds []RedisCmd) ([]*redis.Reply, ferr.FortiaError) {
-	client, err := db.Pool.Get()
+// Convenience methods
+
+// Helper to get fetch value @ key and convert it to string
+func (rdb *Database) GetString(cmd string, args ...interface{}) (string, errors.FortiaError) {
+	reply, err := rdb.Cmd(cmd, args...)
 	if err != nil {
-		return nil, ferr.Wrap(err, "Error Get db client")
+		return "", err
 	}
-	defer db.Pool.Put(client)
-	for _, cmd := range cmds {
-		client.Append(cmd.Cmd, cmd.Args...)
+	str, errConv := reply.Str()
+	if errConv != nil {
+		return str, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+	}
+	return str, nil
+}
+
+// Helper to get fetch value @ key and convert it to byte slice
+func (rdb *Database) GetBytes(cmd string, args ...interface{}) ([]byte, errors.FortiaError) {
+	reply, err := rdb.Cmd(cmd, args...)
+	if err != nil {
+		return []byte{}, err
+	}
+	bslice, errConv := reply.Bytes()
+	if errConv != nil {
+		return bslice, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+	}
+	return bslice, nil
+}
+
+// Helper to get fetch value @ key and convert it to int64
+func (rdb *Database) GetInt64(cmd string, args ...interface{}) (int64, errors.FortiaError) {
+	reply, err := rdb.Cmd(cmd, args...)
+	if err != nil {
+		return 0, err
+	}
+	i64, errConv := reply.Int64()
+	if errConv != nil {
+		return i64, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+	}
+	return i64, nil
+}
+
+// Same GetInt64 but converted to int
+func (rdb *Database) GetInt(cmd string, args ...interface{}) (int, errors.FortiaError) {
+	i64, err := rdb.GetInt64(cmd, args...)
+	if err != nil {
+		return 0, err
+	}
+	return int(i64), nil
+}
+
+// Helper to get fetch value @ key and convert it to bool
+func (rdb *Database) GetBool(cmd string, args ...interface{}) (bool, errors.FortiaError) {
+	reply, err := rdb.Cmd(cmd, args...)
+	if err != nil {
+		return false, err
+	}
+	rbool, errConv := reply.Bool()
+	if errConv != nil {
+		return rbool, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+	}
+	return rbool, nil
+}
+
+// Helper to get fetch value @ key and convert it to string slice
+func (rdb *Database) GetList(cmd string, args ...interface{}) ([]string, errors.FortiaError) {
+	reply, err := rdb.Cmd(cmd, args...)
+	if err != nil {
+		return []string{}, err
 	}
 
-	replies := make([]*redis.Reply, len(cmds))
-	for i := 0; i < len(cmds); i++ {
-		reply := client.GetReply()
-		if reply.Err != nil {
-			return replies, ferr.Wrap(reply.Err, "")
-		}
-		replies[i] = reply
+	list, errConv := reply.List()
+	if errConv != nil {
+		return list, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
 	}
-	return replies, nil
+	return list, nil
 }
 
 // Does HGETALL on "key"
-func (db *Database) GetHash(key string) (map[string]string, ferr.FortiaError) {
-	reply, err := db.Cmd("HGETALL", key)
+func (rdb *Database) GetHash(key string) (map[string]string, errors.FortiaError) {
+	reply, err := rdb.Cmd("HGETALL", key)
 	if err != nil {
 		return emptyStrStrMap, err
 	}
 	hMap, errConv := reply.Hash()
 	if errConv != nil {
-		return emptyStrStrMap, ferr.Wrapa(errConv, "Redis reply conversion", map[string]interface{}{"key": key, "type": "hash"})
+		return emptyStrStrMap, db.NewDBError(fmt.Sprint("HGETALL", key), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
 	}
 	return hMap, err
 }
 
 // Does HMSET on "key" with all the fialds in info map
-func (db *Database) SetHash(key string, info map[string]interface{}) ferr.FortiaError {
-	_, err := db.Cmd("HMSET", key, info)
+func (rdb *Database) SetHash(key string, info map[string]interface{}) errors.FortiaError {
+	_, err := rdb.Cmd("HMSET", key, info)
 	return err
 }
 
-// Decodes the json at "key" info "val", returns any errors if any
+// Decodes the json at "key" into "val", returns any errors if any
 // val and err is nil if not found
-func (db *Database) GetJson(key string, val interface{}) ferr.FortiaError {
-	reply, err := db.Cmd("GET", key)
+func (rdb *Database) GetJson(key string, val interface{}) errors.FortiaError {
+	raw, err := rdb.GetBytes(key)
 	if err != nil {
 		return err
 	}
 
-	raw, nErr := reply.Bytes()
+	nErr := json.Unmarshal(raw, val)
 	if nErr != nil {
-		if reply.Type == redis.NilReply {
-			return ferr.Newc("", errNotFound)
-		}
-		return ferr.Wrap(nErr, "")
-	}
-	nErr = json.Unmarshal(raw, val)
-
-	if nErr != nil {
-		return ferr.Wrap(nErr, "")
+		return errors.Wrap(nErr, messages.ErrorCode_JsonDecodeErr, "", nil)
 	}
 	return nil
 }
 
 // Sets "key" to json encoded "val"
-func (db *Database) SetJson(key string, val interface{}) ferr.FortiaError {
+func (rdb *Database) SetJson(key string, val interface{}) errors.FortiaError {
 	serialized, nErr := json.Marshal(val)
 	if nErr != nil {
-		return ferr.Wrap(nErr, "")
+		return errors.Wrap(nErr, messages.ErrorCode_JsonEncodeErr, "", nil)
 	}
 
-	_, err := db.Cmd("SET", key, serialized)
+	_, err := rdb.Cmd("SET", key, serialized)
 	return err
 }
 
-func (db *Database) GetProto(key string, out proto.Message) ferr.FortiaError {
-	reply, err := db.Cmd("GET", key)
+func (rdb *Database) GetProto(key string, out proto.Message) errors.FortiaError {
+	raw, err := rdb.GetBytes(key)
 	if err != nil {
 		return err
 	}
-	raw, nErr := reply.Bytes()
+	nErr := proto.Unmarshal(raw, out)
 	if nErr != nil {
-		if reply.Type == redis.NilReply {
-			return ferr.Newc("Not found", errNotFound)
-		}
-		return ferr.Wrap(nErr, "")
-	}
-	nErr = proto.Unmarshal(raw, out)
-	if nErr != nil {
-		return ferr.Wrap(nErr, "")
+		return errors.Wrap(nErr, messages.ErrorCode_ProtoDecodeErr, "", nil)
 	}
 	return nil
 }
 
-func (db *Database) SetProto(key string, pb proto.Message) ferr.FortiaError {
+func (rdb *Database) SetProto(key string, pb proto.Message) errors.FortiaError {
 	serialized, nErr := proto.Marshal(pb)
 	if nErr != nil {
-		return ferr.Wrap(nErr, "")
+		return errors.Wrap(nErr, messages.ErrorCode_ProtoEncodeErr, "", nil)
 	}
-	_, err := db.Cmd("SET", key, serialized)
+	_, err := rdb.Cmd("SET", key, serialized)
 	return err
 }
 
-// Find a better way to edit sets later
-// Edit a set of integers
-func (db *Database) EditSet(add []interface{}, del []interface{}) ferr.FortiaError {
-	if len(add) > 1 || len(del) > 1 {
-		client, err := db.Pool.Get()
-		if err != nil {
-			return ferr.Wrap(err, "")
-		}
-		defer db.Pool.Put(client)
+// Convenience methods for modifying sets
+// Replace a set with the provided one
+func (rdb *Database) SetSet(key string, set []interface{}) errors.FortiaError {
+	if len(set) < 1 {
+		return nil // Perhaps return an error here?
+	}
 
+	// Prepare argument slice
+	args := make([]interface{}, 1)
+	args[0] = key
+	args = append(args, set...)
+
+	// Delete it first
+	_, err := rdb.Cmd("DEL", key)
+	if err != nil {
+		return err
+	}
+
+	_, err = rdb.Cmd("SADD", args...)
+	return err
+}
+
+// Edit a set
+func (rdb *Database) EditSet(add []interface{}, del []interface{}) errors.FortiaError {
+	if len(add) > 1 || len(del) > 1 {
 		if len(add) > 1 {
-			reply := client.Cmd("SADD", add...)
-			if reply.Err != nil {
-				return ferr.Wrap(reply.Err, "")
+			_, err := rdb.Cmd("SADD", add...)
+			if err != nil {
+				return err
 			}
 		}
 
 		if len(del) > 1 {
-			reply := client.Cmd("SDEL", del...)
-			if reply.Err != nil {
-				return ferr.Wrap(reply.Err, "")
+			_, err := rdb.Cmd("SDEL", del...)
+			if err != nil {
+				return err
 			}
 		}
 	}
 	return nil
 }
 
-func (db *Database) EditSetI(key string, add, del []int) ferr.FortiaError {
+// Edit a set of integers
+func (rdb *Database) EditSetI(key string, add, del []int) errors.FortiaError {
 	argAddSlice := make([]interface{}, len(add)+1)
 	for k, v := range add {
 		argAddSlice[k+1] = v
@@ -201,11 +267,11 @@ func (db *Database) EditSetI(key string, add, del []int) ferr.FortiaError {
 	}
 	argDelSlice[0] = key
 
-	return db.EditSet(argAddSlice, argDelSlice)
+	return rdb.EditSet(argAddSlice, argDelSlice)
 }
 
 // Edit a set of strings
-func (db *Database) EditSetS(key string, add, del []string) ferr.FortiaError {
+func (rdb *Database) EditSetS(key string, add, del []string) errors.FortiaError {
 	argAddSlice := make([]interface{}, len(add)+1)
 	for k, v := range add {
 		argAddSlice[k+1] = v
@@ -218,5 +284,5 @@ func (db *Database) EditSetS(key string, add, del []string) ferr.FortiaError {
 	}
 	argDelSlice[0] = key
 
-	return db.EditSet(argAddSlice, argDelSlice)
+	return rdb.EditSet(argAddSlice, argDelSlice)
 }
