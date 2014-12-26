@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Dropbox, Inc.
 // All rights reserved.
-package fortia
+package errors
 
 // Modified version of github.com/dropbox/godropbox
 // This module implements functions which manipulate errors and provide stack
@@ -8,6 +8,7 @@ package fortia
 import (
 	"bytes"
 	"fmt"
+	"github.com/jonas747/fortia/messages"
 	"runtime"
 	"strings"
 )
@@ -30,28 +31,17 @@ type FortiaError interface {
 	// Implements the built-in error interface.
 	Error() string
 
-	// Gets additional data map
-	GetData() map[string]interface{}
-
-	// Sets some data
-	SetData(string, interface{})
-
 	// Returns the error code
 	GetCode() int
-	SetCode(int)
 }
 
 // Standard struct for general types of errors.
-//
-// For an example of custom error type, look at databaseError/newDatabaseError
-// in errors_test.go.
 type FortiaBaseError struct {
-	Msg            string
-	Stack          string
-	Context        string
-	Code           int
-	inner          error
-	AdditionalData map[string]interface{}
+	Msg     string
+	Stack   string
+	Context string
+	Code    int
+	inner   error
 }
 
 // This returns the error string without stack trace information.
@@ -79,14 +69,6 @@ func GetMessage(err interface{}) string {
 	default:
 		return "Passed a non-error to GetMessage"
 	}
-}
-
-func (d *FortiaBaseError) GetData() map[string]interface{} {
-	return d.AdditionalData
-}
-
-func (d *FortiaBaseError) SetData(key string, data interface{}) {
-	d.AdditionalData[key] = data
 }
 
 // This returns a string with all available error information, including inner
@@ -118,77 +100,34 @@ func (e *FortiaBaseError) GetInner() error {
 func (e *FortiaBaseError) GetCode() int {
 	return e.Code
 }
-func (e *FortiaBaseError) SetCode(code int) {
-	e.Code = code
-}
 
 // This returns a new FortiaBaseError initialized with the given message and
 // the current stack trace.
-func New(msgs ...interface{}) FortiaError {
-	return Newa(fmt.Sprint(msgs...), make(map[string]interface{}))
-}
-
-func Newc(msg string, code int) FortiaError {
-	e := New(msg)
-	e.SetCode(code)
-	return e
-}
-
-// This returns a new FortiaBaseError initialized with the given message and
-// the current stack trace.
-func Newa(msg string, additionalData map[string]interface{}) FortiaError {
+func New(code messages.ErrorCode, format string, a ...interface{}) FortiaError {
 	stack, context := StackTrace()
+	formatted := fmt.Sprintf(format, a...)
 	return &FortiaBaseError{
-		Msg:            msg,
-		Stack:          stack,
-		Context:        context,
-		AdditionalData: additionalData,
-	}
-}
-
-// Same as New, but with fmt.Printf-style parameters.
-func Newf(format string, args ...interface{}) FortiaError {
-	stack, context := StackTrace()
-	return &FortiaBaseError{
-		Msg:     fmt.Sprintf(format, args...),
+		Msg:     formatted,
 		Stack:   stack,
 		Context: context,
+		Code:    int(code),
 	}
 }
 
-func Wrapc(err error, code int) FortiaError {
-	e := Wrap(err, "")
-	e.SetCode(code)
-	return e
-}
-
 // Wraps another error in a new FortiaBaseError.
-func Wrap(err error, msg string) FortiaError {
-	return Wrapa(err, msg, make(map[string]interface{}))
-}
-
-// Wraps another error in a new FortiaBaseError.
-func Wrapa(err error, msg string, additionalData map[string]interface{}) FortiaError {
+func Wrap(err error, code messages.ErrorCode, format string, a ...interface{}) FortiaError {
 	stack, context := StackTrace()
-	if msg == "" {
+	msg := ""
+	if format == "" {
 		msg = err.Error()
+	} else {
+		msg = fmt.Sprintf(format, a...)
 	}
 	return &FortiaBaseError{
-		Msg:            msg,
-		Stack:          stack,
-		Context:        context,
-		inner:          err,
-		AdditionalData: additionalData,
-	}
-}
-
-// Same as Wrap, but with fmt.Printf-style parameters.
-func Wrapf(err error, format string, args ...interface{}) FortiaError {
-	stack, context := StackTrace()
-	return &FortiaBaseError{
-		Msg:     fmt.Sprintf(format, args...),
+		Msg:     msg,
 		Stack:   stack,
 		Context: context,
+		Code:    int(code),
 		inner:   err,
 	}
 }
@@ -197,9 +136,8 @@ func Wrapf(err error, format string, args ...interface{}) FortiaError {
 func DefaultError(e FortiaError) string {
 	// Find the "original" stack trace, which is probably the most helpful for
 	// debugging.
-	errLines := make([]string, 1)
+	errLines := make([]string, 0)
 	var origStack string
-	errLines[0] = "ERROR:"
 	fillErrorInfo(e, &errLines, &origStack)
 	errLines = append(errLines, "")
 	errLines = append(errLines, "ORIGINAL STACK TRACE:")
@@ -290,5 +228,5 @@ func stackTrace(skip int) (current, context string) {
 // This returns the current stack trace string.  NOTE: the stack creation code
 // is excluded from the stack trace.
 func StackTrace() (current, context string) {
-	return stackTrace(4)
+	return stackTrace(3)
 }
