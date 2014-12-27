@@ -1,6 +1,8 @@
-package world
+package game
 
 import (
+	"github.com/golang/protobuf/proto"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 	. "gopkg.in/check.v1"
 	"testing"
@@ -15,9 +17,9 @@ func (w *WorldSuite) SetUpSuite(c *C) {
 
 var _ = Suite(&WorldSuite{
 	W: &World{
-		GeneralInfo: &WorldInfo{
-			ChunkWidth:  25,
-			ChunkHeight: 200,
+		Settings: &messages.WorldSettings{
+			ChunkWidth:  proto.Int(25),
+			ChunkHeight: proto.Int(200),
 		},
 	},
 })

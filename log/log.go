@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"github.com/jonas747/fortia/errors"
 	"time"
 )
 
@@ -37,6 +38,14 @@ Log levels:
  3: Fatal
 */
 
+const (
+	LOGDEBUG = iota - 1
+	LOGINFO
+	LOGWARN
+	LOGERROR
+	LOGFATAL
+)
+
 var LogLvlStr = map[int]string{
 	-1: "Debug",
 	0:  "Info",
@@ -57,19 +66,26 @@ var LogColors = map[int]string{
 type LogMsg struct {
 	Lvl       int
 	Msg       string
-	Data      map[string]interface{}
 	Host      string
 	Timestamp time.Time
+	Error     errors.FortiaError
+	Data      map[string]interface{}
 }
 
-func NewLogMsg(lvl int, msg string, data map[string]interface{}) LogMsg {
+func NewLogMsg(lvl int, msg string, extradata map[string]interface{}) LogMsg {
 	now := time.Now()
 	return LogMsg{
 		Lvl:       lvl,
 		Msg:       msg,
-		Data:      data,
+		Data:      extradata,
 		Timestamp: now,
 	}
+}
+
+func LogMsgFromError(lvl int, e errors.FortiaError) LogMsg {
+	lm := NewLogMsg(lvl, e.Error(), map[string]interface{}{})
+	lm.Error = e
+	return lm
 }
 
 func (l *LogMsg) String() string {
@@ -78,15 +94,10 @@ func (l *LogMsg) String() string {
 
 func (l *LogMsg) StringDetailed(host bool) string {
 	timeStr := l.Timestamp.Format(time.Stamp)
-	stackTrace, ok := l.Data["stacktrace"]
 	str := ""
 	if host {
 		str = fmt.Sprintf("{%s}", l.Host)
 	}
-	if ok {
-		str += fmt.Sprintf("%s[%s] %s: %s\n%s\x1b[0m", LogColors[l.Lvl], timeStr, LogLvlStr[l.Lvl], l.Msg, stackTrace)
-	} else {
-		str += fmt.Sprintf("%s[%s] %s: %s\x1b[0m\n", LogColors[l.Lvl], timeStr, LogLvlStr[l.Lvl], l.Msg)
-	}
+	str += fmt.Sprintf("%s[%s] %s: %s\x1b[0m\n", LogColors[l.Lvl], timeStr, LogLvlStr[l.Lvl], l.Msg)
 	return str
 }

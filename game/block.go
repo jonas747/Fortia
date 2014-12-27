@@ -1,4 +1,4 @@
-package world
+package game
 
 import (
 	"github.com/jonas747/fortia/messages"

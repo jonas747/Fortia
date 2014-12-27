@@ -34,8 +34,11 @@ const (
 	ErrorCode_JsonDecodeErr  ErrorCode = 6
 	ErrorCode_ProtoEncodeErr ErrorCode = 7
 	ErrorCode_ProtoDecodeErr ErrorCode = 8
-	ErrorCode_FileReadErr    ErrorCode = 9
-	ErrorCode_BCryptErr      ErrorCode = 10
+	// Misc
+	ErrorCode_FileReadErr ErrorCode = 9
+	ErrorCode_BCryptErr   ErrorCode = 10
+	ErrorCode_NetDialErr  ErrorCode = 11
+	ErrorCode_UnKnownErr  ErrorCode = 12
 )
 
 var ErrorCode_name = map[int32]string{
@@ -49,6 +52,8 @@ var ErrorCode_name = map[int32]string{
 	8:  "ProtoDecodeErr",
 	9:  "FileReadErr",
 	10: "BCryptErr",
+	11: "NetDialErr",
+	12: "UnKnownErr",
 }
 var ErrorCode_value = map[string]int32{
 	"RedisDialError":          1,
@@ -61,6 +66,8 @@ var ErrorCode_value = map[string]int32{
 	"ProtoDecodeErr":          8,
 	"FileReadErr":             9,
 	"BCryptErr":               10,
+	"NetDialErr":              11,
+	"UnKnownErr":              12,
 }
 
 func (x ErrorCode) Enum() *ErrorCode {

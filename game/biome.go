@@ -1,27 +1,27 @@
-package world
+package game
 
 import (
 	"encoding/json"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"io/ioutil"
 )
 
-func BiomesFromJson(data []byte) (*messages.WorldBiomes, ferr.FortiaError) {
+func BiomesFromJson(data []byte) (*messages.WorldBiomes, errors.FortiaError) {
 	var biomes *messages.WorldBiomes
 
 	nErr := json.Unmarshal(data, biomes)
 	if nErr != nil {
-		return nil, ferr.Wrap(nErr, "")
+		return nil, errors.Wrap(nErr, messages.ErrorCode_JsonDecodeErr, "", nil)
 	}
 
 	return biomes, nil
 }
 
-func BiomesFromFile(file string) (*messages.WorldBiomes, ferr.FortiaError) {
+func BiomesFromFile(file string) (*messages.WorldBiomes, errors.FortiaError) {
 	data, nErr := ioutil.ReadFile(file)
 	if nErr != nil {
-		return &messages.WorldBiomes{}, ferr.Wrap(nErr, "")
+		return &messages.WorldBiomes{}, errors.Wrap(nErr, messages.ErrorCode_FileReadErr, "", nil)
 	}
 	biomes, err := BiomesFromJson(data)
 	return biomes, err

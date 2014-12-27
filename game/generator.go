@@ -1,9 +1,9 @@
-package world
+package game
 
 import (
 	"github.com/cheggaaa/pb"
 	"github.com/golang/protobuf/proto"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/simplex"
 	"github.com/jonas747/fortia/vec"
@@ -48,7 +48,7 @@ func NewGenerator(world *World, seed int64) *Generator {
 }
 
 // Generates a world
-func (g *Generator) GenerateWorld() ferr.FortiaError {
+func (g *Generator) GenerateWorld() errors.FortiaError {
 	// Start by generating the base chunks
 	g.World.Logger.Info("Generating landscape")
 	p := pb.StartNew(g.Size * g.Size)
@@ -89,7 +89,7 @@ func (g *Generator) GenerateWorld() ferr.FortiaError {
 	return nil
 }
 
-func (g *Generator) GenStage(f func(*Chunk) ferr.FortiaError) {
+func (g *Generator) GenStage(f func(*Chunk) errors.FortiaError) {
 	p := pb.StartNew(g.Size * g.Size)
 	defer p.Finish()
 	for x := 0; x < g.Size; x++ {
@@ -115,7 +115,7 @@ func (g *Generator) GenStage(f func(*Chunk) ferr.FortiaError) {
 	}
 }
 
-func (g *Generator) flagHidden(chunk *Chunk) ferr.FortiaError {
+func (g *Generator) flagHidden(chunk *Chunk) errors.FortiaError {
 	chunk.FlagHidden(map[vec.Vec2I]*Chunk{})
 	return nil
 }
@@ -125,12 +125,12 @@ func (g *Generator) ExpandWorld() {
 
 }
 
-func (g *Generator) smoothChunk(chunk *Chunk) ferr.FortiaError {
+func (g *Generator) smoothChunk(chunk *Chunk) errors.FortiaError {
 	return nil
 }
 
 // Generates a chunk, saves chunk information and layers to db.
-func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaError) {
+func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, errors.FortiaError) {
 	biome, potency, err := g.getBiome(position)
 
 	chunk := g.generateLandscape(position, biome)
@@ -145,7 +145,7 @@ func (g *Generator) generateBaseChunk(position vec.Vec2I) (*Chunk, ferr.FortiaEr
 // First stage
 // Returns the biome and the potency
 // the dominating biome is the one with the most potency? or the ones with most neighbours?(going with potency for now, experimenting later)
-func (g *Generator) getBiome(position vec.Vec2I) (*messages.Biome, int, ferr.FortiaError) {
+func (g *Generator) getBiome(position vec.Vec2I) (*messages.Biome, int, errors.FortiaError) {
 	highestPotency := 0
 	highestBiome := &messages.Biome{}
 	// Get souroding chunks
@@ -234,7 +234,7 @@ func (g *Generator) generateLandscape(position vec.Vec2I, biome *messages.Biome)
 }
 
 // Generates caves underground
-func (g *Generator) generateCaves(chunk *Chunk) ferr.FortiaError {
+func (g *Generator) generateCaves(chunk *Chunk) errors.FortiaError {
 	noiseGen := g.NoiseGenerators["caves"]
 
 	chunkWidth := int(g.World.Settings.GetChunkWidth())
@@ -265,13 +265,13 @@ func (g *Generator) generateCaves(chunk *Chunk) ferr.FortiaError {
 }
 
 // Smooths the chunk edges
-func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, ferr.FortiaError) {
+func (g *Generator) smoothEedges(chunk *Chunk) (*Chunk, errors.FortiaError) {
 	return chunk, nil
 }
 
 // Assigns proper blocks to everything, stone should be stone etc...
 // TODO: More advanced block placement
-func (g *Generator) basePlaceBlocks(chunk *Chunk) ferr.FortiaError {
+func (g *Generator) basePlaceBlocks(chunk *Chunk) errors.FortiaError {
 	for _, block := range chunk.RawChunk.Blocks {
 		life := block.GetKind()
 		if life > 50 {

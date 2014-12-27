@@ -1,18 +1,18 @@
 // Package world contains world realted stuff
 // TODO: Check if layer is air and mark it if so
-package world
+package game
 
 import (
-	"github.com/jonas747/fortia/messages"
-	//"github.com/jonas747/fortia/rdb"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/log"
+	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 )
 
 type World struct {
 	Logger   *log.LogClient
-	Db       GameDB
+	Db       db.GameDB
 	Settings *messages.WorldSettings
 }
 
@@ -20,7 +20,7 @@ func (w *World) NewGenerator() *Generator {
 	return NewGenerator(w, 1)
 }
 
-func (w *World) LoadSettingsFromDb() ferr.FortiaError {
+func (w *World) LoadSettingsFromDb() errors.FortiaError {
 	info, err := w.Db.GetWorldSettings()
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func (w *World) LoadSettingsFromDb() ferr.FortiaError {
 	return nil
 }
 
-func (w *World) SaveSettingsToDb() ferr.FortiaError {
+func (w *World) SaveSettingsToDb() errors.FortiaError {
 	err := w.Db.SetWorldSettings(w.Settings)
 	return err
 }

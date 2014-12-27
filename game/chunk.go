@@ -1,8 +1,8 @@
-package world
+package game
 
 import (
 	"github.com/golang/protobuf/proto"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
 )
@@ -14,7 +14,7 @@ type Chunk struct {
 }
 
 // returns chunk at x y, local to current chunk
-func (c *Chunk) GetNeighbour(x, y int) (*Chunk, ferr.FortiaError) {
+func (c *Chunk) GetNeighbour(x, y int) (*Chunk, errors.FortiaError) {
 	wPos := vec.Vec2I{int(c.RawChunk.GetX()), int(c.RawChunk.GetY())}
 	wPos.Add(vec.Vec2I{x, y})
 	chunk, err := c.World.GetChunk(wPos)
@@ -22,7 +22,7 @@ func (c *Chunk) GetNeighbour(x, y int) (*Chunk, ferr.FortiaError) {
 }
 
 // Returns all neighbours
-func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
+func (c *Chunk) GetAllNeighbours() ([]*Chunk, errors.FortiaError) {
 	out := make([]*Chunk, 0)
 	for x := -1; x < 2; x++ {
 		for y := -1; y < 2; y++ {
@@ -32,7 +32,7 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, ferr.FortiaError) {
 			}
 			chunk, err := c.GetNeighbour(x, y)
 			if err != nil {
-				if err.GetCode() == 404 { // continue even if the chunks was not found in the db
+				if err.GetCode() == messages.ErrorCode_RedisKeyNotFound { // continue even if the chunks was not found in the db
 					continue
 				}
 				return out, err
@@ -62,27 +62,21 @@ func (c *Chunk) GetBlock(pos vec.Vec3I) *Block {
 func (c *Chunk) FlagHidden(neighbours map[vec.Vec2I]*Chunk) {
 	if len(neighbours) < 1 {
 		n := make(map[vec.Vec2I]*Chunk)
-		errs := make([]ferr.FortiaError, 0)
+		errs := make([]errors.FortiaError, 0)
 		c1, e1 := c.GetNeighbour(1, 0)
 		c2, e2 := c.GetNeighbour(0, 1)
 		c3, e3 := c.GetNeighbour(-1, 0)
 		c4, e4 := c.GetNeighbour(0, -1)
-		if e1 == nil {
-			n[vec.Vec2I{1, 0}] = c1
-		}
-		if e2 == nil {
-			n[vec.Vec2I{0, 1}] = c2
-		}
-		if e3 == nil {
-			n[vec.Vec2I{-1, 0}] = c3
-		}
-		if e4 == nil {
-			n[vec.Vec2I{0, -1}] = c4
-		}
+
+		n[vec.Vec2I{1, 0}] = c1
+		n[vec.Vec2I{0, 1}] = c2
+		n[vec.Vec2I{-1, 0}] = c3
+		n[vec.Vec2I{0, -1}] = c4
+
 		errs = append(errs, e1, e2, e3, e4)
 		for _, v := range errs {
 			if v != nil {
-				if v.GetCode() != 404 {
+				if v.GetCode() != messages.ErrorCode_RedisKeyNotFound {
 					c.World.Logger.Error(v)
 				}
 			}
@@ -112,7 +106,7 @@ func (c *Chunk) FlagHidden(neighbours map[vec.Vec2I]*Chunk) {
 	c.RawChunk.VisibleLayers = visibleLayers
 }
 
-func (w *World) GetChunk(pos vec.Vec2I) (*Chunk, ferr.FortiaError) {
+func (w *World) GetChunk(pos vec.Vec2I) (*Chunk, errors.FortiaError) {
 	raw, err := w.Db.GetChunk(pos)
 	if err != nil {
 		return nil, err
@@ -126,6 +120,6 @@ func (w *World) GetChunk(pos vec.Vec2I) (*Chunk, ferr.FortiaError) {
 	return chunk, nil
 }
 
-func (w *World) SetChunk(chunk *Chunk) ferr.FortiaError {
+func (w *World) SetChunk(chunk *Chunk) errors.FortiaError {
 	return w.Db.SetChunk(chunk.RawChunk)
 }

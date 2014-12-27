@@ -5,7 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/errors"
+	"github.com/jonas747/fortia/messages"
 	"net"
 )
 
@@ -15,7 +16,7 @@ type LogClient struct {
 	Host     string
 }
 
-func NewLogClient(addr string, Plvl int, host string) (*LogClient, ferr.FortiaError) {
+func NewLogClient(addr string, Plvl int, host string) (*LogClient, errors.FortiaError) {
 	// Dial the address
 	conn, err := net.Dial("tcp", addr)
 	lc := &LogClient{
@@ -24,7 +25,7 @@ func NewLogClient(addr string, Plvl int, host string) (*LogClient, ferr.FortiaEr
 		Host:     host,
 	}
 	if err != nil {
-		return lc, ferr.Wrap(err, "")
+		return lc, errors.Wrap(err, messages.ErrorCode_NetDialErr, "", nil)
 	}
 	return lc, nil
 }
@@ -64,8 +65,8 @@ func (l *LogClient) Log(msg LogMsg) {
 // For log.Logger output
 func (l *LogClient) Write(p []byte) (n int, err error) {
 	// TODO: Check for prefix
-	nerr := ferr.New(string(p))
-	l.Error(nerr)
+	ferr := errors.New(messages.ErrorCode_UnKnownErr, string(p), nil)
+	l.Error(ferr)
 	return len(p), nil
 }
 
@@ -107,23 +108,13 @@ func (l *LogClient) Warna(msg string, data map[string]interface{}) {
 }
 
 // lvl 2
-func (l *LogClient) Error(err ferr.FortiaError) {
-	msg := err.GetMessage()
-	data := err.GetData()
-
-	data["stacktrace"] = err.GetStack()
-	data["context"] = err.GetContext()
-
-	l.Log(NewLogMsg(2, msg, data))
+func (l *LogClient) Error(err errors.FortiaError) {
+	msg := LogMsgFromError(2, err)
+	l.Log(msg)
 }
 
 // lvl 3
-func (l *LogClient) Fatal(err ferr.FortiaError) {
-	msg := err.GetMessage()
-	data := err.GetData()
-
-	data["stacktrace"] = err.GetStack()
-	data["context"] = err.GetContext()
-
-	l.Log(NewLogMsg(3, msg, data))
+func (l *LogClient) Fatal(err errors.FortiaError) {
+	msg := LogMsgFromError(3, err)
+	l.Log(msg)
 }
