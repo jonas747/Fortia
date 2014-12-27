@@ -32,7 +32,7 @@ type FortiaError interface {
 	Error() string
 
 	// Returns the error code
-	GetCode() int
+	GetCode() messages.ErrorCode
 }
 
 // Standard struct for general types of errors.
@@ -40,7 +40,7 @@ type FortiaBaseError struct {
 	Msg     string
 	Stack   string
 	Context string
-	Code    int
+	Code    messages.ErrorCode
 	inner   error
 }
 
@@ -97,7 +97,7 @@ func (e *FortiaBaseError) GetInner() error {
 	return e.inner
 }
 
-func (e *FortiaBaseError) GetCode() int {
+func (e *FortiaBaseError) GetCode() messages.ErrorCode {
 	return e.Code
 }
 
@@ -110,7 +110,7 @@ func New(code messages.ErrorCode, format string, a ...interface{}) FortiaError {
 		Msg:     formatted,
 		Stack:   stack,
 		Context: context,
-		Code:    int(code),
+		Code:    code,
 	}
 }
 
@@ -127,7 +127,7 @@ func Wrap(err error, code messages.ErrorCode, format string, a ...interface{}) F
 		Msg:     msg,
 		Stack:   stack,
 		Context: context,
-		Code:    int(code),
+		Code:    code,
 		inner:   err,
 	}
 }
@@ -154,7 +154,7 @@ func fillErrorInfo(err error, errLines *[]string, origStack *string) {
 
 	derr, ok := err.(FortiaError)
 	if ok {
-		*errLines = append(*errLines, derr.GetMessage())
+		*errLines = append(*errLines, fmt.Sprintf("{%s}%s", messages.ErrorCode_name[int32(derr.GetCode())], derr.GetMessage()))
 		*origStack = derr.GetStack()
 		fillErrorInfo(derr.GetInner(), errLines, origStack)
 	} else {
