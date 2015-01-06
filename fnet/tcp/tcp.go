@@ -12,28 +12,54 @@ type TCPListner struct {
 	Engine    *fnet.Engine
 	Addr      string
 	Listening bool
+	StopChan  chan chan bool
 }
 
 // Implements fnet.Listener.Listen
-func (w *TCPListner) Listen() error {
-	listener, err := net.Listen("tcp", w.Addr)
+func (t *TCPListner) Listen() error {
+	t.Listening = true
+
+	defer func() {
+		t.Listening = false
+	}()
+
+	listener, err := net.Listen("tcp", t.Addr)
 	if err != nil {
 		return err
 	}
 
 	for {
+		// Check if we should stop
+		select {
+		case rChan := <-t.StopChan:
+			rChan <- true
+			return nil
+		default:
+			// Continue normally
+		}
+
 		con, err := listener.Accept()
 		if err != nil {
 			return err
 		}
 		wrappedConn := NewTCPConn(con)
-		go w.Engine.HandleConn(wrappedConn)
+		go t.Engine.HandleConn(wrappedConn)
 	}
 }
 
 // Implements fnet.Listener.IsListening
-func (w *TCPListner) IsListening() bool {
-	return w.Listening
+func (t *TCPListner) IsListening() bool {
+	return t.Listening
+}
+
+func (t *TCPListner) Stop() error {
+	rChan := make(chan bool)
+	t.StopChan <- rChan
+	ok := <-rChan
+	if !ok {
+		return fnet.ErrCantStopListener
+	}
+	return nil
 }
 
 type TCPConn struct {
@@ -59,50 +85,61 @@ func NewTCPConn(c net.Conn) fnet.Connection {
 }
 
 // Implements Connection.Send([]byte)
-func (w *TCPConn) Send(b []byte) error {
-	if !w.isOpen {
+func (t *TCPConn) sendRaw(b []byte) error {
+	if !t.isOpen {
 		return errors.New("Cannot call TCPConn.Send() on a closed connection")
 	}
 	after := time.After(time.Duration(5) * time.Second) // Time out
 	select {
-	case w.writeChan <- b:
+	case t.writeChan <- b:
 		return nil
 	case <-after:
-		w.isOpen = false
-		w.Close()
+		t.isOpen = false
+		t.Close()
 		return errors.New("Timed out sending payload to writechan")
 	}
 }
 
-func (w *TCPConn) Read(buf []byte) error {
-	_, err := io.ReadFull(w.conn, buf)
+func (t *TCPConn) Send(msg *fnet.Message) error {
+	ecnoded, err := msg.Encode()
+	if err != nil {
+		return err
+	}
+	return t.sendRaw(ecnoded)
+}
+
+func (t *TCPConn) Read(buf []byte) error {
+	_, err := io.ReadFull(t.conn, buf)
 	return err
 }
 
 // Implements Connection.Kind() string
-func (w *TCPConn) Kind() string {
+func (t *TCPConn) Kind() string {
 	return "websocket"
 }
 
 // Implements Connection.Close()
-func (w *TCPConn) Close() {
-	w.isOpen = false
-	w.stopWriting <- true
-	w.conn.Close()
+func (t *TCPConn) Close() {
+	if !t.isOpen {
+		return
+	}
+	t.isOpen = false
+	t.stopWriting <- true
+	t.conn.Close()
 }
 
-func (w *TCPConn) Open() bool {
-	return w.isOpen
+func (t *TCPConn) Open() bool {
+	return t.isOpen
 }
 
-func (w *TCPConn) GetSessionData() *fnet.SessionStore {
-	return w.sessionStore
+func (t *TCPConn) GetSessionData() *fnet.SessionStore {
+	return t.sessionStore
 }
 
 // Implements Connection.Run()
-func (w *TCPConn) Run() {
+func (t *TCPConn) Run() {
 	// Launch the write goroutine
-	go w.writer()
+	go t.writer()
 }
 
 func (w *TCPConn) writer() {

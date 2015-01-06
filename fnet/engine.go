@@ -16,7 +16,7 @@ type Engine struct {
 
 	registerConn   chan Connection // Channel for registering new connections
 	unregisterConn chan Connection // Channel for unregistering connections
-	broadcastChan  chan []byte     // Channel for broadcasting messages to all connections
+	broadcastChan  chan Message    // Channel for broadcasting messages to all connections
 
 	listeners   []Listener          // Slice Containing all listeners
 	handlers    map[int32]Handler   // Map with all the event handlers, their id's as keys
@@ -29,7 +29,7 @@ func NewEngine() *Engine {
 		ConnCloseChan:  make(chan Connection),
 		registerConn:   make(chan Connection),
 		unregisterConn: make(chan Connection),
-		broadcastChan:  make(chan []byte),
+		broadcastChan:  make(chan Message),
 		listeners:      make([]Listener, 0),
 		handlers:       make(map[int32]Handler),
 		connections:    make(map[Connection]bool),
@@ -37,7 +37,7 @@ func NewEngine() *Engine {
 	}
 }
 
-func (e *Engine) Broadcast(msg []byte) {
+func (e *Engine) Broadcast(msg Message) {
 	e.broadcastChan <- msg
 }
 
@@ -128,12 +128,7 @@ func (e *Engine) handleMessage(evtId int32, payload []byte, conn Connection) err
 		return nil
 	}
 
-	returnVal := resp[0]
-	if returnVal.Kind() == reflect.Slice {
-		inter := returnVal.Interface()
-		responseRaw := inter.([]byte)
-		conn.Send(responseRaw)
-	}
+	// Todo, allow the handlers to return stuff to send
 
 	return nil
 }
@@ -141,6 +136,12 @@ func (e *Engine) handleMessage(evtId int32, payload []byte, conn Connection) err
 // Adds a handler
 func (e *Engine) AddHandler(handler Handler) {
 	e.handlers[handler.Event] = handler
+}
+
+func (e *Engine) AddHandlers(handlers ...Handler) {
+	for _, v := range handlers {
+		e.AddHandler(v)
+	}
 }
 
 func (e *Engine) ListenChannels() {
@@ -155,7 +156,10 @@ func (e *Engine) ListenChannels() {
 			}
 		case msg := <-e.broadcastChan: //Broadcast a message to all connections
 			for conn := range e.connections {
-				conn.Send(msg)
+				err := conn.Send(&msg)
+				if err != nil {
+					e.ErrChan <- err
+				}
 			}
 		}
 	}

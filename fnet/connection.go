@@ -3,7 +3,7 @@ package fnet
 import ()
 
 type Connection interface {
-	Send(data []byte) error        // Sends data
+	Send(*Message) error           // Encodes and then sends data
 	Read([]byte) error             // reads data into supplied byte slice
 	Kind() string                  // What kind of connection is it (websocket, tcp etc..)
 	Close()                        // Closes the connections ands stops all goroutines associated with it

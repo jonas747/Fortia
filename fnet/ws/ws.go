@@ -38,6 +38,11 @@ func (w *WebsocketListener) IsListening() bool {
 	return w.Listening
 }
 
+func (w *WebsocketListener) Stop() error {
+	// TODO, need to use a stoppable http server
+	return nil
+}
+
 type WebsocketConn struct {
 	sessionStore *fnet.SessionStore
 	conn         *websocket.Conn
@@ -61,7 +66,7 @@ func NewWebsocketConn(c *websocket.Conn) fnet.Connection {
 }
 
 // Implements Connection.Send([]byte)
-func (w *WebsocketConn) Send(b []byte) error {
+func (w *WebsocketConn) sendRaw(b []byte) error {
 	if !w.isOpen {
 		return errors.New("Cannot call WebsocketConn.Send() on a closed connection")
 	}
@@ -74,6 +79,14 @@ func (w *WebsocketConn) Send(b []byte) error {
 		w.Close()
 		return errors.New("Timed out sending payload to writechan")
 	}
+}
+
+func (w *WebsocketConn) Send(msg *fnet.Message) error {
+	encoded, err := msg.Encode()
+	if err != nil {
+		return err
+	}
+	return w.sendRaw(encoded)
 }
 
 func (w *WebsocketConn) Read(buf []byte) error {

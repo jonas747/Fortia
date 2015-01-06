@@ -19,6 +19,13 @@ func panicErr(err error) {
 	}
 }
 
+func listenErrors(engine *fnet.Engine) {
+	for {
+		err := <-engine.ErrChan
+		fmt.Printf("fnet Error: ", err.Error())
+	}
+}
+
 func main() {
 	flag.Parse()
 	fmt.Println("Running simplechat client!")
@@ -31,21 +38,23 @@ func main() {
 	conn, err := tcp.Dial(*addr)
 	panicErr(err)
 
+	// Start all goroutines
 	go engine.ListenChannels()
 	go engine.HandleConn(conn)
+	go listenErrors(engine)
 
 	fmt.Println("Enter your name:")
 	name := ""
 	fmt.Scanln(&name)
 
-	msg := &simplechat.User{
-		Name: proto.String(name),
+	msg := &fnet.Message{
+		EvtId: int32(simplechat.Events_USERJOIN),
+		PB: &simplechat.User{
+			Name: proto.String(name),
+		},
 	}
 
-	encoded, err := fnet.EncodeMessage(msg, int32(simplechat.Events_USERJOIN))
-	panicErr(err)
-	err = conn.Send(encoded)
-	fmt.Println("message encoded and all!")
+	err = conn.Send(msg)
 	panicErr(err)
 
 	for {
@@ -53,13 +62,14 @@ func main() {
 		line, err := reader.ReadString('\n')
 		panicErr(err)
 		line = line[:len(line)-1]
-		msg := &simplechat.ChatMsg{
-			Msg: proto.String(line),
+		msg := &fnet.Message{
+			EvtId: int32(simplechat.Events_MESSAGE),
+			PB: &simplechat.ChatMsg{
+				Msg: proto.String(line),
+			},
 		}
 
-		encoded, err := fnet.EncodeMessage(msg, int32(simplechat.Events_MESSAGE))
-		panicErr(err)
-		err = conn.Send(encoded)
+		err = conn.Send(msg)
 		panicErr(err)
 	}
 }
