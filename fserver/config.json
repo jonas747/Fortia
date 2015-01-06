@@ -1,8 +1,9 @@
 {
-	"auth": ":6379",
-	"game": ":6379",
+	"auth": "localhost:6379",
+	"game": "localhost:6379",
 	"master": "todo",
 	"version": "alpha-0.1",
 	"servegame": true,
-	"serveauth": true
+	"serveauth": true,
+	"runTicker": true
 }

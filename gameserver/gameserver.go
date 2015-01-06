@@ -1,30 +1,30 @@
 package gameserver
 
 import (
-	"github.com/jonas747/fortia/authserver"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errors"
+	"github.com/jonas747/fortia/game"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/rest"
-	"github.com/jonas747/fortia/world"
 	"reflect"
 )
 
 var (
 	logger    *log.LogClient
-	authDb    authserver.AuthDB
-	gameDb    world.GameDB
-	gameWorld *world.World
+	authDb    db.AuthDB
+	gameDb    db.GameDB
+	gameWorld *game.World
 	server    *rest.Server
 )
 
-func Run(l *log.LogClient, gdb world.GameDB, adb authserver.AuthDB, addr string) ferr.FortiaError {
+func Run(l *log.LogClient, gdb db.GameDB, adb db.AuthDB, addr string) errors.FortiaError {
 	l.Info("Starting gameserver")
 	logger = l
 	authDb = adb
 	gameDb = gdb
 
-	gameWorld = &world.World{
+	gameWorld = &game.World{
 		Logger: logger,
 		Db:     gameDb,
 	}
@@ -36,27 +36,9 @@ func Run(l *log.LogClient, gdb world.GameDB, adb authserver.AuthDB, addr string)
 
 	server = rest.NewServer(addr, logger)
 	initApi(server)
-	server.Run()
+	server.ListenAndServe()
 	return nil
 }
-
-/*
-	Handler         RestHandlerFunc
-	Method          string       // The metho ex: GET, POST, PUT, PATCH etc..
-	RequiredParams  []string     // Required url parameters
-	OptionalParams  []string     // Optional Url parameters
-	RequiredCookies []string     // Required cookies
-	Path            string       // The path this handler takes action upon
-	BodyType        reflect.Type // The type of the body
-	BodyRequired    bool         // Wther a body is required or not
-
-
-func handleRegister(w http.ResponseWriter, r *http.Request, body interface{}) {}
-func handleJoin(w http.ResponseWriter, r *http.Request, body interface{}) {}
-func handleUpdate(w http.ResponseWriter, r *http.Request, body interface{}) {}
-func handleChunk(w http.ResponseWriter, r *http.Request, body interface{}) {}
-func handleVisibleChunks(w http.ResponseWriter, r *http.Request, body interface{}) {}
-*/
 
 func initApi(s *rest.Server) {
 	s.RegisterHandler(&rest.Handler{

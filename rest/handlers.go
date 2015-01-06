@@ -1,35 +1,39 @@
 package rest
 
 import (
-	"code.google.com/p/goprotobuf/proto"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/golang/protobuf/proto"
+	"github.com/jonas747/fortia/errorcodes"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 
 	"net/http"
 )
 
 // Returns true if there was an error, false is error == nil
-func (s *Server) HandleFortiaError(r *Request, err ferr.FortiaError) bool {
-	// Add some additional details
+func (s *Server) HandleFortiaError(r *Request, err errors.FortiaError) bool {
 	if err == nil {
 		return false
 	}
-	err.SetData("remoteaddr", r.Request.RemoteAddr)
-	err.SetData("path", r.Request.URL.Path)
+	// Check if we need to wrap it or not
+	if _, ok := err.(*RESTError); !ok {
+		err = Wrap(err, r, err.GetCode(), "")
+	}
+	HandleInternalServerError(r, "Something went wrong: "+errorcodes.ErrorCode_name[int32(err.GetCode())], err.GetCode())
+
 	s.logger.Error(err)
-	HandleBadRequest(r, "Something went wrong... (Contact admin)")
+
 	return true
 }
 
 // Same as fortiaerror
-func (s *Server) HandleError(r *Request, err error) bool {
+func (s *Server) HandleError(r *Request, err error, code errorcodes.ErrorCode) bool {
 	if err == nil {
 		return false
 	}
-	return s.HandleFortiaError(r, ferr.Wrap(err, ""))
+	return s.HandleFortiaError(r, errors.Wrap(err, code, ""))
 }
 
-func NewPlainResponse(code int, msg string) *messages.PlainResponse {
+func NewPlainResponse(code errorcodes.ErrorCode, msg string) *messages.PlainResponse {
 	r := &messages.PlainResponse{}
 
 	if code != 0 || msg != "" {
@@ -44,19 +48,19 @@ func NewPlainResponse(code int, msg string) *messages.PlainResponse {
 
 func (s *Server) HandleUnauthorized(r *Request, user string) {
 	s.logger.Warna("Unauthorized", map[string]interface{}{"remoteaddr": r.Request.RemoteAddr, "user": user, "path": r.Request.URL.Path})
-	r.WriteResponse(NewPlainResponse(ErrInvalidSessionCookie, "Session cookie expired"), http.StatusUnauthorized)
+	r.WriteResponse(NewPlainResponse(errorcodes.ErrorCode_Unauthorized, "Session cookie expired"), http.StatusUnauthorized)
 }
 
-func HandleInternalServerError(r *Request, msg string) {
-	r.WriteResponse(NewPlainResponse(0, msg), http.StatusInternalServerError)
+func HandleInternalServerError(r *Request, msg string, code errorcodes.ErrorCode) {
+	r.WriteResponse(NewPlainResponse(code, msg), http.StatusInternalServerError)
 }
 
-func HandleBadRequest(r *Request, msg string) {
-	r.WriteResponse(NewPlainResponse(0, msg), http.StatusBadRequest)
+func HandleBadRequest(r *Request, msg string, code errorcodes.ErrorCode) {
+	r.WriteResponse(NewPlainResponse(code, msg), http.StatusBadRequest)
 }
 
 func HandleNotFound(r *Request) {
-	r.WriteResponse(NewPlainResponse(0, "404 - Not found"), http.StatusNotFound)
+	r.WriteResponse(NewPlainResponse(errorcodes.ErrorCode_PageNotFound, "404 - Not found"), http.StatusNotFound)
 }
 
 func RequiredParamsMiddleWare(r *Request, b interface{}) bool {
@@ -70,7 +74,7 @@ func RequiredParamsMiddleWare(r *Request, b interface{}) bool {
 	for _, reqParam := range requiredParams {
 		param := params.Get(reqParam)
 		if param == "" {
-			HandleBadRequest(r, "Required parameter \""+reqParam+"\" Not found")
+			HandleBadRequest(r, "Required parameter \""+reqParam+"\" Not found", errorcodes.ErrorCode_MissingRequiredParams)
 			return false
 		}
 	}

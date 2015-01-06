@@ -8,7 +8,7 @@ package errors
 import (
 	"bytes"
 	"fmt"
-	"github.com/jonas747/fortia/messages"
+	"github.com/jonas747/fortia/errorcodes"
 	"runtime"
 	"strings"
 )
@@ -32,7 +32,7 @@ type FortiaError interface {
 	Error() string
 
 	// Returns the error code
-	GetCode() messages.ErrorCode
+	GetCode() errorcodes.ErrorCode
 }
 
 // Standard struct for general types of errors.
@@ -40,7 +40,7 @@ type FortiaBaseError struct {
 	Msg     string
 	Stack   string
 	Context string
-	Code    messages.ErrorCode
+	Code    errorcodes.ErrorCode
 	inner   error
 }
 
@@ -97,13 +97,13 @@ func (e *FortiaBaseError) GetInner() error {
 	return e.inner
 }
 
-func (e *FortiaBaseError) GetCode() messages.ErrorCode {
+func (e *FortiaBaseError) GetCode() errorcodes.ErrorCode {
 	return e.Code
 }
 
 // This returns a new FortiaBaseError initialized with the given message and
 // the current stack trace.
-func New(code messages.ErrorCode, format string, a ...interface{}) FortiaError {
+func New(code errorcodes.ErrorCode, format string, a ...interface{}) FortiaError {
 	stack, context := StackTrace()
 	formatted := fmt.Sprintf(format, a...)
 	return &FortiaBaseError{
@@ -115,7 +115,7 @@ func New(code messages.ErrorCode, format string, a ...interface{}) FortiaError {
 }
 
 // Wraps another error in a new FortiaBaseError.
-func Wrap(err error, code messages.ErrorCode, format string, a ...interface{}) FortiaError {
+func Wrap(err error, code errorcodes.ErrorCode, format string, a ...interface{}) FortiaError {
 	stack, context := StackTrace()
 	msg := ""
 	if format == "" {
@@ -154,7 +154,7 @@ func fillErrorInfo(err error, errLines *[]string, origStack *string) {
 
 	derr, ok := err.(FortiaError)
 	if ok {
-		*errLines = append(*errLines, fmt.Sprintf("{%s}%s", messages.ErrorCode_name[int32(derr.GetCode())], derr.GetMessage()))
+		*errLines = append(*errLines, fmt.Sprintf("{%s} %s", errorcodes.ErrorCode_name[int32(derr.GetCode())], derr.GetMessage()))
 		*origStack = derr.GetStack()
 		fillErrorInfo(derr.GetInner(), errLines, origStack)
 	} else {

@@ -2,10 +2,8 @@ package rdb
 
 import (
 	"code.google.com/p/go.crypto/bcrypt"
-	//"fmt"
 	"github.com/jonas747/fortia/db"
-	"github.com/jonas747/fortia/messages"
-	//"github.com/jonas747/fortia/authserver"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
 	"math/rand"
 	"strconv"
@@ -56,7 +54,7 @@ func (a *AuthDB) CheckUserPw(user, pw string) (bool, errors.FortiaError) {
 			// incorrect password
 			return false, nil
 		}
-		return false, errors.Wrap(berr, messages.ErrorCode_BCryptErr, "", nil)
+		return false, errors.Wrap(berr, errorcodes.ErrorCode_BCryptErr, "")
 	}
 	return true, nil
 }

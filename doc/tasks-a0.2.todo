@@ -12,28 +12,45 @@ Alpha 0.2:
     ☐ db 
     ☐ api
 
-   ☐ Redo all the logging
-  
+   ☐ Overhaul to the backend
+     With better logging
+     Was gonna do this in 0.3 but better to do this sooner than later
+     ✔ Overhaul databases @done (14-12-26 14:13)
+     ✔ Overhaul logging @done (14-12-27 16:49)
+     ✔ overhaul world package @done (14-12-27 16:49)
+       ✔ Rename it to game @done (14-12-27 16:49)
+     ✔ Overhaul rest package @done (15-01-05 22:01)
+     ☐ Overhaul game and auth services
   Scheduler:
     (Main point create the scheduler)
     The shdeduler tells tickers when to tick, and what they should do
     ☐ Plan/doc the scheduler
     Connects to tickers over tcp
+    ☐ implement basic scheduler
  
   Ticker:
     The ticker makes the world go around
     ✔ Figure out the action system and document it @done (14-12-03 02:33)
     ☐ Implement said action system
+    ✔ Implement basic ticker (without a scheduler for now) @today @done (14-12-15 12:03)
+    ☐ Add place unit action handler
+    ☐ Gracefull shutdown
 
   DB:
     General improvements and such to the redis implementation
    ☐ Write tests and benchmarks @high
+     Started on it... then got bored
    ☐ Optimise and use more concurrency
-   ☐ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then) @high
-   ☐ Go over everything and make sure everything returns proper error codes
+   ✔ Do checking to see if the actual chunks/layers/user etc were getting exists(return a predefined error then) @high @done (14-12-27 16:50)
+   ✔ Go over everything and make sure everything returns proper error codes @done (14-12-27 16:50)
    ✔ Change from storing the world in layers to chunks @today @done (14-12-12 06:53)
       Also store it in a binary format, as opposed to json for improved speed and memory usage
-   ☐ Add chunk locks`
+   ☐ Add chunk locks
+   ☐ Look into redis sentinel
+   ☐ Add database sharding
+     Needs database versioning, handled by the master server?
+     Keys will be hashed and the server will be taken from that
+     ☐ Add ability to add/remove redis servers and rebalance accordinly
   World:
    ✔ Move away from layers to chunks @today @done (14-12-07 15:57)
    ☐ Organise the world package better
@@ -41,6 +58,9 @@ Alpha 0.2:
    ☐ write tests and benchmarks 
    ☐ Rename world package to game @high
      ☐ Make everything work with the the new package name @critical
+
+  fnet:
+   ✔ Restructure and redo a lot @today @done (14-12-15 09:29)
 
    Worldgen:
      Gonne keep the world gen relatively simple for now
@@ -68,14 +88,13 @@ Alpha 0.2:
    ✘ Change username @cancelled (14-12-04 03:32)
      Later you will sign in with email instead.
 
-  Master Server:
-    ☐ Create a simple package for interacting with the master server
-    ☐ Create the master server itself
-      ☐ Logserver
-        Stores logs in a database, be it mongodb couchdb or something else, will have to figure that out
-      ☐ Server manager
-        Manages server instances
-        Just a basic one, that takes in information from servers
+  Master:
+   ☐ Store logs in mongodb
+   ☐ have fserver connect to the master server and communicate with fnet
+
+   fserver:
+   ☐ Publish all services in redis
+   ☐ Cleanups
 
   Frontend: 
    ☐ Maybe change from backbone.js to knockout.js
@@ -93,7 +112,10 @@ Alpha 0.2:
      ☐ Animations
        Maybe save this one for 0.3
      ☐ Try out isometric 
-     ☐ Right click menu
+     ✔ Right click menu @today @done (14-12-15 12:02)
+     ☐ Add "place unit" in right click menu (which places a unit) @today
+     ☐ Render entities as spheres @today
+     ☐ User block colors from received world settings @today
        Simple list menu for now, change to something like a circle later
      ✔ Add voxel raycast that dosent lag the fuck out of everything... @done (14-11-19 23:57)
      ☐ Change mice.js and keyboard.js into a single input library
@@ -127,16 +149,23 @@ Alpha 0.2:
      in /chunk request
    ✔ Add some form of compression @done (14-11-14 21:49)
      built in browser gzip maybe, unless that decompresses in the main thread
+   ☐ add /placeunit @today
 
   REST Server:
    ✔ Redo the REST server, to make it easier to return appropiate status codes, add middle handles and such @done (14-12-04 03:39)
      Maybe chose a third party one instead of coding one yourself, coding one myself however lets me add some fortia specific things
-   ✔ Allow the selection of content type from both requests and responses from response header, and reuest parameters @done (14-12-04 03:39)
+   ✔ Allow the selection of content type in responses from request header, and reuest parameters @done (14-12-04 03:39)
      ✔ JSON @done (14-12-04 03:39)
      ✔ protobuf @done (14-12-04 03:39)
+   ☐ Allow multiple request body types 
+     ☐ JSON
+     ☐ proto
+     ☐ url value pairs?
    ☐ Standardize logging of requests and errors on requests 
      which includes information such as remot address, request path and body
      on body, fields tagged sensitive are ignored
+   ☐ Gracefull shutdown of the rest server
+     We need to be sure all keep-alive connections are closed
 
   Bugs:
    ☐ The bottom layer is always air, shoudl be bedrock(to be implemented) @low

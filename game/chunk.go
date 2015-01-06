@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
@@ -32,7 +33,7 @@ func (c *Chunk) GetAllNeighbours() ([]*Chunk, errors.FortiaError) {
 			}
 			chunk, err := c.GetNeighbour(x, y)
 			if err != nil {
-				if err.GetCode() == messages.ErrorCode_RedisKeyNotFound { // continue even if the chunks was not found in the db
+				if err.GetCode() == errorcodes.ErrorCode_RedisKeyNotFound { // continue even if the chunks was not found in the db
 					continue
 				}
 				return out, err
@@ -76,7 +77,7 @@ func (c *Chunk) FlagHidden(neighbours map[vec.Vec2I]*Chunk) {
 		errs = append(errs, e1, e2, e3, e4)
 		for _, v := range errs {
 			if v != nil {
-				if v.GetCode() != messages.ErrorCode_RedisKeyNotFound {
+				if v.GetCode() != errorcodes.ErrorCode_RedisKeyNotFound {
 					c.World.Logger.Error(v)
 				}
 			}

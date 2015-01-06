@@ -20,6 +20,7 @@ func panicErr(err error) {
 }
 
 func main() {
+	flag.Parse()
 	fmt.Println("Running simplechat client!")
 	engine := fnet.NewEngine()
 

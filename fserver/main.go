@@ -4,12 +4,12 @@ import (
 	"flag"
 	"github.com/jonas747/fortia/authserver"
 	"github.com/jonas747/fortia/common"
+	"github.com/jonas747/fortia/game"
 	"github.com/jonas747/fortia/gameserver"
 	"github.com/jonas747/fortia/log"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/rdb"
-	//"github.com/jonas747/fortia/ticker"
-	"github.com/jonas747/fortia/world"
+	"github.com/jonas747/fortia/ticker"
 	"runtime"
 )
 
@@ -71,15 +71,15 @@ func main() {
 		go authserver.Run(logger, adb, ":8080")
 	}
 	if config.RunTicker {
-		//go ticker.Run(logger, adb, gdb)
+		go ticker.Run(logger, adb, gdb)
 	}
 	select {}
 }
 
 func createWorld() {
 	// Load the world info json
-	var biomesInfo *messages.WorldBiomes
-	err := common.LoadJsonFile("biomes.json", biomesInfo)
+	var biomesInfo messages.WorldBiomes
+	err := common.LoadJsonFile("biomes.json", &biomesInfo)
 	panicErr(err)
 
 	var btypes []*messages.BlockType
@@ -88,12 +88,12 @@ func createWorld() {
 
 	winfo := &messages.WorldSettings{
 		BlockTypes: btypes,
-		Biomes:     biomesInfo,
+		Biomes:     &biomesInfo,
 	}
 
 	err = common.LoadJsonFile("world.json", winfo)
 
-	world := &world.World{
+	world := &game.World{
 		Logger:   logger,
 		Db:       gdb,
 		Settings: winfo,

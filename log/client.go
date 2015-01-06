@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
-	"github.com/jonas747/fortia/messages"
 	"net"
 )
 
@@ -25,7 +25,7 @@ func NewLogClient(addr string, Plvl int, host string) (*LogClient, errors.Fortia
 		Host:     host,
 	}
 	if err != nil {
-		return lc, errors.Wrap(err, messages.ErrorCode_NetDialErr, "", nil)
+		return lc, errors.Wrap(err, errorcodes.ErrorCode_NetDialErr, "", nil)
 	}
 	return lc, nil
 }
@@ -65,12 +65,12 @@ func (l *LogClient) Log(msg LogMsg) {
 // For log.Logger output
 func (l *LogClient) Write(p []byte) (n int, err error) {
 	// TODO: Check for prefix
-	ferr := errors.New(messages.ErrorCode_UnKnownErr, string(p), nil)
+	ferr := errors.New(errorcodes.ErrorCode_UnKnownErr, string(p), nil)
 	l.Error(ferr)
 	return len(p), nil
 }
 
-// lvl -1 (not recorded or sent to master(maybe sent to master))
+// lvl -1 (not recorded or sent to master(maybe sent to master and recorded locally))
 func (l *LogClient) Debug(msgs ...interface{}) {
 	str := fmt.Sprint(msgs...)
 	l.Log(NewLogMsg(-1, str, make(map[string]interface{})))

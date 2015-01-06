@@ -1,20 +1,21 @@
 ## Layout
- - Master server
-    + Handles logging for all fservers
-    + Manages all the server instances, keeps them up to date etc..
+ - logserver
+     + Compiles all logs from all servers
  - fserver
-     + fserver instances are controlled by the master server
-     + the master server can tell an fserver instance to:
-         * Update
-         * start service
-         * stop service
-         * Change settings for service
-     + Auth server
-        + Handles non-game specific stuff
-     + Game server
-        + Handles game specific stuff
-     + World ticker
-        + Keeps the world going
+     + fserver instances fetch configurations from a database
+     + Sending commands to these servers is done through a redis database (update, configuration etc..)
+         * Removes the single point failure that is a single master server, can have redis slaves that gets promoted if/when one dies
+     + Serivces:
+         * Auth
+             - Handles non-game specific stuff
+             - Servers a public rest API
+         * Game
+             - Handles game specific stuff
+             - serves a public rest API
+         * World ticker
+             - Keeps the world going
+         * Scheduler
+             - Tells al tickers when and what to tick
  - Fortia pkgs
     + log
         * Provides a logging client and server
@@ -24,8 +25,8 @@
         * vector math
     + world
         * Functions for maipulating the world
-    + db
-        * Abstracts db interactions
+    + rdb
+        * authserver/db and world/db implementations for redis
     + common   
         * Common functions used throughout fortia
 
@@ -33,6 +34,43 @@ How this works:
 Login
 Client post /login -> load balancer -> auth server -> redis auth server
 
+Current parts of the fortia backend thats scaleable:
+
+ - API
+     + The fortia api is stateless so servers can be added and removed without any hassle
+
+To be made scaleable
+
+ - DB
+     + Data is sharded between multiple databases, to spread out the load towards mutliple servers, the only penalty for adding/removing servers is the rebalancing
+ - Logging
+
+Maybe in the future
+
+ - World scheduler
+ - Master server
+     + The master server is supposed to handle all the other servers, So with too many servers this might need to be made scaleable across multiple servers
+
+##Sharding the data between redis instances
+
+World data is sharded between several instances to spread the load and to increase the possible world size.
+
+It is sharded by hashing the key and then take the modulo of whatever the number of active redis shards is
+
+The key is also prepended a database version number, so the final key format is:
+v{version}:{key}
+
+The database version number increases everytime a redis server is added or removed.
+This is to make the rebalancing simpler and also makes the world viewable while rebalancing
+
+This has some drawbacks:
+
+ - When adding a redis server everything will have to be rebalanced between all servers
+ - Can't use more advanced redis features like transactions
+
+It has however some advantaes too:
+
+ - If a redis instance(and its backup/slave) dies, only the world data on that server is not available (the world will however pause as soon as a server dies but will still be viewable from clients, in read only mode)
 
 ##Ticking:
 

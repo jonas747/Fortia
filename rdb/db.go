@@ -10,8 +10,9 @@ import (
 	"github.com/fzzy/radix/redis"
 	"github.com/golang/protobuf/proto"
 	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
-	"github.com/jonas747/fortia/messages"
+	"strings"
 )
 
 var (
@@ -35,10 +36,10 @@ func (rdb *Database) CheckReplyErrors(query string, reply *redis.Reply) errors.F
 	switch reply.Type {
 	case redis.ErrorReply:
 		// Error writing req or reading response
-		return db.NewDBError(query, messages.ErrorCode_RedisWriteReadErr, "Error writing or reading request", nil)
+		return db.NewDBError(query, errorcodes.ErrorCode_RedisWriteReadErr, "Error writing or reading")
 	case redis.NilReply:
 		// Key not found
-		return db.NewDBError(query, messages.ErrorCode_RedisKeyNotFound, "Key not found", nil)
+		return db.NewDBError(query, errorcodes.ErrorCode_RedisKeyNotFound, "Key not foudn")
 	default:
 		return nil
 	}
@@ -46,10 +47,16 @@ func (rdb *Database) CheckReplyErrors(query string, reply *redis.Reply) errors.F
 
 // Same as redis.Client.Cmd but uses a connection from a pool
 func (rdb *Database) Cmd(cmd string, args ...interface{}) (*redis.Reply, errors.FortiaError) {
-	query := fmt.Sprint(cmd, args)
+	querySlice := make([]string, len(args)+1)
+	for k, arg := range args {
+		querySlice[k+1] = fmt.Sprint(arg)
+	}
+	querySlice[0] = cmd
+	query := strings.Join(querySlice, " ")
+
 	client, nErr := rdb.Pool.Get()
 	if nErr != nil {
-		err := db.NewDBError(query, messages.ErrorCode_RedisDialError, nErr.Error(), nil)
+		err := db.NewDBError(query, errorcodes.ErrorCode_RedisDialError, nErr.Error())
 		return nil, err
 	}
 	defer rdb.Pool.Put(client)
@@ -78,7 +85,7 @@ func (rdb *Database) GetString(cmd string, args ...interface{}) (string, errors.
 	}
 	str, errConv := reply.Str()
 	if errConv != nil {
-		return str, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return str, db.NewDBError(fmt.Sprint(cmd, args), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return str, nil
 }
@@ -91,7 +98,7 @@ func (rdb *Database) GetBytes(cmd string, args ...interface{}) ([]byte, errors.F
 	}
 	bslice, errConv := reply.Bytes()
 	if errConv != nil {
-		return bslice, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return bslice, db.NewDBError(fmt.Sprint(cmd, args), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return bslice, nil
 }
@@ -104,7 +111,7 @@ func (rdb *Database) GetInt64(cmd string, args ...interface{}) (int64, errors.Fo
 	}
 	i64, errConv := reply.Int64()
 	if errConv != nil {
-		return i64, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return i64, db.NewDBError(fmt.Sprint(cmd, args), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return i64, nil
 }
@@ -126,7 +133,7 @@ func (rdb *Database) GetBool(cmd string, args ...interface{}) (bool, errors.Fort
 	}
 	rbool, errConv := reply.Bool()
 	if errConv != nil {
-		return rbool, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return rbool, db.NewDBError(fmt.Sprint(cmd, args), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return rbool, nil
 }
@@ -140,7 +147,7 @@ func (rdb *Database) GetList(cmd string, args ...interface{}) ([]string, errors.
 
 	list, errConv := reply.List()
 	if errConv != nil {
-		return list, db.NewDBError(fmt.Sprint(cmd, args), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return list, db.NewDBError(fmt.Sprint(cmd, args), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return list, nil
 }
@@ -153,7 +160,7 @@ func (rdb *Database) GetHash(key string) (map[string]string, errors.FortiaError)
 	}
 	hMap, errConv := reply.Hash()
 	if errConv != nil {
-		return emptyStrStrMap, db.NewDBError(fmt.Sprint("HGETALL", key), messages.ErrorCode_RedisReplyConversionErr, errConv.Error(), nil)
+		return emptyStrStrMap, db.NewDBError(fmt.Sprint("HGETALL", key), errorcodes.ErrorCode_RedisReplyConversionErr, errConv.Error())
 	}
 	return hMap, err
 }
@@ -167,14 +174,14 @@ func (rdb *Database) SetHash(key string, info map[string]interface{}) errors.For
 // Decodes the json at "key" into "val", returns any errors if any
 // val and err is nil if not found
 func (rdb *Database) GetJson(key string, val interface{}) errors.FortiaError {
-	raw, err := rdb.GetBytes(key)
+	raw, err := rdb.GetBytes("GET", key)
 	if err != nil {
 		return err
 	}
 
 	nErr := json.Unmarshal(raw, val)
 	if nErr != nil {
-		return errors.Wrap(nErr, messages.ErrorCode_JsonDecodeErr, "", nil)
+		return errors.Wrap(nErr, errorcodes.ErrorCode_JsonDecodeErr, "", nil)
 	}
 	return nil
 }
@@ -183,7 +190,7 @@ func (rdb *Database) GetJson(key string, val interface{}) errors.FortiaError {
 func (rdb *Database) SetJson(key string, val interface{}) errors.FortiaError {
 	serialized, nErr := json.Marshal(val)
 	if nErr != nil {
-		return errors.Wrap(nErr, messages.ErrorCode_JsonEncodeErr, "", nil)
+		return errors.Wrap(nErr, errorcodes.ErrorCode_JsonEncodeErr, "", nil)
 	}
 
 	_, err := rdb.Cmd("SET", key, serialized)
@@ -191,13 +198,13 @@ func (rdb *Database) SetJson(key string, val interface{}) errors.FortiaError {
 }
 
 func (rdb *Database) GetProto(key string, out proto.Message) errors.FortiaError {
-	raw, err := rdb.GetBytes(key)
+	raw, err := rdb.GetBytes("GET", key)
 	if err != nil {
 		return err
 	}
 	nErr := proto.Unmarshal(raw, out)
 	if nErr != nil {
-		return errors.Wrap(nErr, messages.ErrorCode_ProtoDecodeErr, "", nil)
+		return errors.Wrap(nErr, errorcodes.ErrorCode_ProtoDecodeErr, "", nil)
 	}
 	return nil
 }
@@ -205,7 +212,7 @@ func (rdb *Database) GetProto(key string, out proto.Message) errors.FortiaError 
 func (rdb *Database) SetProto(key string, pb proto.Message) errors.FortiaError {
 	serialized, nErr := proto.Marshal(pb)
 	if nErr != nil {
-		return errors.Wrap(nErr, messages.ErrorCode_ProtoEncodeErr, "", nil)
+		return errors.Wrap(nErr, errorcodes.ErrorCode_ProtoEncodeErr, "", nil)
 	}
 	_, err := rdb.Cmd("SET", key, serialized)
 	return err

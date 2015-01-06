@@ -2,9 +2,7 @@ package gameserver
 
 import (
 	"encoding/json"
-	//"github.com/golang/protobuf/proto"
 	"github.com/jonas747/fortia/messages"
-	//ferr "github.com/jonas747/fortia/error"
 	"github.com/jonas747/fortia/rest"
 	"github.com/jonas747/fortia/vec"
 	"net/http"
@@ -74,5 +72,8 @@ func handleInfo(r *rest.Request, body interface{}) {
 }
 
 func handlePlaceUnit(r *rest.Request, body interface{}) {
+	// casted, ok := body.(*messages.BodyPlaceUnit)
+	// if !ok {
 
+	// }
 }

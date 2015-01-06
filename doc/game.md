@@ -22,13 +22,6 @@ Method: `GET`
 
 Returns info such as moved units or new messages since last update
 
-####/layers
-Method: `GET`
-
- - x: list (seperated by ,) of x coordinates
- - y: list (seperated by ,) of y coordinates
- - z: list (seperated by ,) of z coordinates
-
 ####/chunks
 Method: `GET`
 Same as /layers but with whole chunks instead

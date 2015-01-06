@@ -3,7 +3,8 @@ package rest
 import (
 	"bytes"
 	"compress/gzip"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/errorcodes"
+	"github.com/jonas747/fortia/errors"
 )
 
 const (
@@ -18,7 +19,7 @@ var (
 	}
 )
 
-func Compress(in []byte, r *Request) ([]byte, ferr.FortiaError) {
+func Compress(in []byte, r *Request) ([]byte, errors.FortiaError) {
 	selectedCompression := ""
 	for i := 0; i < len(CompressionAlgos); i++ {
 		algo := CompressionAlgos[i]
@@ -27,11 +28,12 @@ func Compress(in []byte, r *Request) ([]byte, ferr.FortiaError) {
 		}
 	}
 	if selectedCompression == "" {
-		return in, ferr.Newc("No compression supported", ErrNoCompressionSupported)
+		return in, NewRestError(r, errorcodes.ErrorCode_ClientSupportsNoCompression, "No compression supported", nil)
 	}
+
 	handler, ok := CompressionAlgosHandlers[selectedCompression]
 	if !ok {
-		return in, ferr.Newc("No handler for selected compression", ErrNoHandlerForSelectedCompression)
+		return in, NewRestError(r, errorcodes.ErrorCode_NoHandlerForSelectedCompression, "", nil)
 	}
 
 	out := handler(in)

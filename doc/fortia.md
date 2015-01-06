@@ -19,11 +19,36 @@ A world can last years without a winner. Depending on what time you have you can
 
 ####Alpha
 
-Alpha 0.1 is mostly the base work, the only thing that will work is view the world. There are no units or building just blocks
+#####Alpha 0.1 
+Prototype with only world viewing
 
-Alpha 0.2 Intruduces 2 units and 1 building and interaction between units from different players
+#####Alpha 0.2
+Will be the first publicly available version up for alpha testing to anyone
 
-Alpha 0.3 Dosent really add a lot of stuff, mostly backend stuff like the master server, server managegement, build system and load balancers is gonna be worked on here, improving the server infrastructure.
-The only game related thing 0.3 is gonna add is making the world destructible by making units be able to destroy blocks(how long they use on each block depends on which block)
+In this version the backend will be made solid. check infrastructure for more info
 
-after this the fun work starts! (physics(water preasure, gravity, gas etc) is gonna be a hard one though...)
+game features added:
+
+ - 2 units:
+     + handyman
+         * builds buildings
+         * can chop wood
+     + fighter
+         * is better at fighing than handymen
+ - 1 building:
+     + barracks
+         * Trains handymen into fighters
+ - 1 resource
+     + wood
+ - Unit actions
+     + all
+         * hold postion
+         * attack
+         * move
+     + handymen:
+         * chop wood
+         * build
+
+#####Alpha 0.3:
+More game will be added here so while 0.2 was playable it was not exactly fun.
+This will add some fun atleast and make it more of a game

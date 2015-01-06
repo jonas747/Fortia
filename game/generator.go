@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/cheggaaa/pb"
 	"github.com/golang/protobuf/proto"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/simplex"
@@ -153,7 +154,7 @@ func (g *Generator) getBiome(position vec.Vec2I) (*messages.Biome, int, errors.F
 		for y := -1; y < 1; y++ {
 			chunk, err := g.World.GetChunk(vec.Vec2I{x + position.X, y + position.Y})
 			if err != nil {
-				if err.GetCode() != 404 {
+				if err.GetCode() != errorcodes.ErrorCode_RedisKeyNotFound {
 					return &messages.Biome{}, 0, err
 				}
 			}

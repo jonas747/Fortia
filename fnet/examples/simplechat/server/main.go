@@ -41,7 +41,24 @@ func main() {
 	}
 	go engine.ListenChannels()
 	go engine.AddListener(listener)
-	select {}
+
+	engine.EmitConnOnClose = true
+
+	for {
+		c := <-engine.ConnCloseChan
+		name, ok := c.GetSessionData().Get("name")
+		if ok {
+			nameStr := name.(string)
+			chatMsg := fmt.Sprintf("\"%s\" Has left!", nameStr)
+			msg := &simplechat.ChatMsg{
+				From: proto.String("server"),
+				Msg:  proto.String(chatMsg),
+			}
+			encoded, err := fnet.EncodeMessage(msg, int32(simplechat.Events_MESSAGE))
+			panicErr(err)
+			engine.Broadcast(encoded)
+		}
+	}
 }
 
 func HandleUserJoin(conn fnet.Connection, user simplechat.User) {

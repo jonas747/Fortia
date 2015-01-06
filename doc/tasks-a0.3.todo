@@ -1,0 +1,14 @@
+Alpha 0.3:
+  First stable version
+  See details about this release in fortia.md
+
+  General:
+    ☐ Move user login details to a sql  server, (postgresql perhaps)
+  DB:
+  Gameserver:
+  Game:
+  Formerly known as world
+  admin:
+  master:
+  logging:
+  web frontend:

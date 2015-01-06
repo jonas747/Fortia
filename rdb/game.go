@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
 	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/vec"
@@ -85,7 +86,7 @@ func (g *GameDB) SetEntity(id int, info map[string]interface{}) errors.FortiaErr
 func (g *GameDB) PushAction(action *messages.Action, tick int) errors.FortiaError {
 	serialized, nErr := proto.Marshal(action)
 	if nErr != nil {
-		return errors.New(messages.ErrorCode_ProtoEncodeErr, nErr.Error(), nil)
+		return errors.New(errorcodes.ErrorCode_ProtoEncodeErr, nErr.Error(), nil)
 	}
 	_, err := g.Cmd("SADD", fmt.Sprintf("actionQueue:%d:%d", tick, action.GetKind()), serialized)
 	return err
@@ -100,7 +101,7 @@ func (g *GameDB) PopAction(tick, kind int) (*messages.Action, errors.FortiaError
 	var action *messages.Action
 	nErr := proto.Unmarshal(raw, action)
 	if nErr != nil {
-		return nil, errors.New(messages.ErrorCode_ProtoDecodeErr, nErr.Error(), nil)
+		return nil, errors.New(errorcodes.ErrorCode_ProtoDecodeErr, nErr.Error(), nil)
 	}
 
 	return action, nil

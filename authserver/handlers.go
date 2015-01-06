@@ -3,7 +3,9 @@ package authserver
 import (
 	"code.google.com/p/go.crypto/bcrypt"
 	"github.com/golang/protobuf/proto"
-	ferr "github.com/jonas747/fortia/error"
+	"github.com/jonas747/fortia/db"
+	"github.com/jonas747/fortia/errorcodes"
+	"github.com/jonas747/fortia/errors"
 	"github.com/jonas747/fortia/messages"
 	"github.com/jonas747/fortia/rest"
 	"net/http"
@@ -36,11 +38,12 @@ func AuthRequiredMiddleWare(r *rest.Request) bool {
 }
 
 // Returns true if logged on, false if not, also returns the user if logged on
-func CheckSession(r *rest.Request) (bool, string, ferr.FortiaError) {
+func CheckSession(r *rest.Request) (bool, string, errors.FortiaError) {
 	// Get the session cookie
 	cookie, nErr := r.Request.Cookie("fortia-session")
 	if nErr != nil {
-		return false, "", ferr.Wrap(nErr, "")
+		// No cookie found...
+		return false, "", nil
 	}
 
 	session := cookie.Value
@@ -66,7 +69,7 @@ func handleLogin(r *rest.Request, body interface{}) {
 		logger.Warna("User tried logging in with invalid password", map[string]interface{}{"remoteaddr": r.Request.RemoteAddr, "user": bl.Username})
 		// w.WriteHeader(http.StatusBadRequest)
 		// w.Write(rest.ApiError(rest.ErrWrongLoginDetails, "Username or password incorrect"))
-		r.WriteResponse(rest.NewPlainResponse(rest.ErrWrongLoginDetails, "Login details incorrect"), http.StatusBadRequest)
+		r.WriteResponse(rest.NewPlainResponse(errorcodes.ErrorCode_IncorrectLoginCredentials, "Login details incorrect"), http.StatusBadRequest)
 		return
 	}
 	session, err := authDb.LoginUser(bl.Username, 3600*24) // 24 hours
@@ -122,15 +125,15 @@ func handleRegister(r *rest.Request, body interface{}) {
 
 	// Make sure all details are valid
 	if !validateUsername(rBody.Username) {
-		r.WriteResponse(rest.NewPlainResponse(rest.ErrInvalidUsername, "Username is not valid"), http.StatusBadRequest)
+		r.WriteResponse(rest.NewPlainResponse(errorcodes.ErrorCode_InvalidUsername, "Username is not valid"), http.StatusBadRequest)
 		return
 	}
 	if !validateEmail(rBody.Email) {
-		r.WriteResponse(rest.NewPlainResponse(rest.ErrInvalidEmail, "Email is not valid"), http.StatusBadRequest)
+		r.WriteResponse(rest.NewPlainResponse(errorcodes.ErrorCode_InvalidEmail, "Email is not valid"), http.StatusBadRequest)
 		return
 	}
 	if !validatePassword(rBody.Pw) {
-		r.WriteResponse(rest.NewPlainResponse(rest.ErrInavlidPassword, "Password is not valid"), http.StatusBadRequest)
+		r.WriteResponse(rest.NewPlainResponse(errorcodes.ErrorCode_InvalidPassword, "Password is not valid"), http.StatusBadRequest)
 		return
 	}
 
@@ -139,18 +142,16 @@ func handleRegister(r *rest.Request, body interface{}) {
 		return
 	}
 	if existingInfo.Email != "" {
-		r.WriteResponse(rest.NewPlainResponse(rest.ErrUsernameTaken, "Username taken"), http.StatusBadRequest)
+		r.WriteResponse(rest.NewPlainResponse(errorcodes.ErrorCode_UsernameTaken, "Username taken"), http.StatusBadRequest)
 		return
 	}
 
 	pwHash, nErr := bcrypt.GenerateFromPassword([]byte(rBody.Pw), bcrypt.DefaultCost)
-	if nErr != nil {
-		err := ferr.Wrapa(nErr, "", map[string]interface{}{"user": rBody.Username})
-		server.HandleFortiaError(r, err)
+	if server.HandleError(r, nErr, errorcodes.ErrorCode_BCryptErr) {
 		return
 	}
 
-	user := &UserInfo{
+	user := &db.AuthUserInfo{
 		Name:   rBody.Username,
 		PwHash: pwHash,
 		Email:  rBody.Email,

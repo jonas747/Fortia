@@ -2,8 +2,8 @@ package db
 
 import (
 	"fmt"
+	"github.com/jonas747/fortia/errorcodes"
 	"github.com/jonas747/fortia/errors"
-	"github.com/jonas747/fortia/messages"
 )
 
 // To be used when there is an error with the database
@@ -12,7 +12,7 @@ type DBError struct {
 	Query string
 }
 
-func NewDBError(query string, code messages.ErrorCode, format string, a ...interface{}) errors.FortiaError {
+func NewDBError(query string, code errorcodes.ErrorCode, format string, a ...interface{}) errors.FortiaError {
 	base := errors.New(code, format, a...).(*errors.FortiaBaseError)
 	return &DBError{
 		FortiaBaseError: base,
@@ -21,7 +21,7 @@ func NewDBError(query string, code messages.ErrorCode, format string, a ...inter
 }
 
 func (e *DBError) Error() string {
-	header := fmt.Sprintf("Database Error on query [%s]\n", e.Query)
+	header := fmt.Sprintf("Database Error on query \"%s\"\n", e.Query)
 	body := errors.DefaultError(e)
 	return header + body
 }
@@ -31,7 +31,7 @@ type AuthError struct {
 	User string
 }
 
-func NewAuthError(user string, code messages.ErrorCode, format string, a ...interface{}) errors.FortiaError {
+func NewAuthError(user string, code errorcodes.ErrorCode, format string, a ...interface{}) errors.FortiaError {
 	base := errors.New(code, format, a...).(*errors.FortiaBaseError)
 	return &AuthError{
 		FortiaBaseError: base,

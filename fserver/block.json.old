@@ -1,0 +1,55 @@
+{
+	"id": 5,
+	"name": "deepdirt",
+	"type": "deepSoil",
+	"layers": ["*"],
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	}
+},
+{
+	"id": 6,
+	"name": "sand",
+	"type": "soil",
+	"layers": ["*"],
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	},
+	"flags": ["sand"]
+},
+{
+	"id": 7,
+	"name": "water",
+	"type": "water",
+	"layers": ["*"],
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	},
+	"flags": ["fish", "swim"]
+},
+{
+	"id": 8,
+	"name": "oak",
+	"type": "wood",
+	"layers": ["*"],
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	},
+	"properties":{
+		"leaves": 9
+	}
+},
+{
+	"id": 9,
+	"name": "oak leaves",
+	"type": "leaves",
+	"layers": ["*"],
+	"biomes": ["*"],
+	"probability": {
+		"everywhere": 100
+	}
+}

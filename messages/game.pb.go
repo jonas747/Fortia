@@ -2,6 +2,28 @@
 // source: game.proto
 // DO NOT EDIT!
 
+/*
+Package messages is a generated protocol buffer package.
+
+It is generated from these files:
+	game.proto
+	requstbodies.proto
+	responses.proto
+
+It has these top-level messages:
+	UserInfo
+	WorldInfo
+	WorldSettings
+	Block
+	Chunk
+	BiomeProperties
+	Biome
+	WorldBiomes
+	Property
+	Colors
+	BlockType
+	Action
+*/
 package messages
 
 import proto "github.com/golang/protobuf/proto"
